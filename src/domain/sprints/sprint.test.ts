@@ -1,0 +1,11 @@
+import { describe, expect, it } from "vitest";
+import { assertCanActivateSprint, assertCanChangeCommitment, deriveSprintProgress, SprintTransitionError, validateSprintClosure, validateSprintValues, type Sprint } from "./sprint";
+const values = { name: "Sprint 18", intendedResult: "Entrega validada", ownerMemberId: "member-1", startsOn: "2026-07-20", endsOn: "2026-07-24", taskIds: ["task-1"] };
+const sprint: Sprint = { id: "sprint-1", ...validateSprintValues(values), status: "active", actualResult: null, learning: null, tasks: [{ taskId: "task-1", taskStatus: "completed", committedAt: "2026-07-20T09:00:00Z", closureDisposition: null }, { taskId: "task-2", taskStatus: "blocked", committedAt: "2026-07-21T09:00:00Z", closureDisposition: null }], createdAt: "2026-07-19T09:00:00Z", updatedAt: "2026-07-19T09:00:00Z" };
+describe("Sprint", () => {
+  it("valida identidade, resultado, owner e intervalo", () => { expect(validateSprintValues(values).taskIds).toEqual(["task-1"]); expect(() => validateSprintValues({ ...values, endsOn: "2026-07-19" })).toThrow("fim"); expect(() => validateSprintValues({ ...values, intendedResult: "" })).toThrow("resultado pretendido"); });
+  it("exige Task antes da ativação e impede remoção após compromisso", () => { expect(() => assertCanActivateSprint({ ...sprint, status: "planned", tasks: [] })).toThrow("Task"); expect(() => assertCanChangeCommitment(sprint, true)).toThrow(SprintTransitionError); });
+  it("deriva progresso dos estados reais sem percentagem", () => { expect(deriveSprintProgress(sprint.tasks)).toMatchObject({ total: 2, completed: 1, blocked: 1 }); });
+  it("fecha com destinos automáticos e explícitos", () => { expect(validateSprintClosure(sprint, { actualResult: "Uma entrega concluída", learning: "Reduzir dependências", incompleteDispositions: { "task-2": "recommitted" } }).dispositions).toEqual({ "task-1": "completed", "task-2": "recommitted" }); });
+  it("rejeita fecho sem aprendizagem ou destino incompleto", () => { expect(() => validateSprintClosure(sprint, { actualResult: "Resultado", learning: "", incompleteDispositions: { "task-2": "split" } })).toThrow("aprendizagem"); expect(() => validateSprintClosure(sprint, { actualResult: "Resultado", learning: "Aprendizagem", incompleteDispositions: {} })).toThrow("destino"); });
+});

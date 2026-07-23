@@ -1,0 +1,505 @@
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import type {
+  CalendarEntry,
+  CalendarMeetingSummary,
+  CalendarProjection,
+  CalendarSourceType,
+} from "@/projections/calendar/calendar";
+import {
+  entryOccursOn,
+  enumerateDays,
+  moveAnchor,
+  type CalendarView,
+} from "@/projections/calendar/calendar-time";
+import { withReturnTo } from "@/foundation/navigation/return-to";
+
+import { CalendarWeekGrid } from "./calendar-week-grid";
+
+const SOURCE_LABELS: Record<CalendarSourceType, string> = {
+  meeting: "Meetings",
+  task: "Tasks",
+  milestone: "Milestones",
+  google: "Google",
+};
+const BASIS_LABELS: Record<CalendarEntry["temporalBasis"], string> = {
+  scheduled: "Agendado",
+  expected: "Esperado",
+  confirmed: "Confirmado",
+  derived: "Recorrência derivada",
+  historical: "Histórico",
+};
+const VIEW_LABELS: Record<CalendarView, string> = {
+  week: "Semana",
+  month: "Mês",
+  agenda: "Agenda",
+};
+
+type Filters = { history: boolean; owner: string; sourceType: string };
+
+export function CalendarSurface({
+  anchor,
+  filters,
+  projection,
+  today,
+  view,
+}: {
+  anchor: string;
+  filters: Filters;
+  projection: CalendarProjection;
+  today: string;
+  view: CalendarView;
+}) {
+  const days = enumerateDays(projection.range.start, projection.range.end);
+  const failedSources = Object.entries(projection.sourceStates)
+    .filter(([, status]) => status === "error")
+    .map(([source]) => SOURCE_LABELS[source as CalendarSourceType]);
+  const allSourcesFailed = failedSources.length === Object.keys(projection.sourceStates).length;
+  const returnTo = calendarHref(view, anchor, filters);
+
+  return (
+    <main className="workspace-main module-main calendar-main">
+      <div className="module-heading calendar-heading">
+        <div>
+          <h1 className="display">Calendar</h1>
+          <p className="workspace-intro">A tua semana.</p>
+        </div>
+        <div className="calendar-create-links" aria-label="Create dated object">
+          <Link className="button-secondary" href="/meetings/new">
+            New
+          </Link>
+        </div>
+      </div>
+
+      <section className="calendar-controls" aria-label="Controlos do Calendar">
+        <div className="calendar-period-controls">
+          <Link
+            aria-label={`Período anterior de ${VIEW_LABELS[view].toLocaleLowerCase("pt-PT")}`}
+            className="calendar-icon-button"
+            href={calendarHref(view, moveAnchor(view, anchor, -1), filters)}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </Link>
+          <div>
+            <strong>{periodLabel(view, anchor, projection.range)}</strong>
+          </div>
+          <Link
+            aria-label={`Período seguinte de ${VIEW_LABELS[view].toLocaleLowerCase("pt-PT")}`}
+            className="calendar-icon-button"
+            href={calendarHref(view, moveAnchor(view, anchor, 1), filters)}
+          >
+            <ChevronRight aria-hidden="true" />
+          </Link>
+          {anchor === today ? (
+            <span
+              aria-current="date"
+              className="button-secondary calendar-today calendar-today-active"
+            >
+              Hoje
+            </span>
+          ) : (
+            <Link
+              className="button-secondary calendar-today"
+              href={calendarHref(view, today, filters)}
+            >
+              Ir para hoje
+            </Link>
+          )}
+        </div>
+
+        <nav aria-label="Vistas do Calendar" className="calendar-view-tabs">
+          {(["week", "month", "agenda"] as CalendarView[]).map((candidate) => (
+            <Link
+              aria-current={candidate === view ? "page" : undefined}
+              className={candidate === view ? "active" : ""}
+              href={calendarHref(candidate, anchor, filters)}
+              key={candidate}
+            >
+              {VIEW_LABELS[candidate]}
+            </Link>
+          ))}
+        </nav>
+
+        <details className="calendar-filter-menu">
+          <summary className="button-secondary">Filter</summary>
+          <form action="/calendar" className="calendar-filters" method="get">
+            <input name="view" type="hidden" value={view} />
+            <input name="date" type="hidden" value={anchor} />
+            <label>
+              <span>Type</span>
+              <select defaultValue={filters.sourceType} name="type">
+                <option value="">All</option>
+                {(["meeting", "google"] as CalendarSourceType[]).map((value) => (
+                  <option key={value} value={value}>
+                    {SOURCE_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="calendar-history-filter">
+              <input defaultChecked={filters.history} name="history" type="checkbox" value="1" />
+              <span>Show history</span>
+            </label>
+            <button className="button-secondary" type="submit">
+              Apply
+            </button>
+          </form>
+        </details>
+      </section>
+
+      {projection.isPartial && !allSourcesFailed ? (
+        <div className="calendar-source-warning" role="status">
+          <strong>Leitura parcial.</strong>
+          <span>
+            {failedSources.join(" e ")}{" "}
+            {failedSources.length === 1 ? "está indisponível" : "estão indisponíveis"}.
+          </span>
+        </div>
+      ) : null}
+      {projection.overflow ? (
+        <div className="calendar-source-warning" role="status">
+          <strong>Janela com demasiados compromissos.</strong>
+          <span>Refina os filtros ou avança para um período mais curto.</span>
+        </div>
+      ) : null}
+
+      <section aria-label="Calendar filtrado" className="calendar-board">
+        {allSourcesFailed ? (
+          <section className="empty-state empty-state-inline" role="alert">
+            <h2 className="display">Calendar unavailable.</h2>
+            <p>Try again. No empty state is being assumed.</p>
+          </section>
+        ) : (
+          <>
+            {view === "week" ? (
+              <CalendarWeekGrid
+                days={days}
+                entries={projection.entries}
+                returnTo={returnTo}
+                today={today}
+              />
+            ) : null}
+            {view === "month" ? (
+              <MonthView
+                anchor={anchor}
+                days={days}
+                entries={projection.entries}
+                returnTo={returnTo}
+                today={today}
+              />
+            ) : null}
+            {view === "agenda" ? (
+              <AgendaView
+                days={days}
+                entries={projection.entries}
+                returnTo={returnTo}
+                today={today}
+              />
+            ) : null}
+          </>
+        )}
+      </section>
+
+      {!allSourcesFailed ? (
+        <CalendarMeetingOverview meetings={projection.meetings} returnTo={returnTo} />
+      ) : null}
+    </main>
+  );
+}
+
+function CalendarMeetingOverview({
+  meetings,
+  returnTo,
+}: {
+  meetings: readonly CalendarMeetingSummary[];
+  returnTo: string;
+}) {
+  const missingOutput = meetings.filter((meeting) => meeting.isMissingOutput);
+  const active = meetings.filter(
+    (meeting) => !meeting.isMissingOutput && !meeting.isClosed && !meeting.isCancelled,
+  );
+  const closed = meetings.filter((meeting) => meeting.isClosed);
+
+  if (!meetings.length) return null;
+
+  return (
+    <section className="calendar-meetings" aria-labelledby="calendar-meetings-title">
+      <div className="calendar-meetings-heading">
+        <h2 className="section-title" id="calendar-meetings-title">
+          Meetings & Events
+        </h2>
+        <span>{meetings.length}</span>
+      </div>
+      <div className="calendar-meeting-groups">
+        <CalendarMeetingGroup
+          empty="Todas as Meetings desta janela têm output."
+          meetings={missingOutput}
+          returnTo={returnTo}
+          title="Sem output"
+          tone="danger"
+        />
+        <CalendarMeetingGroup
+          empty="Sem Meetings ou Events ativos ou próximos."
+          meetings={active}
+          returnTo={returnTo}
+          title="Agora / próximas"
+          tone="default"
+        />
+        <CalendarMeetingGroup
+          empty="Ainda nada fechado nesta janela."
+          meetings={closed}
+          returnTo={returnTo}
+          title="Fechadas"
+          tone="muted"
+        />
+      </div>
+    </section>
+  );
+}
+
+function CalendarMeetingGroup({
+  empty,
+  meetings,
+  returnTo,
+  title,
+  tone,
+}: {
+  empty: string;
+  meetings: readonly CalendarMeetingSummary[];
+  returnTo: string;
+  title: string;
+  tone: "danger" | "default" | "muted";
+}) {
+  return (
+    <section className={`calendar-meeting-group calendar-meeting-group-${tone}`}>
+      <header>
+        <h3>{title}</h3>
+        <span>{meetings.length}</span>
+      </header>
+      {meetings.length ? (
+        <div className="calendar-meeting-list">
+          {meetings.map((meeting) => (
+            <Link
+              className="calendar-meeting-row"
+              href={withReturnTo(meeting.href, returnTo)}
+              key={meeting.id}
+            >
+              <span>
+                <strong>{meeting.title}</strong>
+                <small>
+                  {meeting.kind === "meeting"
+                    ? "Meeting"
+                    : meeting.kind === "event"
+                      ? "Event"
+                      : meeting.kind === "vacation"
+                        ? "Vacation"
+                        : "Google Event"}{" "}
+                  · {meeting.ownerDisplayName}
+                  {meeting.companyNames.length ? ` · ${meeting.companyNames.join(" · ")}` : ""}
+                </small>
+              </span>
+              <span>
+                <time dateTime={meeting.startsAt}>{formatMeetingInterval(meeting)}</time>
+                <em>{meeting.statusLabel}</em>
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p>{empty}</p>
+      )}
+    </section>
+  );
+}
+
+function MonthView({
+  anchor,
+  days,
+  entries,
+  returnTo,
+  today,
+}: {
+  anchor: string;
+  days: string[];
+  entries: readonly CalendarEntry[];
+  returnTo: string;
+  today: string;
+}) {
+  return (
+    <section aria-label="Mês operacional" className="calendar-month">
+      {days.map((day) => {
+        const items = entries.filter((entry) => entryOccursOn(entry, day));
+        const outside = day.slice(0, 7) !== anchor.slice(0, 7);
+        return (
+          <section
+            className={`calendar-month-day${outside ? " calendar-month-day-outside" : ""}${day === today ? " calendar-day-today" : ""}`}
+            key={day}
+          >
+            <Link
+              aria-label={`Criar Meeting, Event ou Vacation em ${day}`}
+              className="calendar-month-day-create"
+              href={`/meetings/new?date=${day}&returnTo=${encodeURIComponent(returnTo)}`}
+            >
+              <DayHeading compact day={day} today={today} />
+            </Link>
+            <div className="calendar-month-entries">
+              {items.slice(0, 3).map((entry) => (
+                <CalendarEntryLink
+                  compact
+                  entry={entry}
+                  key={`${entry.entryKey}:${day}`}
+                  returnTo={returnTo}
+                />
+              ))}
+              {items.length > 3 ? (
+                <span className="calendar-more">+{items.length - 3} compromissos</span>
+              ) : null}
+            </div>
+          </section>
+        );
+      })}
+    </section>
+  );
+}
+
+function AgendaView({
+  days,
+  entries,
+  returnTo,
+  today,
+}: {
+  days: string[];
+  entries: readonly CalendarEntry[];
+  returnTo: string;
+  today: string;
+}) {
+  const activeDays = days.filter((day) => entries.some((entry) => entryOccursOn(entry, day)));
+  return (
+    <section aria-label="Agenda cronológica" className="calendar-agenda">
+      {activeDays.length ? (
+        activeDays.map((day) => (
+          <section className="calendar-agenda-day" key={day}>
+            <DayHeading day={day} today={today} />
+            <div className="calendar-agenda-entries">
+              {entries
+                .filter((entry) => entryOccursOn(entry, day))
+                .map((entry) => (
+                  <CalendarEntryLink
+                    entry={entry}
+                    key={`${entry.entryKey}:${day}`}
+                    returnTo={returnTo}
+                  />
+                ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <p className="calendar-agenda-empty">No events.</p>
+      )}
+    </section>
+  );
+}
+
+function DayHeading({
+  compact = false,
+  day,
+  today,
+}: {
+  compact?: boolean;
+  day: string;
+  today: string;
+}) {
+  const date = new Date(`${day}T12:00:00.000Z`);
+  return (
+    <header className="calendar-day-heading">
+      <span>
+        {new Intl.DateTimeFormat("pt-PT", { weekday: compact ? "short" : "long" }).format(date)}
+      </span>
+      <strong>
+        {compact
+          ? date.getUTCDate()
+          : new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "short" }).format(date)}
+      </strong>
+      {day === today ? <em>Hoje</em> : null}
+    </header>
+  );
+}
+
+function CalendarEntryLink({
+  compact = false,
+  entry,
+  returnTo,
+}: {
+  compact?: boolean;
+  entry: CalendarEntry;
+  returnTo: string;
+}) {
+  const contexts = entry.context.map((item) => item.label).join(" · ");
+  const time = entry.allDay
+    ? null
+    : new Intl.DateTimeFormat("pt-PT", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Lisbon",
+      }).format(new Date(entry.start));
+  const label = `${entry.sourceLabel}: ${entry.title}. ${entry.sourceStatus.label}. ${time ? `Às ${time}.` : "Dia inteiro."}`;
+  const content = (
+    <>
+      <span className="calendar-entry-topline">
+        <b>{entry.sourceLabel}</b>
+        {time ? (
+          <time dateTime={entry.start}>{time}</time>
+        ) : (
+          <span>{BASIS_LABELS[entry.temporalBasis]}</span>
+        )}
+      </span>
+      <strong>{entry.title}</strong>
+      {!compact ? (
+        <span className="calendar-entry-meta">
+          {entry.sourceStatus.label}
+          {entry.owner ? ` · ${entry.owner.displayName}` : ""}
+          {contexts ? ` · ${contexts}` : ""}
+        </span>
+      ) : null}
+    </>
+  );
+  const className = `calendar-entry calendar-entry-${entry.sourceType}${entry.tone ? ` calendar-entry-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-entry-vacation" : ""}${entry.isOverdue ? " calendar-entry-overdue" : ""}${entry.isCancelled ? " calendar-entry-cancelled" : ""}${compact ? " calendar-entry-compact" : ""}`;
+  return (
+    <Link aria-label={label} className={className} href={withReturnTo(entry.href, returnTo)}>
+      {content}
+    </Link>
+  );
+}
+
+function calendarHref(view: CalendarView, date: string, filters: Filters) {
+  const params = new URLSearchParams({ view, date });
+  if (filters.sourceType) params.set("type", filters.sourceType);
+  if (filters.owner) params.set("owner", filters.owner);
+  if (filters.history) params.set("history", "1");
+  return `/calendar?${params.toString()}`;
+}
+
+function formatMeetingInterval(meeting: CalendarMeetingSummary) {
+  const formatter = new Intl.DateTimeFormat("pt-PT", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+    timeZone: "Europe/Lisbon",
+  });
+  return `${formatter.format(new Date(meeting.startsAt))}–${formatter.format(new Date(meeting.endsAt))}`;
+}
+
+function periodLabel(view: CalendarView, anchor: string, range: { start: string; end: string }) {
+  if (view === "month") {
+    return new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" }).format(
+      new Date(`${anchor}T12:00:00.000Z`),
+    );
+  }
+  const format = (value: string) =>
+    new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "short" }).format(
+      new Date(`${value}T12:00:00.000Z`),
+    );
+  return `${format(range.start)} — ${format(range.end)}`;
+}

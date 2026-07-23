@@ -1,0 +1,237 @@
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Vouga identity */
+  --vouga-orange: #d98218;
+  --vouga-orange-hover: #e69632;
+  --vouga-orange-active: #bd6b12;
+
+  /* Backgrounds and surfaces */
+  --color-bg: #111210;
+  --color-bg-elevated: #151614;
+  --color-surface: #1a1b19;
+  --color-surface-raised: #20211f;
+  --color-surface-hover: #262724;
+  --color-surface-active: #2b2c29;
+
+  /* Text */
+  --color-text-primary: #f2f1ec;
+  --color-text-secondary: #aaa9a3;
+  --color-text-tertiary: #81817b;
+  --color-text-disabled: #62625d;
+  --color-text-inverse: #181818;
+
+  /* Borders */
+  --color-border: rgb(242 241 236 / 10%);
+  --color-border-strong: rgb(242 241 236 / 18%);
+  --color-border-focus: rgb(242 241 236 / 34%);
+
+  /* Accent */
+  --color-accent: var(--vouga-orange);
+  --color-accent-hover: var(--vouga-orange-hover);
+  --color-accent-active: var(--vouga-orange-active);
+  --color-accent-soft: color-mix(in srgb, var(--vouga-orange) 14%, transparent);
+  --color-accent-border: color-mix(in srgb, var(--vouga-orange) 42%, transparent);
+
+  /* Semantic states */
+  --color-success: #91a66f;
+  --color-success-soft: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-warning: #d2a04f;
+  --color-warning-soft: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  --color-danger: #d77b6b;
+  --color-danger-soft: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  --color-info: #82aeb9;
+  --color-info-soft: color-mix(in srgb, var(--color-info) 12%, transparent);
+
+  /* Product materials */
+  --color-panel-neutral-start: #1d1e1c;
+  --color-panel-neutral-end: #191a18;
+  --color-panel-warm-start: #211c17;
+  --color-panel-warm-end: #1d1915;
+  --color-panel-cool-start: #171d20;
+  --color-panel-cool-end: #161a1d;
+  --color-panel-positive-start: #182019;
+  --color-panel-positive-end: #171c17;
+  --color-panel-attention-start: #211918;
+  --color-panel-attention-end: #1d1717;
+  --color-panel-border: rgb(255 255 255 / 8%);
+  --color-panel-cell: rgb(255 255 255 / 3.5%);
+  --color-panel-cell-hover: rgb(255 255 255 / 9%);
+  --shadow-panel: 0 1px 1px rgb(0 0 0 / 14%), 0 14px 40px rgb(0 0 0 / 8%);
+
+  /* Legacy aliases retained while older surfaces adopt the Founder Workspace names. */
+  --color-brief-today-start: var(--color-panel-warm-start);
+  --color-brief-today-end: var(--color-panel-warm-end);
+  --color-brief-week-start: var(--color-panel-cool-start);
+  --color-brief-week-end: var(--color-panel-cool-end);
+  --color-brief-sprint-start: var(--color-panel-positive-start);
+  --color-brief-sprint-end: var(--color-panel-positive-end);
+  --color-brief-attention-start: var(--color-panel-attention-start);
+  --color-brief-attention-end: var(--color-panel-attention-end);
+  --color-brief-panel-border: var(--color-panel-border);
+  --color-brief-panel-cell: var(--color-panel-cell);
+  --color-brief-panel-cell-hover: var(--color-panel-cell-hover);
+  --shadow-brief-panel: var(--shadow-panel);
+
+  /* Typography */
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-meta: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-page-title: clamp(1.875rem, 2vw, 2.125rem);
+
+  --leading-tight: 1;
+  --leading-title: 1.08;
+  --leading-body: 1.45;
+  --leading-relaxed: 1.6;
+
+  --tracking-title: -0.015em;
+  --tracking-body: 0;
+  --tracking-label: 0.03em;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 2.5rem;
+  --space-9: 3rem;
+  --space-10: 4rem;
+
+  /* Shape and depth */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-pill: 999px;
+
+  --border-width: 1px;
+  --shadow-subtle: 0 1px 2px rgb(0 0 0 / 16%);
+  --shadow-overlay: 0 16px 48px rgb(0 0 0 / 34%);
+
+  /* Controls and navigation */
+  --control-height-sm: 2rem;
+  --control-height-md: 2.375rem;
+  --control-height-lg: 2.5rem;
+  --sidebar-item-height: 2.25rem;
+  --table-row-height: 2.5rem;
+  --sidebar-width: 13.25rem;
+  --sidebar-width-compact: 4.5rem;
+  --bottom-navigation-height: 4rem;
+  --bottom-navigation-item-width: 3.25rem;
+  --workspace-header-height: 3.5rem;
+  --navigation-icon-size: 1rem;
+  --navigation-gutter: var(--space-3);
+  --navigation-item-radius: var(--radius-sm);
+
+  /* Editorial grid */
+  --page-gutter: clamp(1rem, 2vw, 2rem);
+  --content-max-width: 92rem;
+  --grid-gap: clamp(0.625rem, 1vw, 1rem);
+  --grid-columns-desktop: 12;
+  --grid-columns-tablet: 8;
+  --grid-columns-mobile: 4;
+
+  /* Motion */
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 360ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Breakpoints: documented tokens for shared JS/CSS conventions. */
+  --breakpoint-mobile: 30rem;
+  --breakpoint-tablet: 48rem;
+  --breakpoint-desktop: 64rem;
+  --breakpoint-wide: 90rem;
+
+  /* Compatibility aliases while existing surfaces adopt the official names. */
+  --background: var(--color-bg);
+  --foreground: var(--color-text-primary);
+  --surface: var(--color-surface);
+  --surface-strong: var(--color-surface-raised);
+  --muted: var(--color-text-secondary);
+  --border: var(--color-border);
+  --ring: var(--color-accent);
+  --danger: var(--color-danger);
+  --font-serif: var(--font-sans);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f1f0eb;
+  --color-bg-elevated: #ebeae4;
+  --color-surface: #e5e4de;
+  --color-surface-raised: #deddd7;
+  --color-surface-hover: #d7d6d0;
+  --color-surface-active: #cfcec8;
+
+  --color-text-primary: #181818;
+  --color-text-secondary: #676762;
+  --color-text-tertiary: #6d6d68;
+  --color-text-disabled: #a09f99;
+  --color-text-inverse: #f2f1ec;
+
+  --color-border: rgb(24 24 24 / 14%);
+  --color-border-strong: rgb(24 24 24 / 26%);
+  --color-border-focus: rgb(24 24 24 / 40%);
+
+  --color-success: #5f7446;
+  --color-warning: #90651f;
+  --color-danger: #a64f42;
+  --color-info: #4f7480;
+
+  --color-panel-neutral-start: #fbfaf7;
+  --color-panel-neutral-end: #f6f5f0;
+  --color-panel-warm-start: #fff8f1;
+  --color-panel-warm-end: #fff3e6;
+  --color-panel-cool-start: #f6faff;
+  --color-panel-cool-end: #eef6ff;
+  --color-panel-positive-start: #f5fcf7;
+  --color-panel-positive-end: #eef8f2;
+  --color-panel-attention-start: #fff6f5;
+  --color-panel-attention-end: #ffefef;
+  --color-panel-border: rgb(255 255 255 / 72%);
+  --color-panel-cell: rgb(255 255 255 / 48%);
+  --color-panel-cell-hover: rgb(24 24 24 / 7%);
+  --shadow-panel: 0 1px 2px rgb(37 32 25 / 4%), 0 14px 40px rgb(37 32 25 / 5%);
+}
+
+.editorial-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(var(--grid-columns-mobile), minmax(0, 1fr));
+}
+
+.page-container {
+  margin-inline: auto;
+  max-width: var(--content-max-width);
+  padding-inline: var(--page-gutter);
+  width: 100%;
+}
+
+@media (min-width: 48rem) {
+  .editorial-grid {
+    grid-template-columns: repeat(var(--grid-columns-tablet), minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .editorial-grid {
+    grid-template-columns: repeat(var(--grid-columns-desktop), minmax(0, 1fr));
+  }
+}

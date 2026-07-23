@@ -5,7 +5,7 @@ import type {
   GoogleIdentity,
   GoogleOAuthGateway,
 } from "@/application/google/contracts";
-import { GOOGLE_OAUTH_SCOPES } from "@/application/google/google-scopes";
+import { GOOGLE_DRIVE_FILE_SCOPE, GOOGLE_OAUTH_SCOPES } from "@/application/google/google-scopes";
 import type { GoogleOAuthEnv } from "@/foundation/config/google-env";
 
 type Fetcher = typeof fetch;
@@ -33,6 +33,22 @@ export class GoogleOAuthClient implements GoogleOAuthGateway {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", GOOGLE_OAUTH_SCOPES.join(" "));
     url.searchParams.set("state", values.state);
+    if (values.loginHint) url.searchParams.set("login_hint", values.loginHint);
+    return url.toString();
+  }
+
+  createPickerAuthorizationUrl(values: { state: string; loginHint?: string | null }): string {
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("allow_multiple", "true");
+    url.searchParams.set("client_id", this.env.clientId);
+    url.searchParams.set("mimetypes", "application/vnd.google-apps.document");
+    url.searchParams.set("prompt", "consent select_account");
+    url.searchParams.set("redirect_uri", this.env.redirectUri);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", GOOGLE_DRIVE_FILE_SCOPE);
+    url.searchParams.set("state", values.state);
+    url.searchParams.set("trigger_onepick", "true");
     if (values.loginHint) url.searchParams.set("login_hint", values.loginHint);
     return url.toString();
   }

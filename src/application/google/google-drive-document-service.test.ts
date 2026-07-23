@@ -35,6 +35,7 @@ function setup(connection: StoredGoogleConnection | null = stored) {
   };
   const oauth: GoogleOAuthGateway = {
     createAuthorizationUrl: vi.fn(),
+    createPickerAuthorizationUrl: vi.fn(),
     exchangeAuthorizationCode: vi.fn(),
     getIdentity: vi.fn(),
     refreshAccessToken: vi.fn().mockResolvedValue("access-token"),

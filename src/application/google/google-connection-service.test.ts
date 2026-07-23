@@ -12,6 +12,20 @@ import {
 } from "./google-connection-service";
 import { GOOGLE_DATA_SCOPES } from "./google-scopes";
 
+const activeStoredConnection: StoredGoogleConnection = {
+  connection: {
+    connectedAt: "2026-07-19T15:00:00.000Z",
+    email: "hello@vouga-agency.pt",
+    memberId: "member-1",
+    providerSubject: "google-subject",
+    revokedAt: null,
+    scopes: GOOGLE_DATA_SCOPES,
+    status: "active",
+    updatedAt: "2026-07-19T15:00:00.000Z",
+  },
+  refreshToken: { ciphertext: "cipher", iv: "iv", keyVersion: 1 },
+};
+
 function setup(stored: StoredGoogleConnection | null = null) {
   const repository: GoogleConnectionRepository = {
     findActiveByMemberId: vi.fn().mockResolvedValue(stored),
@@ -20,6 +34,7 @@ function setup(stored: StoredGoogleConnection | null = null) {
   };
   const oauth: GoogleOAuthGateway = {
     createAuthorizationUrl: vi.fn().mockReturnValue("https://accounts.google.com/auth"),
+    createPickerAuthorizationUrl: vi.fn().mockReturnValue("https://accounts.google.com/picker"),
     exchangeAuthorizationCode: vi.fn().mockResolvedValue({
       accessToken: "access-token",
       refreshToken: "refresh-token",
@@ -77,21 +92,22 @@ describe("GoogleConnectionService", () => {
     expect(repository.save).not.toHaveBeenCalled();
   });
 
+  test("autoriza Docs escolhidos sem exigir novo refresh token", async () => {
+    const { oauth, repository, service } = setup(activeStoredConnection);
+    vi.mocked(oauth.exchangeAuthorizationCode).mockResolvedValue({
+      accessToken: "picker-access",
+      refreshToken: null,
+      scopes: ["https://www.googleapis.com/auth/drive.file"],
+    });
+
+    await expect(service.completePickerAuthorization("member-1", "picker-code")).resolves.toBe(
+      undefined,
+    );
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
   test("remove a credencial local mesmo quando a revogação remota falha", async () => {
-    const stored: StoredGoogleConnection = {
-      connection: {
-        connectedAt: "2026-07-19T15:00:00.000Z",
-        email: "hello@vouga-agency.pt",
-        memberId: "member-1",
-        providerSubject: "google-subject",
-        revokedAt: null,
-        scopes: GOOGLE_DATA_SCOPES,
-        status: "active",
-        updatedAt: "2026-07-19T15:00:00.000Z",
-      },
-      refreshToken: { ciphertext: "cipher", iv: "iv", keyVersion: 1 },
-    };
-    const { oauth, repository, service } = setup(stored);
+    const { oauth, repository, service } = setup(activeStoredConnection);
     vi.mocked(oauth.revokeToken).mockRejectedValue(new Error("Google unavailable"));
 
     await expect(service.disconnect("member-1")).resolves.toEqual({ remotelyRevoked: false });

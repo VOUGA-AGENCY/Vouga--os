@@ -3,6 +3,7 @@ export const GOOGLE_OAUTH_STATE_TTL_SECONDS = 10 * 60;
 
 type GoogleOAuthStatePayload = Readonly<{
   exp: number;
+  flow?: "connection" | "picker";
   nonce: string;
   sub: string;
   v: 1;
@@ -12,9 +13,11 @@ export async function createGoogleOAuthState(
   userId: string,
   encryptionSecret: string,
   nowMs = Date.now(),
+  flow: GoogleOAuthStatePayload["flow"] = "connection",
 ): Promise<string> {
   const payload: GoogleOAuthStatePayload = {
     exp: Math.floor(nowMs / 1000) + GOOGLE_OAUTH_STATE_TTL_SECONDS,
+    flow,
     nonce: encodeBytes(crypto.getRandomValues(new Uint8Array(24))),
     sub: userId,
     v: 1,
@@ -44,6 +47,7 @@ export async function verifyGoogleOAuthState(
     return (
       payload.v === 1 &&
       payload.sub === userId &&
+      (!payload.flow || payload.flow === "connection" || payload.flow === "picker") &&
       typeof payload.nonce === "string" &&
       payload.nonce.length >= 24 &&
       typeof payload.exp === "number" &&
@@ -51,6 +55,20 @@ export async function verifyGoogleOAuthState(
     );
   } catch {
     return false;
+  }
+}
+
+export function getGoogleOAuthStateFlow(token: string | undefined): "connection" | "picker" {
+  if (!token) return "connection";
+  const [encoded] = token.split(".");
+  if (!encoded) return "connection";
+  try {
+    const payload = JSON.parse(
+      new TextDecoder().decode(decodeBytes(encoded)),
+    ) as Partial<GoogleOAuthStatePayload>;
+    return payload.flow === "picker" ? "picker" : "connection";
+  } catch {
+    return "connection";
   }
 }
 

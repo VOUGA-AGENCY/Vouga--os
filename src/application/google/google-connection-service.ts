@@ -3,7 +3,10 @@ import type {
   GoogleOAuthGateway,
   GoogleTokenProtector,
 } from "@/application/google/contracts";
-import { hasRequiredGoogleDataScopes } from "@/application/google/google-scopes";
+import {
+  hasGoogleDriveFileScope,
+  hasRequiredGoogleDataScopes,
+} from "@/application/google/google-scopes";
 import { createGoogleConnection } from "@/domain/google/google-connection";
 
 export class GoogleConnectionApplicationError extends Error {
@@ -23,6 +26,10 @@ export class GoogleConnectionService {
 
   createAuthorizationUrl(state: string, loginHint?: string | null): string {
     return this.oauth.createAuthorizationUrl({ loginHint, state });
+  }
+
+  createPickerAuthorizationUrl(state: string, loginHint?: string | null): string {
+    return this.oauth.createPickerAuthorizationUrl({ loginHint, state });
   }
 
   async completeAuthorization(memberId: string, code: string): Promise<void> {
@@ -73,6 +80,21 @@ export class GoogleConnectionService {
     await this.repository.revoke(memberId, this.now().toISOString());
 
     return { remotelyRevoked };
+  }
+
+  async completePickerAuthorization(memberId: string, code: string): Promise<void> {
+    if (!memberId.trim() || !code.trim()) {
+      throw new GoogleConnectionApplicationError("O callback Google está incompleto.");
+    }
+    const stored = await this.repository.findActiveByMemberId(memberId);
+    if (!stored) throw new GoogleConnectionApplicationError("Liga primeiro uma conta Google.");
+
+    const tokens = await this.oauth.exchangeAuthorizationCode(code);
+    if (!hasGoogleDriveFileScope(tokens.scopes)) {
+      throw new GoogleConnectionApplicationError(
+        "O Google não concedeu acesso aos Docs escolhidos.",
+      );
+    }
   }
 }
 

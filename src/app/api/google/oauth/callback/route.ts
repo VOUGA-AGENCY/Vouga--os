@@ -5,6 +5,7 @@ import { getGoogleConnectionErrorMessage } from "@/application/google/google-con
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
 import { GoogleConfigurationError } from "@/foundation/config/google-env";
 import {
+  getGoogleOAuthStateFlow,
   GOOGLE_OAUTH_STATE_COOKIE,
   verifyGoogleOAuthState,
 } from "@/foundation/security/google-oauth-state";
@@ -39,7 +40,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (request.nextUrl.searchParams.has("error")) {
-    return clearState(redirectToSettings(request, "Ligação Google cancelada."));
+    const flow = getGoogleOAuthStateFlow(state);
+    return clearState(
+      flow === "picker"
+        ? redirectToNotes(request, "Seleção Google cancelada.")
+        : redirectToSettings(request, "Ligação Google cancelada."),
+    );
   }
 
   const code = request.nextUrl.searchParams.get("code");
@@ -48,10 +54,28 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const flow = getGoogleOAuthStateFlow(state);
+    if (flow === "picker") {
+      await integration.service.completePickerAuthorization(user.id, code);
+      const pickedIds = parsePickedFileIds(request.nextUrl.searchParams.get("picked_file_ids"));
+      return clearState(
+        redirectToNotes(
+          request,
+          pickedIds.length === 1
+            ? "Google Doc adicionado."
+            : `${pickedIds.length} Google Docs adicionados.`,
+        ),
+      );
+    }
     await integration.service.completeAuthorization(user.id, code);
     return clearState(redirectToSettings(request, "Conta Google ligada."));
   } catch (error) {
-    return clearState(redirectToSettings(request, getGoogleConnectionErrorMessage(error)));
+    const flow = getGoogleOAuthStateFlow(state);
+    return clearState(
+      flow === "picker"
+        ? redirectToNotes(request, getGoogleConnectionErrorMessage(error))
+        : redirectToSettings(request, getGoogleConnectionErrorMessage(error)),
+    );
   }
 }
 
@@ -71,4 +95,17 @@ function redirectToSettings(request: Request, message: string) {
   url.searchParams.set(FEEDBACK_QUERY_KEY, message);
   url.hash = "google";
   return NextResponse.redirect(url);
+}
+
+function redirectToNotes(request: Request, message: string) {
+  const url = new URL("/notes", request.url);
+  url.searchParams.set(FEEDBACK_QUERY_KEY, message);
+  return NextResponse.redirect(url);
+}
+
+function parsePickedFileIds(value: string | null): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
 }

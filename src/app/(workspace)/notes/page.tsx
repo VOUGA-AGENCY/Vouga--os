@@ -53,20 +53,25 @@ export default async function NotesPage({
           <h1 className="display">Notes</h1>
         </div>
         {googleConnection && googleConfigured ? (
-          <form action={createGoogleDocumentAction} className="notes-create-form">
-            <input
-              aria-label="Título do novo Google Doc"
-              maxLength={180}
-              name="title"
-              placeholder="Novo documento"
-              required
-              type="text"
-            />
-            <button className="button-primary" type="submit">
-              <Plus aria-hidden="true" />
-              New doc
-            </button>
-          </form>
+          <div className="notes-heading-actions">
+            <a className="button-secondary" href="/api/google/picker/start">
+              Add existing
+            </a>
+            <form action={createGoogleDocumentAction} className="notes-create-form">
+              <input
+                aria-label="Título do novo Google Doc"
+                maxLength={180}
+                name="title"
+                placeholder="Novo documento"
+                required
+                type="text"
+              />
+              <button className="button-primary" type="submit">
+                <Plus aria-hidden="true" />
+                New doc
+              </button>
+            </form>
+          </div>
         ) : null}
       </div>
 

@@ -85,6 +85,7 @@ export interface GoogleConnectionRepository {
 
 export interface GoogleOAuthGateway {
   createAuthorizationUrl(values: { state: string; loginHint?: string | null }): string;
+  createPickerAuthorizationUrl(values: { state: string; loginHint?: string | null }): string;
   exchangeAuthorizationCode(code: string): Promise<GoogleAuthorizationTokens>;
   getIdentity(accessToken: string): Promise<GoogleIdentity>;
   refreshAccessToken(refreshToken: string): Promise<string>;

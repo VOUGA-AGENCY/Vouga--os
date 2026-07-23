@@ -5979,6 +5979,11 @@ a {
   align-items: center;
   flex-direction: row;
 }
+.notes-heading-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
 .notes-create-form {
   align-items: center;
   display: flex;

@@ -25,6 +25,19 @@ describe("GoogleOAuthClient", () => {
     expect(url.searchParams.get("scope")).toContain(GOOGLE_DATA_SCOPES[1]);
   });
 
+  test("cria authorization URL OnePick apenas para Google Docs", () => {
+    const client = new GoogleOAuthClient(env);
+    const url = new URL(
+      client.createPickerAuthorizationUrl({ loginHint: "hello@vouga.pt", state: "state" }),
+    );
+
+    expect(url.searchParams.get("scope")).toBe("https://www.googleapis.com/auth/drive.file");
+    expect(url.searchParams.get("trigger_onepick")).toBe("true");
+    expect(url.searchParams.get("allow_multiple")).toBe("true");
+    expect(url.searchParams.get("mimetypes")).toBe("application/vnd.google-apps.document");
+    expect(url.searchParams.get("redirect_uri")).toBe(env.redirectUri);
+  });
+
   test("troca o code sem expor o client secret na URL", async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(

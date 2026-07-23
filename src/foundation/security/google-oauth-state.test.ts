@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { createGoogleOAuthState, verifyGoogleOAuthState } from "./google-oauth-state";
+import {
+  createGoogleOAuthState,
+  getGoogleOAuthStateFlow,
+  verifyGoogleOAuthState,
+} from "./google-oauth-state";
 
 const SECRET = Buffer.alloc(32, 9).toString("base64");
 
@@ -27,5 +31,12 @@ describe("Google OAuth state", () => {
     await expect(verifyGoogleOAuthState(tampered, tampered, "member-1", SECRET)).resolves.toBe(
       false,
     );
+  });
+
+  test("transporta o flow do Google Picker dentro do state assinado", async () => {
+    const state = await createGoogleOAuthState("member-1", SECRET, Date.now(), "picker");
+
+    await expect(verifyGoogleOAuthState(state, state, "member-1", SECRET)).resolves.toBe(true);
+    expect(getGoogleOAuthStateFlow(state)).toBe("picker");
   });
 });

@@ -5,7 +5,7 @@ export const themePreferences = ["dark", "light", "system"] as const;
 export type ThemePreference = (typeof themePreferences)[number];
 export type ResolvedTheme = Exclude<ThemePreference, "system">;
 
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
 
 export const themeOptions: ReadonlyArray<{
   value: ThemePreference;

@@ -39,7 +39,7 @@ export function GoogleEventArtifactForm({
       <FormFields>
         <div className="company-form-grid object-form-grid">
           <fieldset className="choice-field company-form-wide">
-            <legend>Tipo</legend>
+            <legend>Tipo de registo</legend>
             <div className="choice-grid choice-grid-three">
               {[
                 ["", "Google Event"],
@@ -59,60 +59,73 @@ export function GoogleEventArtifactForm({
               ))}
             </div>
           </fieldset>
-          <fieldset className="choice-field company-form-wide">
-            <legend>Participantes</legend>
-            <div className="choice-grid">
-              {members.map((member) => (
-                <label className="choice-option" key={member.id}>
-                  <input
-                    defaultChecked={selectedMembers.has(member.id)}
-                    name="participant_member_id"
-                    type="checkbox"
-                    value={member.id}
-                  />
-                  <span>{member.displayName}</span>
-                </label>
-              ))}
+
+          <details className="crm-editor-more company-form-wide" open={Boolean(artifact?.companyIds.length || artifact?.taskIds.length)}>
+            <summary>Associar Participantes, Organisations e Tasks</summary>
+            <div className="crm-editor-grid" style={{ marginTop: "var(--space-4)" }}>
+              <fieldset className="choice-field company-form-wide">
+                <legend>Participantes</legend>
+                <div className="choice-grid">
+                  {members.map((member) => (
+                    <label className="choice-option" key={member.id}>
+                      <input
+                        defaultChecked={selectedMembers.has(member.id)}
+                        name="participant_member_id"
+                        type="checkbox"
+                        value={member.id}
+                      />
+                      <span>{member.displayName}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              {companies.length ? (
+                <fieldset className="choice-field company-form-wide">
+                  <legend>Organisations relacionadas</legend>
+                  <div className="choice-grid">
+                    {companies.map((company) => (
+                      <label className="choice-option" key={company.id}>
+                        <input
+                          defaultChecked={selectedCompanies.has(company.id)}
+                          name="company_id"
+                          type="checkbox"
+                          value={company.id}
+                        />
+                        <span>{company.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ) : null}
+              <fieldset className="choice-field company-form-wide">
+                <legend>Tasks relacionadas</legend>
+                {tasks.length ? (
+                  <div className="choice-grid">
+                    {tasks.map((task) => (
+                      <label className="choice-option" key={task.id}>
+                        <input
+                          defaultChecked={selectedTasks.has(task.id)}
+                          name="task_id"
+                          type="checkbox"
+                          value={task.id}
+                        />
+                        <span>{task.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="field-help">Sem Tasks associadas.</p>
+                )}
+                <Link
+                  className="button-secondary inline-form-link"
+                  href={`/tasks/new?googleCalendar=${encodeURIComponent(calendarId)}&googleEvent=${encodeURIComponent(eventId)}&returnTo=${encodeURIComponent(`/calendar/google-event/${eventId}?calendar=${encodeURIComponent(calendarId)}`)}`}
+                >
+                  Criar nova Task
+                </Link>
+              </fieldset>
             </div>
-          </fieldset>
-          <fieldset className="choice-field company-form-wide">
-            <legend>Organisations relacionadas</legend>
-            <div className="choice-grid">
-              {companies.map((company) => (
-                <label className="choice-option" key={company.id}>
-                  <input
-                    defaultChecked={selectedCompanies.has(company.id)}
-                    name="company_id"
-                    type="checkbox"
-                    value={company.id}
-                  />
-                  <span>{company.name}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="choice-field company-form-wide">
-            <legend>Tasks relacionadas</legend>
-            <div className="choice-grid">
-              {tasks.map((task) => (
-                <label className="choice-option" key={task.id}>
-                  <input
-                    defaultChecked={selectedTasks.has(task.id)}
-                    name="task_id"
-                    type="checkbox"
-                    value={task.id}
-                  />
-                  <span>{task.title}</span>
-                </label>
-              ))}
-            </div>
-            <Link
-              className="button-secondary inline-form-link"
-              href={`/tasks/new?googleCalendar=${encodeURIComponent(calendarId)}&googleEvent=${encodeURIComponent(eventId)}&returnTo=${encodeURIComponent(`/calendar/google-event/${eventId}?calendar=${encodeURIComponent(calendarId)}`)}`}
-            >
-              New task
-            </Link>
-          </fieldset>
+          </details>
+
           <div className="field field-light company-form-wide">
             <label htmlFor="notes">Notas</label>
             <textarea
@@ -120,17 +133,20 @@ export function GoogleEventArtifactForm({
               id="notes"
               maxLength={12000}
               name="notes"
-              rows={6}
+              placeholder="Adicionar apontamentos internos..."
+              rows={4}
             />
           </div>
+
           {classification === "meeting" ? (
             <div className="field field-light company-form-wide">
-              <label htmlFor="output">Output</label>
+              <label htmlFor="output">Output da Meeting</label>
               <textarea
                 defaultValue={artifact?.output ?? ""}
                 id="output"
                 maxLength={4000}
                 name="output"
+                placeholder="Resumo, conclusões ou ações acordadas..."
                 rows={4}
               />
             </div>
@@ -139,7 +155,7 @@ export function GoogleEventArtifactForm({
       </FormFields>
       <FormFeedback message={state.message} />
       <div className="form-actions">
-        <FormSubmit idleLabel="Guardar" />
+        <FormSubmit idleLabel="Guardar alterações no OS" />
       </div>
     </form>
   );

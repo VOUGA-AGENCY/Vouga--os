@@ -37,7 +37,7 @@ const fields = (fd: FormData) =>
       ].map((key) => [key, String(fd.get(key) ?? "")]),
     ),
   );
-async function fieldsWithInlineOrganisation(fd: FormData, organisationOwnerMemberId: string) {
+async function fieldsWithInlineOrganisation(fd: FormData, fallbackOwnerMemberId: string) {
   const values = fields(fd);
   const newCompanyName = String(fd.get("new_company_name") ?? "").trim();
   if (!newCompanyName) return values;
@@ -46,7 +46,7 @@ async function fieldsWithInlineOrganisation(fd: FormData, organisationOwnerMembe
   const company = await service.createCompany({
     name: newCompanyName,
     status: "active",
-    ownerMemberId: organisationOwnerMemberId,
+    ownerMemberId: values.ownerMemberId || fallbackOwnerMemberId,
     currentContext: null,
     relationshipRisks: null,
     prospectingStage: fd.get("prospecting_context") === "1" ? "to_contact" : null,
@@ -81,7 +81,12 @@ export async function createContactAction(
     return { message: formErrorMessage(error) };
   }
   const returnTo = String(fd.get("return_to") ?? "");
-  redirect(withFeedback(returnTo.startsWith("/") ? returnTo : `/relations/contacts/${contactId}`, "Perfil criado."));
+  redirect(
+    withFeedback(
+      returnTo.startsWith("/") ? returnTo : `/relations/contacts/${contactId}`,
+      "Perfil criado.",
+    ),
+  );
 }
 export async function updateContactAction(
   id: string,
@@ -113,12 +118,7 @@ export async function deleteContactAction(id: string) {
   try {
     await service.deleteContact(id);
   } catch (error) {
-    redirect(
-      withErrorFeedback(
-        `/relations/contacts/${id}`,
-        getRelationsErrorMessage(error),
-      ),
-    );
+    redirect(withErrorFeedback(`/relations/contacts/${id}`, getRelationsErrorMessage(error)));
   }
   revalidatePath("/relations");
   revalidatePath("/companies");

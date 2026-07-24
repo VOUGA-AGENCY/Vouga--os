@@ -69,7 +69,7 @@ export class TaskService {
   async unblockTask(id: string) {
     return this.tasks.saveState(unblockTask(await this.getTask(id)));
   }
-  async completeTask(id: string, note?: string | null) {
+  async completeTask(id: string, note: string) {
     return this.tasks.saveState(completeTask(await this.getTask(id), this.now(), note));
   }
   async cancelTask(id: string) {

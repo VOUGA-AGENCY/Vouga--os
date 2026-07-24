@@ -147,7 +147,6 @@ function MobileNavigation({ pathname }: { pathname: string }) {
       {mobileNavigationItems.map((item) => (
         <NavigationLink item={item} key={item.href} pathname={pathname} />
       ))}
-      <MobileMore pathname={pathname} />
     </nav>
   );
 }

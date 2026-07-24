@@ -1,10 +1,14 @@
+import { BrandMark } from "@/foundation/appearance/brand-mark";
+
 export default function CalendarLoading() {
   return (
-    <main className="workspace-main module-main calendar-main" aria-busy="true" aria-label="A carregar Calendar">
-      <div className="loading-line loading-line-wide" />
-      <div className="loading-line" />
-      <div className="calendar-loading-grid">
-        {Array.from({ length: 7 }, (_, index) => <div className="loading-card" key={index} />)}
+    <main
+      aria-busy="true"
+      aria-label="A carregar Calendar"
+      className="workspace-loading-screen"
+    >
+      <div className="workspace-loading-mark">
+        <BrandMark priority size={32} />
       </div>
     </main>
   );

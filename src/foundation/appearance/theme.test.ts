@@ -22,7 +22,7 @@ describe("theme preferences", () => {
     expect(isThemePreference("sepia")).toBe(false);
   });
 
-  it("falls back to the dark product theme for invalid storage values", () => {
+  it("falls back to the default product theme for invalid storage values", () => {
     expect(normalizeThemePreference(null)).toBe(DEFAULT_THEME_PREFERENCE);
     expect(normalizeThemePreference("")).toBe(DEFAULT_THEME_PREFERENCE);
     expect(normalizeThemePreference("sepia")).toBe(DEFAULT_THEME_PREFERENCE);

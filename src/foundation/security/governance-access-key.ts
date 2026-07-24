@@ -7,8 +7,9 @@ export async function verifyGovernanceAccessKey(
   candidate: string,
   encodedHash: string,
 ): Promise<boolean> {
-  if (!candidate || candidate.length > MAX_ACCESS_KEY_LENGTH) return false;
-  const parsed = parseHash(encodedHash);
+  if (!candidate || candidate.length > MAX_ACCESS_KEY_LENGTH || !encodedHash) return false;
+  const sanitizedHash = encodedHash.replaceAll("\\$", "$").trim();
+  const parsed = parseHash(sanitizedHash);
   if (!parsed) return false;
 
   try {

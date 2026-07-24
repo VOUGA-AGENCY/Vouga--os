@@ -1,5 +1,3 @@
-import { headers } from "next/headers";
-
 import { loadCalendar } from "@/foundation/composition/calendar";
 import { CALENDAR_SOURCE_TYPES, type CalendarSourceType } from "@/projections/calendar/calendar";
 import {
@@ -15,6 +13,7 @@ const VIEWS: CalendarView[] = ["week", "month", "agenda"];
 
 type CalendarSearchParams = {
   date?: string;
+  day?: string;
   history?: string;
   owner?: string;
   type?: string;
@@ -26,21 +25,18 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<CalendarSearchParams>;
 }) {
-  const [params, requestHeaders] = await Promise.all([searchParams, headers()]);
+  const params = await searchParams;
   const nowIso = new Date().toISOString();
   const today = dateKeyInLisbon(nowIso);
-  const userAgent = requestHeaders.get("user-agent") ?? "";
-  const responsiveDefault: CalendarView = /Android|iPhone|Mobile/i.test(userAgent)
-    ? "agenda"
-    : "week";
-  const view = VIEWS.includes(params.view as CalendarView)
-    ? (params.view as CalendarView)
-    : responsiveDefault;
+  const view = VIEWS.includes(params.view as CalendarView) ? (params.view as CalendarView) : "week";
   const anchor = params.date && isDateKey(params.date) ? params.date : today;
+  const requestedDate = params.day && isDateKey(params.day) ? params.day : anchor;
   const sourceType = CALENDAR_SOURCE_TYPES.includes(params.type as CalendarSourceType)
     ? (params.type as CalendarSourceType)
     : null;
   const range = rangeForView(view, anchor);
+  const selectedDate =
+    requestedDate >= range.start && requestedDate <= range.end ? requestedDate : anchor;
   const projection = await loadCalendar(range, nowIso, {
     sourceTypes: sourceType ? [sourceType] : undefined,
     ownerMemberId: params.owner || null,
@@ -56,6 +52,7 @@ export default async function CalendarPage({
         sourceType: sourceType ?? "",
       }}
       projection={projection}
+      selectedDate={selectedDate}
       today={today}
       view={view}
     />

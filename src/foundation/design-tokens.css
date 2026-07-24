@@ -164,10 +164,9 @@
   --surface: var(--color-surface);
   --surface-strong: var(--color-surface-raised);
   --muted: var(--color-text-secondary);
-  --border: var(--color-border);
   --ring: var(--color-accent);
   --danger: var(--color-danger);
-  --font-serif: var(--font-sans);
+  --font-serif: "Instrument Serif", Georgia, serif;
 }
 
 [data-theme="light"] {

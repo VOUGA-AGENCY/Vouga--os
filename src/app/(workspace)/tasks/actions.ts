@@ -117,8 +117,39 @@ export async function blockTaskAction(id: string, form: FormData) {
 }
 export async function completeTaskAction(id: string, form: FormData) {
   return transition(id, "Task concluída.", (s) =>
-    s.completeTask(id, String(form.get("completion_note") ?? "") || null),
+    s.completeTask(id, String(form.get("completion_note") ?? "")),
   );
+}
+export async function updateTaskStatusAction(id: string, form: FormData) {
+  const status = String(form.get("next_status") ?? "");
+  const message =
+    status === "in_progress"
+      ? "Task em curso."
+      : status === "blocked"
+        ? "Task marcada como bloqueada."
+        : status === "completed"
+          ? "Task concluída."
+          : "Não foi possível atualizar o estado da Task.";
+  try {
+    const { service } = await createTaskModule();
+    if (status === "in_progress") {
+      const task = await service.getTask(id);
+      if (task.status === "blocked") await service.unblockTask(id);
+      else await service.startTask(id);
+    } else if (status === "blocked")
+      await service.blockTask(
+        id,
+        String(form.get("blocked_reason") ?? ""),
+        String(form.get("blocked_next_move") ?? ""),
+      );
+    else if (status === "completed")
+      await service.completeTask(id, String(form.get("completion_note") ?? ""));
+    else throw new Error("O estado selecionado não é válido.");
+    refresh(id);
+  } catch (error) {
+    redirect(withFeedback(`/tasks/${id}`, getTaskApplicationErrorMessage(error)));
+  }
+  redirect(withFeedback(`/tasks/${id}`, message));
 }
 export async function deleteTaskAction(id: string) {
   try {

@@ -70,7 +70,7 @@ export const navigationItems: NavigationItem[] = [
 ];
 
 export const mobileNavigationItems = navigationItems.filter((item) =>
-  ["/calendar", "/work", "/relations"].includes(item.href),
+  ["/calendar", "/work", "/relations", "/governance"].includes(item.href),
 );
 
 export function flattenNavigation(

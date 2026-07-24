@@ -197,7 +197,7 @@ export function unblockTask(task: Task): Task {
     throw new TaskTransitionError("Apenas uma Task bloqueada pode ser desbloqueada.");
   return { ...task, status: "in_progress", blockedReason: null, blockedNextMove: null };
 }
-export function completeTask(task: Task, completedAt: string, note?: string | null): Task {
+export function completeTask(task: Task, completedAt: string, note: string): Task {
   active(task);
   const instant = new Date(completedAt);
   if (Number.isNaN(instant.getTime()))
@@ -207,7 +207,7 @@ export function completeTask(task: Task, completedAt: string, note?: string | nu
     status: "completed",
     blockedReason: null,
     blockedNextMove: null,
-    completionNote: optional(note, "A nota de conclusão", 4000),
+    completionNote: required(note, "A evidência da conclusão", 4000),
     completedAt: instant.toISOString(),
   };
 }

@@ -148,13 +148,13 @@ function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
   }[] = [
     {
       stage: "replied",
-      title: "Por responder",
-      empty: "Não há mensagens por responder.",
+      title: "A Responder",
+      empty: "Não há mensagens a responder.",
     },
     {
       stage: "contacted",
-      title: "À espera de resposta",
-      empty: "Não há respostas em espera.",
+      title: "Contactados",
+      empty: "Não há contactos efetuados.",
     },
   ];
 

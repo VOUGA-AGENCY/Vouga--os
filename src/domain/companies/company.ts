@@ -13,8 +13,8 @@ export type ProspectingStage = (typeof PROSPECTING_STAGES)[number];
 
 export const PROSPECTING_STAGE_LABELS: Record<ProspectingStage, string> = {
   to_contact: "Por contactar",
-  contacted: "À espera de resposta",
-  replied: "Por responder",
+  contacted: "Contactados",
+  replied: "A Responder",
   meeting_scheduled: "Agendado",
   not_interested: "Não avançou",
   agreed: "Acordado",

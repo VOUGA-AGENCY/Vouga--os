@@ -8,14 +8,7 @@ import { returnLabel, safeWorkspaceReturnTo } from "@/foundation/navigation/retu
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { ContextPanel } from "../../context-panel";
 
-import {
-  blockTaskAction,
-  cancelTaskAction,
-  completeTaskAction,
-  startTaskAction,
-  unblockTaskAction,
-  deleteTaskAction,
-} from "../actions";
+import { cancelTaskAction, deleteTaskAction } from "../actions";
 
 export default async function TaskDetailPage({
   params,
@@ -55,21 +48,12 @@ export default async function TaskDetailPage({
         <div className="detail-actions">
           {!terminal && (
             <>
-              <Link className="button-secondary" href={`/tasks/${task.id}/edit`}>
+              <Link className="button-primary" href={`/tasks/${task.id}/edit`}>
                 Editar
               </Link>
-              {task.status === "todo" && (
-                <form action={startTaskAction.bind(null, task.id)}>
-                  <button className="button-primary">Iniciar</button>
-                </form>
-              )}
-              {task.status === "blocked" && (
-                <form action={unblockTaskAction.bind(null, task.id)}>
-                  <button className="button-primary">Desbloquear</button>
-                </form>
-              )}
               <ConfirmAction
                 action={cancelTaskAction.bind(null, task.id)}
+                className="button-secondary"
                 confirmation="Cancelar esta Task? O compromisso fica terminal e não reabre automaticamente."
                 pendingLabel="A cancelar…"
               >
@@ -79,6 +63,7 @@ export default async function TaskDetailPage({
           )}
           <ConfirmAction
             action={deleteTaskAction.bind(null, task.id)}
+            className="button-danger"
             confirmation="Eliminar definitivamente esta Task? Não ficará histórico no Vouga OS."
             pendingLabel="A eliminar…"
           >
@@ -117,63 +102,7 @@ export default async function TaskDetailPage({
         )}
       </div>
 
-      <ContextPanel context={context} exclude={["task-meetings"]} />
-
-      {!terminal && (
-        <section aria-labelledby="task-next-actions" className="task-actions-section">
-          <div className="archive-heading">
-            <p className="eyebrow">Próximo movimento</p>
-            <h2 className="display section-title" id="task-next-actions">
-              Atualizar o estado do compromisso
-            </h2>
-          </div>
-          <div className="task-transition-grid">
-            <form
-              action={blockTaskAction.bind(null, task.id)}
-              className="detail-card task-action-card task-action-block"
-            >
-              <p className="eyebrow">Bloquear</p>
-              <div className="field field-light">
-                <label htmlFor="blocked_reason">Causa</label>
-                <textarea
-                  id="blocked_reason"
-                  name="blocked_reason"
-                  placeholder="Ex.: Aguardar validação jurídica."
-                  required
-                  rows={3}
-                />
-              </div>
-              <div className="field field-light">
-                <label htmlFor="blocked_next_move">Próximo movimento</label>
-                <textarea
-                  id="blocked_next_move"
-                  name="blocked_next_move"
-                  placeholder="Ex.: Pedir resposta até sexta-feira."
-                  required
-                  rows={3}
-                />
-              </div>
-              <button className="button-secondary">Marcar bloqueada</button>
-            </form>
-            <form
-              action={completeTaskAction.bind(null, task.id)}
-              className="detail-card task-action-card task-action-complete"
-            >
-              <p className="eyebrow">Concluir</p>
-              <div className="field field-light">
-                <label htmlFor="completion_note">Evidência opcional</label>
-                <textarea
-                  id="completion_note"
-                  name="completion_note"
-                  placeholder="Ex.: Proposta enviada por email e receção confirmada."
-                  rows={4}
-                />
-              </div>
-              <button className="button-primary">Concluir Task</button>
-            </form>
-          </div>
-        </section>
-      )}
+      <ContextPanel collapsible context={context} exclude={["task-meetings"]} />
     </main>
   );
 }

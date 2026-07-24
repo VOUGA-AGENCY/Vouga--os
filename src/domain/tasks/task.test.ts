@@ -58,7 +58,14 @@ describe("Task", () => {
   it("preserva transições existentes", () => {
     const blocked = blockTask(startTask(task), "Dependência", "Pedir resposta");
     expect(unblockTask(blocked).status).toBe("in_progress");
-    expect(completeTask(task, "2026-07-16T01:00:00Z").status).toBe("completed");
+    expect(completeTask(task, "2026-07-16T01:00:00Z", "Proposta enviada.").status).toBe(
+      "completed",
+    );
     expect(cancelTask(task).status).toBe("cancelled");
+  });
+  it("exige evidência ao concluir", () => {
+    expect(() => completeTask(task, "2026-07-16T01:00:00Z", "")).toThrow(
+      "A evidência da conclusão é obrigatório.",
+    );
   });
 });

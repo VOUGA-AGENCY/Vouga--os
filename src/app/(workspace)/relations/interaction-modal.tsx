@@ -1,12 +1,10 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ContactChannel } from "@/domain/relations/contact";
-import {
-  PROSPECTING_STAGE_LABELS,
-  PROSPECTING_STAGES,
-} from "@/domain/companies/company";
+import { PROSPECTING_STAGE_LABELS, PROSPECTING_STAGES } from "@/domain/companies/company";
 import { FormSubmit } from "@/foundation/ui/form-controls";
 import type { MessageTemplateItem } from "@/projections/relations/relations-read-model";
 import { recordContactInteractionAction } from "./actions";
@@ -50,6 +48,14 @@ export function InteractionModal({
         <Plus aria-hidden="true" />
         Nova interação
       </button>
+      {segment === "prospecting" ? (
+        <Link
+          className="button-secondary"
+          href="/relations/contacts/new?prospecting=1&returnTo=/relations?segment=prospecting"
+        >
+          Novo por contactar
+        </Link>
+      ) : null}
       {open ? (
         <div className="crm-modal-backdrop" onMouseDown={() => setOpen(false)}>
           <section

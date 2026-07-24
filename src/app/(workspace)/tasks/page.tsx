@@ -4,6 +4,8 @@ import type { TaskStatus } from "@/domain/tasks/task";
 import { createTaskModule } from "@/foundation/composition/tasks";
 import type { TaskListItem } from "@/projections/tasks/task-read-model";
 
+import { TaskStatusUpdate } from "./task-status-update";
+
 const ACTIVE_GROUPS: ReadonlyArray<{
   status: TaskStatus;
   title: string;
@@ -114,12 +116,12 @@ function TaskSection({
 
 function TaskRow({ task, status }: { task: TaskListItem; status: TaskStatus }) {
   return (
-    <Link className={`task-list-row task-list-row-${status}`} href={`/tasks/${task.id}`}>
+    <article className={`task-list-row task-list-row-${status}`}>
       <span className="task-list-dot" aria-hidden="true" />
-      <div className="task-list-primary">
+      <Link className="task-list-primary" href={`/tasks/${task.id}`}>
         <h2>{task.title}</h2>
         {status === "blocked" && task.blockedNextMove ? <p>{task.blockedNextMove}</p> : null}
-      </div>
+      </Link>
       <div className="task-list-meta">
         <span>{task.ownerDisplayName}</span>
         {task.dueAt ? <time dateTime={task.dueAt}>{formatTaskDate(task.dueAt)}</time> : null}
@@ -127,7 +129,8 @@ function TaskRow({ task, status }: { task: TaskListItem; status: TaskStatus }) {
           <span className="task-list-alert">Blocked</span>
         ) : null}
       </div>
-    </Link>
+      <TaskStatusUpdate status={status} taskId={task.id} />
+    </article>
   );
 }
 

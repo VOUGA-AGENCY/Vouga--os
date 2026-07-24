@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -42,12 +45,14 @@ export function CalendarSurface({
   anchor,
   filters,
   projection,
+  selectedDate,
   today,
   view,
 }: {
   anchor: string;
   filters: Filters;
   projection: CalendarProjection;
+  selectedDate: string;
   today: string;
   view: CalendarView;
 }) {
@@ -56,7 +61,7 @@ export function CalendarSurface({
     .filter(([, status]) => status === "error")
     .map(([source]) => SOURCE_LABELS[source as CalendarSourceType]);
   const allSourcesFailed = failedSources.length === Object.keys(projection.sourceStates).length;
-  const returnTo = calendarHref(view, anchor, filters);
+  const returnTo = calendarHref(view, anchor, filters, selectedDate);
 
   return (
     <main className="workspace-main module-main calendar-main">
@@ -77,7 +82,12 @@ export function CalendarSurface({
           <Link
             aria-label={`Período anterior de ${VIEW_LABELS[view].toLocaleLowerCase("pt-PT")}`}
             className="calendar-icon-button"
-            href={calendarHref(view, moveAnchor(view, anchor, -1), filters)}
+            href={calendarHref(
+              view,
+              moveAnchor(view, anchor, -1),
+              filters,
+              moveAnchor(view, anchor, -1),
+            )}
           >
             <ChevronLeft aria-hidden="true" />
           </Link>
@@ -87,7 +97,12 @@ export function CalendarSurface({
           <Link
             aria-label={`Período seguinte de ${VIEW_LABELS[view].toLocaleLowerCase("pt-PT")}`}
             className="calendar-icon-button"
-            href={calendarHref(view, moveAnchor(view, anchor, 1), filters)}
+            href={calendarHref(
+              view,
+              moveAnchor(view, anchor, 1),
+              filters,
+              moveAnchor(view, anchor, 1),
+            )}
           >
             <ChevronRight aria-hidden="true" />
           </Link>
@@ -101,7 +116,7 @@ export function CalendarSurface({
           ) : (
             <Link
               className="button-secondary calendar-today"
-              href={calendarHref(view, today, filters)}
+              href={calendarHref(view, today, filters, today)}
             >
               Ir para hoje
             </Link>
@@ -113,7 +128,7 @@ export function CalendarSurface({
             <Link
               aria-current={candidate === view ? "page" : undefined}
               className={candidate === view ? "active" : ""}
-              href={calendarHref(candidate, anchor, filters)}
+              href={calendarHref(candidate, selectedDate, filters, selectedDate)}
               key={candidate}
             >
               {VIEW_LABELS[candidate]}
@@ -173,21 +188,49 @@ export function CalendarSurface({
         ) : (
           <>
             {view === "week" ? (
-              <CalendarWeekGrid
-                days={days}
-                entries={projection.entries}
-                returnTo={returnTo}
-                today={today}
-              />
+              <>
+                <div className="calendar-desktop-surface">
+                  <CalendarWeekGrid
+                    days={days}
+                    entries={projection.entries}
+                    returnTo={returnTo}
+                    today={today}
+                  />
+                </div>
+                <MobileWeekView
+                  anchor={anchor}
+                  days={days}
+                  entries={projection.entries}
+                  filters={filters}
+                  returnTo={returnTo}
+                  selectedDate={selectedDate}
+                  today={today}
+                />
+              </>
             ) : null}
             {view === "month" ? (
-              <MonthView
-                anchor={anchor}
-                days={days}
-                entries={projection.entries}
-                returnTo={returnTo}
-                today={today}
-              />
+              <>
+                <div className="calendar-desktop-surface">
+                  <MonthView
+                    anchor={anchor}
+                    days={days}
+                    entries={projection.entries}
+                    filters={filters}
+                    returnTo={returnTo}
+                    selectedDate={selectedDate}
+                    today={today}
+                  />
+                </div>
+                <MobileMonthView
+                  anchor={anchor}
+                  days={days}
+                  entries={projection.entries}
+                  filters={filters}
+                  returnTo={returnTo}
+                  selectedDate={selectedDate}
+                  today={today}
+                />
+              </>
             ) : null}
             {view === "agenda" ? (
               <AgendaView
@@ -317,49 +360,308 @@ function MonthView({
   anchor,
   days,
   entries,
+  filters,
   returnTo,
+  selectedDate,
   today,
 }: {
   anchor: string;
   days: string[];
   entries: readonly CalendarEntry[];
+  filters: Filters;
   returnTo: string;
+  selectedDate: string;
   today: string;
 }) {
   return (
-    <section aria-label="Mês operacional" className="calendar-month">
-      {days.map((day) => {
-        const items = entries.filter((entry) => entryOccursOn(entry, day));
-        const outside = day.slice(0, 7) !== anchor.slice(0, 7);
-        return (
-          <section
-            className={`calendar-month-day${outside ? " calendar-month-day-outside" : ""}${day === today ? " calendar-day-today" : ""}`}
-            key={day}
-          >
-            <Link
-              aria-label={`Criar Meeting, Event ou Vacation em ${day}`}
-              className="calendar-month-day-create"
-              href={`/meetings/new?date=${day}&returnTo=${encodeURIComponent(returnTo)}`}
-            >
-              <DayHeading compact day={day} today={today} />
-            </Link>
-            <div className="calendar-month-entries">
-              {items.slice(0, 3).map((entry) => (
-                <CalendarEntryLink
-                  compact
-                  entry={entry}
-                  key={`${entry.entryKey}:${day}`}
-                  returnTo={returnTo}
-                />
-              ))}
-              {items.length > 3 ? (
-                <span className="calendar-more">+{items.length - 3} compromissos</span>
-              ) : null}
-            </div>
-          </section>
-        );
-      })}
+    <section aria-label="Mês operacional" className="calendar-month-layout">
+      <MonthGrid
+        anchor={anchor}
+        days={days}
+        entries={entries}
+        filters={filters}
+        returnTo={returnTo}
+        selectedDate={selectedDate}
+        today={today}
+      />
+      <SelectedDayPanel
+        entries={entries}
+        returnTo={returnTo}
+        selectedDate={selectedDate}
+        today={today}
+      />
     </section>
+  );
+}
+
+function MobileWeekView({
+  anchor,
+  days,
+  entries,
+  filters,
+  returnTo,
+  selectedDate,
+  today,
+}: {
+  anchor: string;
+  days: string[];
+  entries: readonly CalendarEntry[];
+  filters: Filters;
+  returnTo: string;
+  selectedDate: string;
+  today: string;
+}) {
+  return (
+    <section aria-label="Semana móvel" className="calendar-mobile-surface calendar-mobile-week">
+      <div className="calendar-mobile-week-strip">
+        {days.map((day) => {
+          const count = entries.filter((entry) => entryOccursOn(entry, day)).length;
+          return (
+            <Link
+              aria-current={day === selectedDate ? "date" : undefined}
+              className={`${day === selectedDate ? "calendar-mobile-day calendar-mobile-day-selected" : "calendar-mobile-day"}${day === today ? " calendar-mobile-day-today" : ""}`}
+              href={calendarHref("week", anchor, filters, day)}
+              key={day}
+            >
+              <span>{weekdayLetter(day)}</span>
+              <strong>{new Date(`${day}T12:00:00.000Z`).getUTCDate()}</strong>
+              {count ? <i aria-label={`${count} compromissos`} /> : <i aria-hidden="true" />}
+            </Link>
+          );
+        })}
+      </div>
+      <SelectedDayPanel
+        entries={entries}
+        mobile
+        returnTo={returnTo}
+        selectedDate={selectedDate}
+        today={today}
+      />
+    </section>
+  );
+}
+
+function MobileMonthView({
+  anchor,
+  days,
+  entries,
+  filters,
+  returnTo,
+  selectedDate,
+  today,
+}: {
+  anchor: string;
+  days: string[];
+  entries: readonly CalendarEntry[];
+  filters: Filters;
+  returnTo: string;
+  selectedDate: string;
+  today: string;
+}) {
+  return (
+    <section aria-label="Mês móvel" className="calendar-mobile-surface calendar-mobile-month">
+      <MonthGrid
+        anchor={anchor}
+        days={days}
+        entries={entries}
+        filters={filters}
+        mobile
+        returnTo={returnTo}
+        selectedDate={selectedDate}
+        today={today}
+      />
+      <SelectedDayPanel
+        entries={entries}
+        mobile
+        returnTo={returnTo}
+        selectedDate={selectedDate}
+        today={today}
+      />
+    </section>
+  );
+}
+
+function MonthGrid({
+  anchor,
+  days,
+  entries,
+  filters,
+  mobile = false,
+  returnTo,
+  selectedDate,
+  today,
+}: {
+  anchor: string;
+  days: string[];
+  entries: readonly CalendarEntry[];
+  filters: Filters;
+  mobile?: boolean;
+  returnTo: string;
+  selectedDate: string;
+  today: string;
+}) {
+  return (
+    <div
+      className={
+        mobile ? "calendar-month-shell calendar-month-shell-mobile" : "calendar-month-shell"
+      }
+    >
+      <div aria-hidden="true" className="calendar-month-weekdays">
+        {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className={mobile ? "calendar-month calendar-month-mobile" : "calendar-month"}>
+        {days.map((day) => {
+          const items = entries.filter((entry) => entryOccursOn(entry, day));
+          const outside = day.slice(0, 7) !== anchor.slice(0, 7);
+          return (
+            <section
+              className={`calendar-month-day${outside ? " calendar-month-day-outside" : ""}${day === today ? " calendar-day-today" : ""}${day === selectedDate ? " calendar-month-day-selected" : ""}`}
+              key={day}
+            >
+              <Link
+                aria-label={`Ver compromissos de ${formatFullDate(day)}`}
+                className="calendar-month-day-select"
+                href={calendarHref("month", anchor, filters, day)}
+              />
+              <DayHeading compact day={day} today={today} />
+              {mobile ? (
+                <div aria-label={`${items.length} compromissos`} className="calendar-month-dots">
+                  {items.slice(0, 3).map((entry) => (
+                    <i
+                      className={`calendar-month-dot calendar-month-dot-${entry.sourceType}`}
+                      key={entry.entryKey}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="calendar-month-entries">
+                  {items.slice(0, 3).map((entry) => (
+                    <CalendarEntryLink
+                      compact
+                      entry={entry}
+                      key={`${entry.entryKey}:${day}`}
+                      returnTo={returnTo}
+                    />
+                  ))}
+                  {items.length > 3 ? (
+                    <span className="calendar-more">+{items.length - 3}</span>
+                  ) : null}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SelectedDayPanel({
+  entries,
+  mobile = false,
+  returnTo,
+  selectedDate,
+  today,
+}: {
+  entries: readonly CalendarEntry[];
+  mobile?: boolean;
+  returnTo: string;
+  selectedDate: string;
+  today: string;
+}) {
+  const items = entries.filter((entry) => entryOccursOn(entry, selectedDate));
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (deltaY > 40) {
+      setIsCollapsed(true);
+    } else if (deltaY < -40) {
+      setIsCollapsed(false);
+    }
+    touchStartY.current = null;
+  };
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => !prev);
+  };
+
+  return (
+    <aside
+      aria-label={`Compromissos de ${formatFullDate(selectedDate)}`}
+      className={
+        mobile
+          ? `calendar-day-panel calendar-day-panel-mobile${isCollapsed ? " is-collapsed" : ""}`
+          : "calendar-day-panel"
+      }
+      onTouchEnd={mobile ? handleTouchEnd : undefined}
+      onTouchStart={mobile ? handleTouchStart : undefined}
+    >
+      {mobile && (
+        <button
+          aria-label={isCollapsed ? "Expandir painel do dia" : "Recolher painel do dia"}
+          className="sheet-drag-handle-button"
+          onClick={toggleCollapsed}
+          type="button"
+        >
+          <span className="sheet-drag-handle" aria-hidden="true" />
+        </button>
+      )}
+      <header
+        onClick={mobile ? toggleCollapsed : undefined}
+        style={{ cursor: mobile ? "pointer" : "default" }}
+      >
+        <div>
+          <span>{selectedDate === today ? "Hoje" : weekdayLong(selectedDate)}</span>
+          <h2>{formatSelectedDate(selectedDate)}</h2>
+        </div>
+        <Link
+          aria-label={`Criar em ${formatFullDate(selectedDate)}`}
+          className="calendar-day-add"
+          href={`/meetings/new?date=${selectedDate}&returnTo=${encodeURIComponent(returnTo)}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          +
+        </Link>
+      </header>
+      {items.length ? (
+        <div className="calendar-day-panel-list">
+          {items.map((entry) => (
+            <DayPanelEntry entry={entry} key={entry.entryKey} returnTo={returnTo} />
+          ))}
+        </div>
+      ) : (
+        <p className="calendar-day-panel-empty">Sem compromissos.</p>
+      )}
+    </aside>
+  );
+}
+
+function DayPanelEntry({ entry, returnTo }: { entry: CalendarEntry; returnTo: string }) {
+  const time = formatEntryTime(entry);
+  return (
+    <Link
+      className={`calendar-day-panel-entry calendar-day-panel-entry-${entry.sourceType}${entry.tone ? ` calendar-day-panel-entry-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-day-panel-entry-vacation" : ""}${entry.isOverdue ? " calendar-day-panel-entry-overdue" : ""}`}
+      href={withReturnTo(entry.href, returnTo)}
+    >
+      <i aria-hidden="true" />
+      <span>
+        <strong>{entry.title}</strong>
+        <small>
+          {entry.sourceLabel}
+          {entry.owner ? ` · ${entry.owner.displayName}` : ""}
+        </small>
+      </span>
+      <time dateTime={entry.start}>{time}</time>
+    </Link>
   );
 }
 
@@ -472,12 +774,51 @@ function CalendarEntryLink({
   );
 }
 
-function calendarHref(view: CalendarView, date: string, filters: Filters) {
+function calendarHref(view: CalendarView, date: string, filters: Filters, selectedDate?: string) {
   const params = new URLSearchParams({ view, date });
+  if (selectedDate) params.set("day", selectedDate);
   if (filters.sourceType) params.set("type", filters.sourceType);
   if (filters.owner) params.set("owner", filters.owner);
   if (filters.history) params.set("history", "1");
   return `/calendar?${params.toString()}`;
+}
+
+function formatEntryTime(entry: CalendarEntry) {
+  if (entry.allDay) return "Dia inteiro";
+  const formatter = new Intl.DateTimeFormat("pt-PT", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Lisbon",
+  });
+  const start = formatter.format(new Date(entry.start));
+  return entry.end ? `${start}–${formatter.format(new Date(entry.end))}` : start;
+}
+
+function formatFullDate(day: string) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${day}T12:00:00.000Z`));
+}
+
+function formatSelectedDate(day: string) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    day: "numeric",
+    month: "long",
+  }).format(new Date(`${day}T12:00:00.000Z`));
+}
+
+function weekdayLong(day: string) {
+  return new Intl.DateTimeFormat("pt-PT", { weekday: "long" }).format(
+    new Date(`${day}T12:00:00.000Z`),
+  );
+}
+
+function weekdayLetter(day: string) {
+  return new Intl.DateTimeFormat("pt-PT", { weekday: "narrow" }).format(
+    new Date(`${day}T12:00:00.000Z`),
+  );
 }
 
 function formatMeetingInterval(meeting: CalendarMeetingSummary) {

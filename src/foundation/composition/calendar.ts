@@ -13,6 +13,7 @@ export async function loadCalendar(
   filters: CalendarFilters,
 ) {
   const [meetings, user] = await Promise.all([createMeetingModule(), getAuthenticatedUser()]);
+  const googleModulePromise = user ? createGoogleIntegrationModule() : null;
 
   return composeCalendar(
     {
@@ -20,13 +21,27 @@ export async function loadCalendar(
       tasks: async () => [],
       sprints: async () => [],
       googleEvents: async () => {
-        if (!user) return [];
-        const google = await createGoogleIntegrationModule();
-        return google.calendarEventService.listVisibleEvents(user.id, range);
+        if (!user || !googleModulePromise) return [];
+        try {
+          const google = await googleModulePromise;
+          // 2.5s timeout guard so Google API latency never freezes the Calendar SSR
+          const eventsPromise = google.calendarEventService.listVisibleEvents(user.id, range);
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Google Calendar API timeout")), 2500),
+          );
+          return await Promise.race([eventsPromise, timeoutPromise]);
+        } catch {
+          return [];
+        }
       },
       googleArtifacts: async () => {
-        if (!user) return [];
-        return (await createGoogleIntegrationModule()).artifactRepository.list(user.id);
+        if (!user || !googleModulePromise) return [];
+        try {
+          const google = await googleModulePromise;
+          return await google.artifactRepository.list(user.id);
+        } catch {
+          return [];
+        }
       },
     },
     range,

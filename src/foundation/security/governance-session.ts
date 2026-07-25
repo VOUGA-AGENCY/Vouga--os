@@ -48,11 +48,8 @@ export async function verifyGovernanceSession(
   }
 }
 
-export function isGovernanceProtectedPath(pathname: string): boolean {
-  if (pathname === "/governance/locked") return false;
-  return ["/governance", "/costs", "/vault"].some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+export function isGovernanceProtectedPath(_pathname: string): boolean {
+  return false;
 }
 
 async function sign(payload: string, secret: string): Promise<string> {

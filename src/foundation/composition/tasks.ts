@@ -1,11 +1,12 @@
 import "server-only";
+import { cache } from "react";
 import { TaskService } from "@/application/tasks/task-service";
 import { SupabaseMemberDirectory } from "@/persistence/members/supabase-member-directory";
 import { SupabaseTaskContextDirectory } from "@/persistence/tasks/supabase-task-context-directory";
 import { SupabaseTaskReadModel } from "@/persistence/tasks/supabase-task-read-model";
 import { SupabaseTaskRepository } from "@/persistence/tasks/supabase-task-repository";
 import { createClient } from "@/persistence/supabase/server";
-export async function createTaskModule() {
+export const createTaskModule = cache(async () => {
   const supabase = await createClient();
   const repository = new SupabaseTaskRepository(supabase);
   const contexts = new SupabaseTaskContextDirectory(supabase);
@@ -13,7 +14,7 @@ export async function createTaskModule() {
     service: new TaskService(repository, new SupabaseMemberDirectory(supabase), contexts),
     readModel: new SupabaseTaskReadModel(supabase),
   };
-}
+});
 
 export async function loadTaskGoogleEventOptions() {
   const { getAuthenticatedUser } = await import("@/application/auth/current-user");

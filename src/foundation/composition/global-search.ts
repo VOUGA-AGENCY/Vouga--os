@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { composeGlobalSearch } from "@/projections/search/global-search";
 
 import { createCompanyModule } from "./companies";
@@ -10,7 +11,7 @@ import { createSprintModule } from "./sprints";
 import { createTaskModule } from "./tasks";
 import { createRelationsModule } from "./relations";
 
-export async function createGlobalSearchIndex(now: string) {
+export const createGlobalSearchIndex = cache(async (now: string) => {
   const [companies, relations, meetings, tasks, decisions, sprints, roadmap] =
     await Promise.all([
       createCompanyModule(),
@@ -34,4 +35,4 @@ export async function createGlobalSearchIndex(now: string) {
     },
     now,
   );
-}
+});

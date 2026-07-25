@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { KeyRound, Plus } from "lucide-react";
 
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { requireGovernanceAccess } from "@/application/governance/require-governance-access";
 import { getVaultApplicationErrorMessage } from "@/application/vault/vault-service";
 import { createVaultModule } from "@/foundation/composition/vault";
@@ -17,12 +18,17 @@ export default async function VaultPage() {
   noStore();
   await requireGovernanceAccess("/vault");
 
+  const [user, vaultModule] = await Promise.all([
+    getAuthenticatedUser(),
+    createVaultModule(),
+  ]);
+
   const env = getVaultSecurityEnv();
   if (!env) return <VaultSetupState kind="key" />;
 
   let entries;
   try {
-    entries = await (await createVaultModule()).service.listEntries();
+    entries = await vaultModule.service.listEntries();
   } catch (error) {
     return <VaultSetupState kind="migration" message={getVaultApplicationErrorMessage(error)} />;
   }
@@ -58,7 +64,11 @@ export default async function VaultPage() {
               </div>
               <span className="vault-updated">Atualizado {formatDate(entry.updatedAt)}</span>
               <div className="vault-actions">
-                <RevealVaultEntry entryId={entry.id} serviceName={entry.serviceName} />
+                <RevealVaultEntry
+                  entryId={entry.id}
+                  serviceName={entry.serviceName}
+                  userEmail={user?.email ?? null}
+                />
                 <ConfirmAction
                   action={deleteVaultEntryAction.bind(null, entry.id)}
                   confirmation={`Eliminar definitivamente a credencial de ${entry.serviceName}?`}

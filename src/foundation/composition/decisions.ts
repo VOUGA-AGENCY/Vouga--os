@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { DecisionService } from "@/application/decisions/decision-service";
 import { SupabaseDecisionContextDirectory } from "@/persistence/decisions/supabase-decision-context-directory";
 import { SupabaseDecisionReadModel } from "@/persistence/decisions/supabase-decision-read-model";
@@ -7,7 +8,7 @@ import { SupabaseDecisionRepository } from "@/persistence/decisions/supabase-dec
 import { SupabaseMemberDirectory } from "@/persistence/members/supabase-member-directory";
 import { createClient } from "@/persistence/supabase/server";
 
-export async function createDecisionModule() {
+export const createDecisionModule = cache(async () => {
   const supabase = await createClient();
   const repository = new SupabaseDecisionRepository(supabase);
   return {
@@ -18,4 +19,4 @@ export async function createDecisionModule() {
     ),
     readModel: new SupabaseDecisionReadModel(supabase),
   };
-}
+});

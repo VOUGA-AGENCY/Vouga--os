@@ -3,6 +3,7 @@ import { MEETING_STATUS_LABELS, type MeetingStatus } from "@/domain/meetings/mee
 import { ROADMAP_HORIZON_LABELS, type RoadmapHorizon } from "@/domain/roadmap/roadmap-item";
 import { SPRINT_STATUS_LABELS, type SprintStatus } from "@/domain/sprints/sprint";
 import { TASK_STATUS_LABELS, type TaskStatus } from "@/domain/tasks/task";
+import { PROSPECTING_STAGE_LABELS } from "@/domain/companies/company";
 import type { CompanyReadModel } from "@/projections/companies/company-read-model";
 import type { CostReadModel } from "@/projections/costs/cost-read-model";
 import type { DecisionReadModel } from "@/projections/decisions/decision-read-model";
@@ -42,6 +43,45 @@ export type ObjectContext = Readonly<{
   target: ContextTarget;
   sections: readonly ContextSection[];
   isPartial: boolean;
+}>;
+
+export type GraphNodeType =
+  | "company"
+  | "contact"
+  | "meeting"
+  | "task"
+  | "sprint"
+  | "decision"
+  | "cost"
+  | "roadmap";
+
+export type GraphNode = Readonly<{
+  id: string;
+  type: GraphNodeType;
+  label: string;
+  sublabel: string | null;
+  status: string | null;
+  href: string;
+  layer: number;
+  connectionsCount: number;
+}>;
+
+export type GraphEdge = Readonly<{
+  id: string;
+  source: string;
+  target: string;
+  relation: string;
+}>;
+
+export type FullContextGraph = Readonly<{
+  nodes: readonly GraphNode[];
+  edges: readonly GraphEdge[];
+  stats: Readonly<{
+    totalEntities: number;
+    totalConnections: number;
+    densityScore: number;
+    activeClusters: number;
+  }>;
 }>;
 
 type ContextReadModels = Readonly<{
@@ -96,6 +136,198 @@ export class ContextEngine {
       case "contact":
         return this.contactRequests(target.id);
     }
+  }
+
+  async getFullGraph(nowIso: string): Promise<FullContextGraph> {
+    const [companies, contacts, meetings, tasks, sprints, decisions, globalRoadmap, costs] =
+      await Promise.all([
+        this.readModels.companies.list(),
+        this.readModels.relations.listContacts(),
+        this.readModels.meetings.list(nowIso),
+        this.readModels.tasks.list(),
+        this.readModels.sprints.list(),
+        this.readModels.decisions.list(),
+        this.readModels.roadmap.getGlobal(),
+        this.readModels.costs.list(),
+      ]);
+    const roadmap = [...globalRoadmap.now, ...globalRoadmap.next, ...globalRoadmap.later];
+
+    const nodeMap = new Map<string, GraphNode>();
+    const edges: GraphEdge[] = [];
+    const edgeSet = new Set<string>();
+
+    const addEdge = (source: string, target: string, relation: string) => {
+      if (!source || !target || source === target) return;
+      const key = `${source}->${target}:${relation}`;
+      if (edgeSet.has(key)) return;
+      edgeSet.add(key);
+      edges.push({ id: key, source, target, relation });
+    };
+
+    // Layer 0: Companies & Contacts
+    for (const c of companies) {
+      nodeMap.set(`company:${c.id}`, {
+        id: `company:${c.id}`,
+        type: "company",
+        label: c.name,
+        sublabel: c.prospectingStage ? PROSPECTING_STAGE_LABELS[c.prospectingStage] : "Organisation",
+        status: c.status,
+        href: `/companies/${c.id}`,
+        layer: 0,
+        connectionsCount: 0,
+      });
+    }
+
+    for (const ct of contacts) {
+      nodeMap.set(`contact:${ct.id}`, {
+        id: `contact:${ct.id}`,
+        type: "contact",
+        label: ct.displayName,
+        sublabel: ct.jobTitle ?? "Perfil",
+        status: ct.status,
+        href: `/relations/contacts/${ct.id}`,
+        layer: 0,
+        connectionsCount: 0,
+      });
+      if (ct.companyId) {
+        addEdge(`contact:${ct.id}`, `company:${ct.companyId}`, "Organização");
+      }
+    }
+
+    // Layer 1: Meetings
+    for (const m of meetings) {
+      nodeMap.set(`meeting:${m.id}`, {
+        id: `meeting:${m.id}`,
+        type: "meeting",
+        label: m.title,
+        sublabel: m.companyNames.join(", ") || "Meeting",
+        status: m.status,
+        href: `/meetings/${m.id}`,
+        layer: 1,
+        connectionsCount: 0,
+      });
+      for (const name of m.companyNames) {
+        const matchingCompany = companies.find((c) => c.name === name);
+        if (matchingCompany) {
+          addEdge(`meeting:${m.id}`, `company:${matchingCompany.id}`, "Contexto de Organização");
+        }
+      }
+    }
+
+    // Layer 2: Tasks
+    for (const t of tasks) {
+      nodeMap.set(`task:${t.id}`, {
+        id: `task:${t.id}`,
+        type: "task",
+        label: t.title,
+        sublabel: t.ownerDisplayName,
+        status: t.status,
+        href: `/tasks/${t.id}`,
+        layer: 2,
+        connectionsCount: 0,
+      });
+      for (const cid of t.companyIds) {
+        addEdge(`task:${t.id}`, `company:${cid}`, "Trabalho de Organização");
+      }
+      if (t.originMeetingId) {
+        addEdge(`task:${t.id}`, `meeting:${t.originMeetingId}`, "Origem em Meeting");
+      }
+      if (t.originDecisionId) {
+        addEdge(`task:${t.id}`, `decision:${t.originDecisionId}`, "Origem em Decision");
+      }
+    }
+
+    // Layer 3: Sprints
+    for (const s of sprints) {
+      nodeMap.set(`sprint:${s.id}`, {
+        id: `sprint:${s.id}`,
+        type: "sprint",
+        label: s.name,
+        sublabel: `${s.taskCount} Tasks`,
+        status: s.status,
+        href: `/sprints/${s.id}`,
+        layer: 3,
+        connectionsCount: 0,
+      });
+    }
+
+    // Layer 4: Decisions & Costs
+    for (const d of decisions) {
+      nodeMap.set(`decision:${d.id}`, {
+        id: `decision:${d.id}`,
+        type: "decision",
+        label: d.title,
+        sublabel: d.choice,
+        status: d.status,
+        href: `/decisions/${d.id}`,
+        layer: 4,
+        connectionsCount: 0,
+      });
+      if (d.originMeetingId) {
+        addEdge(`decision:${d.id}`, `meeting:${d.originMeetingId}`, "Origem em Meeting");
+      }
+    }
+
+    for (const cost of costs) {
+      nodeMap.set(`cost:${cost.id}`, {
+        id: `cost:${cost.id}`,
+        type: "cost",
+        label: cost.title || cost.description,
+        sublabel: `${cost.currency} ${(cost.expectedAmountMinor / 100).toFixed(2)}`,
+        status: cost.status,
+        href: `/costs/${cost.id}`,
+        layer: 4,
+        connectionsCount: 0,
+      });
+      if (cost.companyName) {
+        const matchingCompany = companies.find((c) => c.name === cost.companyName);
+        if (matchingCompany) {
+          addEdge(`cost:${cost.id}`, `company:${matchingCompany.id}`, "Custo de Organização");
+        }
+      }
+      if (cost.sourceDecisionTitle) {
+        const matchingDecision = decisions.find((d) => d.title === cost.sourceDecisionTitle);
+        if (matchingDecision) {
+          addEdge(`cost:${cost.id}`, `decision:${matchingDecision.id}`, "Origem em Decisão");
+        }
+      }
+    }
+
+    // Layer 5: Roadmap Items
+    for (const r of roadmap) {
+      nodeMap.set(`roadmap:${r.id}`, {
+        id: `roadmap:${r.id}`,
+        type: "roadmap",
+        label: r.title,
+        sublabel: r.horizon,
+        status: r.lifecycleStatus,
+        href: `/roadmap/${r.id}`,
+        layer: 5,
+        connectionsCount: 0,
+      });
+    }
+
+    const rawNodes = Array.from(nodeMap.values());
+    const nodes: GraphNode[] = rawNodes.map((node) => {
+      const count = edges.filter((e) => e.source === node.id || e.target === node.id).length;
+      return { ...node, connectionsCount: count };
+    });
+
+    const totalEntities = nodes.length;
+    const totalConnections = edges.length;
+    const densityScore = totalEntities > 1 ? Number((totalConnections / totalEntities).toFixed(2)) : 0;
+    const activeClusters = new Set(nodes.map((n) => n.layer)).size;
+
+    return {
+      nodes,
+      edges,
+      stats: {
+        totalEntities,
+        totalConnections,
+        densityScore,
+        activeClusters,
+      },
+    };
   }
 
   private companyRequests(companyId: string, nowIso: string): readonly SectionRequest[] {

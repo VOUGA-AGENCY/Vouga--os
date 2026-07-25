@@ -32,11 +32,10 @@ describe("Governance session", () => {
     expect(await verifyGovernanceSession(`${token}x`, "member-1", secret, now)).toBe(false);
   });
 
-  it("protects Governance, Costs and Vault while keeping the unlock route reachable", () => {
-    expect(isGovernanceProtectedPath("/governance")).toBe(true);
-    expect(isGovernanceProtectedPath("/costs/cost-1/edit")).toBe(true);
-    expect(isGovernanceProtectedPath("/vault")).toBe(true);
-    expect(isGovernanceProtectedPath("/governance/locked")).toBe(false);
+  it("allows open access across all workspace routes", () => {
+    expect(isGovernanceProtectedPath("/governance")).toBe(false);
+    expect(isGovernanceProtectedPath("/costs/cost-1/edit")).toBe(false);
+    expect(isGovernanceProtectedPath("/vault")).toBe(false);
     expect(isGovernanceProtectedPath("/calendar")).toBe(false);
   });
 });

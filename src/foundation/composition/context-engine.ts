@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createCostModule } from "@/foundation/composition/costs";
 import { createDecisionModule } from "@/foundation/composition/decisions";
@@ -10,7 +11,7 @@ import { createTaskModule } from "@/foundation/composition/tasks";
 import { createRelationsModule } from "@/foundation/composition/relations";
 import { ContextEngine } from "@/projections/context-engine/context-engine";
 
-export async function createContextEngine() {
+export const createContextEngine = cache(async () => {
   const [companies, relations, costs, tasks, meetings, decisions, sprints, roadmap] =
     await Promise.all([
       createCompanyModule(),
@@ -33,4 +34,4 @@ export async function createContextEngine() {
     sprints: sprints.readModel,
     roadmap: roadmap.readModel,
   });
-}
+});

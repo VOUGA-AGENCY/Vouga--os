@@ -35,7 +35,7 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
       </a>
 
       <aside aria-label="Workspace Vouga" className="app-sidebar">
-        <Link className="brand app-sidebar-brand" href="/calendar">
+        <Link className="brand app-sidebar-brand" href="/context">
           <BrandMark priority />
           <span>Vouga OS</span>
         </Link>
@@ -50,7 +50,7 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
       <div className="workspace-frame">
         <header className="workspace-header">
           <div className="workspace-header-context">
-            <Link aria-label="Vouga OS — Calendar" className="workspace-mobile-mark" href="/calendar">
+            <Link aria-label="Vouga OS — Context Engine" className="workspace-mobile-mark" href="/context">
               <BrandMark priority />
             </Link>
           </div>

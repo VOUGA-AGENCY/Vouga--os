@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { CostService } from "@/application/costs/cost-service";
 import { SupabaseCashBalanceRepository } from "@/persistence/costs/supabase-cash-balance-repository";
 import { SupabaseCostContextDirectory } from "@/persistence/costs/supabase-cost-context-directory";
@@ -7,7 +8,7 @@ import { SupabaseCostRepository } from "@/persistence/costs/supabase-cost-reposi
 import { SupabaseMemberDirectory } from "@/persistence/members/supabase-member-directory";
 import { createClient } from "@/persistence/supabase/server";
 
-export async function createCostModule() {
+export const createCostModule = cache(async () => {
   const supabase = await createClient();
   return {
     service: new CostService(
@@ -18,4 +19,4 @@ export async function createCostModule() {
     ),
     readModel: new SupabaseCostReadModel(supabase),
   };
-}
+});

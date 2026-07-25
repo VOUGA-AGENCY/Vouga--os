@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { GoogleCalendarSelectionService } from "@/application/google/google-calendar-selection-service";
 import { GoogleCalendarEventService } from "@/application/google/google-calendar-event-service";
 import { GoogleConnectionService } from "@/application/google/google-connection-service";
@@ -24,7 +25,7 @@ export async function createGoogleConnectionReadModel() {
   return new SupabaseGoogleConnectionReadModel(await createClient());
 }
 
-export async function createGoogleIntegrationModule() {
+export const createGoogleIntegrationModule = cache(async () => {
   const env = requireGoogleOAuthEnv();
   const supabase = await createClient();
   const repository = new SupabaseGoogleConnectionRepository(supabase);
@@ -71,4 +72,4 @@ export async function createGoogleIntegrationModule() {
     env,
     service: new GoogleConnectionService(repository, oauth, tokenProtector),
   };
-}
+});

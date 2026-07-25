@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { Eye, EyeOff, Lock, X } from "lucide-react";
 
 import { revealVaultEntryAction, type VaultRevealState } from "./actions";
 
@@ -9,11 +10,16 @@ const REVEAL_TIMEOUT_MS = 30_000;
 export function RevealVaultEntry({
   entryId,
   serviceName,
+  userEmail,
 }: {
   entryId: string;
   serviceName: string;
+  userEmail: string | null;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [accountPassword, setAccountPassword] = useState("");
   const [revealed, setRevealed] = useState<VaultRevealState | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -22,6 +28,8 @@ export function RevealVaultEntry({
     const clear = () => {
       setRevealed(null);
       setCopyFeedback(null);
+      setIsOpen(false);
+      setAccountPassword("");
     };
     const timeout = window.setTimeout(clear, REVEAL_TIMEOUT_MS);
     const visibility = () => {
@@ -34,10 +42,34 @@ export function RevealVaultEntry({
     };
   }, [revealed]);
 
-  function reveal() {
+  function handleOpenModal() {
+    setErrorMsg(null);
+    setAccountPassword("");
+    setIsOpen(true);
+  }
+
+  function handleCloseModal() {
+    setIsOpen(false);
+    setErrorMsg(null);
+    setAccountPassword("");
+  }
+
+  function handleSubmitPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!accountPassword.trim()) {
+      setErrorMsg("Introduz a tua palavra-passe da conta.");
+      return;
+    }
+
     startTransition(async () => {
-      setCopyFeedback(null);
-      setRevealed(await revealVaultEntryAction(entryId));
+      setErrorMsg(null);
+      const result = await revealVaultEntryAction(entryId, accountPassword);
+      if (result.ok) {
+        setRevealed(result);
+        setIsOpen(false);
+      } else {
+        setErrorMsg(result.message);
+      }
     });
   }
 
@@ -47,70 +79,92 @@ export function RevealVaultEntry({
     window.setTimeout(() => setCopyFeedback(null), 2000);
   }
 
-  if (!revealed) {
-    return (
-      <button className="button-secondary" disabled={pending} onClick={reveal} type="button">
-        {pending ? "A revelar…" : "Revelar"}
-      </button>
-    );
-  }
-
-  if (!revealed.ok) {
-    return (
-      <div className="vault-reveal-error" role="alert">
-        <span>{revealed.message}</span>
-        <button className="button-secondary" onClick={() => setRevealed(null)} type="button">
-          Fechar
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div aria-label={`Credencial revelada de ${serviceName}`} className="vault-reveal">
-      <SecretLine
-        label="Username"
-        onCopy={() => copy("Username", revealed.secret.username)}
-        value={revealed.secret.username}
-      />
-      <SecretLine
-        label="Password"
-        onCopy={() => copy("Password", revealed.secret.password)}
-        value={revealed.secret.password}
-      />
-      {revealed.secret.note ? (
-        <SecretLine
-          label="Nota"
-          onCopy={() => copy("Nota", revealed.secret.note ?? "")}
-          value={revealed.secret.note}
-        />
-      ) : null}
-      <div className="vault-reveal-footer">
-        <span aria-live="polite">{copyFeedback ?? "Oculta automaticamente em 30 segundos."}</span>
-        <button className="button-secondary" onClick={() => setRevealed(null)} type="button">
-          Ocultar
-        </button>
-      </div>
-    </div>
-  );
-}
+    <div className="vault-reveal-wrapper">
+      {revealed?.ok ? (
+        <div className="vault-revealed-panel">
+          <div className="vault-secret-inline">
+            <span>Password: <code>{revealed.secret.password}</code></span>
+            <button
+              className="button-tertiary"
+              onClick={() => copy("Password", revealed.secret.password)}
+              type="button"
+            >
+              Copiar
+            </button>
+            <button
+              aria-label="Ocultar password"
+              className="button-tertiary icon-only"
+              onClick={() => setRevealed(null)}
+              type="button"
+            >
+              <EyeOff size={16} />
+            </button>
+          </div>
+          {copyFeedback && <small className="vault-copy-toast">{copyFeedback}</small>}
+        </div>
+      ) : (
+        <div className="vault-masked-panel">
+          <span className="vault-masked-dots">••••••••</span>
+          <button
+            aria-label={`Revelar palavra-passe de ${serviceName}`}
+            className="vault-eye-button"
+            onClick={handleOpenModal}
+            title="Revelar palavra-passe"
+            type="button"
+          >
+            <Eye size={16} />
+          </button>
+        </div>
+      )}
 
-function SecretLine({
-  label,
-  onCopy,
-  value,
-}: {
-  label: string;
-  onCopy: () => void;
-  value: string;
-}) {
-  return (
-    <div className="vault-secret-line">
-      <span>{label}</span>
-      <code>{value}</code>
-      <button className="button-secondary" onClick={onCopy} type="button">
-        Copiar
-      </button>
+      {/* Account Password Verification Modal */}
+      {isOpen && (
+        <div className="vault-modal-overlay" onClick={handleCloseModal}>
+          <div className="vault-modal-card" onClick={(e) => e.stopPropagation()}>
+            <header className="vault-modal-header">
+              <div className="vault-modal-title">
+                <Lock size={18} />
+                <h3>Verificação de Segurança</h3>
+              </div>
+              <button className="vault-modal-close" onClick={handleCloseModal} type="button">
+                <X size={18} />
+              </button>
+            </header>
+
+            <form onSubmit={handleSubmitPassword}>
+              <div className="vault-modal-body">
+                <p>
+                  Confirma a palavra-passe da tua conta <strong>({userEmail ?? "Sessão Vouga"})</strong> para ver a palavra-passe de <strong>{serviceName}</strong>.
+                </p>
+
+                <div className="form-field">
+                  <label htmlFor="account-password-input">Palavra-passe da conta</label>
+                  <input
+                    autoFocus
+                    id="account-password-input"
+                    onChange={(e) => setAccountPassword(e.target.value)}
+                    placeholder="A tua palavra-passe do Vouga OS"
+                    type="password"
+                    value={accountPassword}
+                  />
+                </div>
+
+                {errorMsg && <div className="form-error" role="alert">{errorMsg}</div>}
+              </div>
+
+              <footer className="vault-modal-footer">
+                <button className="button-secondary" onClick={handleCloseModal} type="button">
+                  Cancelar
+                </button>
+                <button className="button-primary" disabled={pending} type="submit">
+                  {pending ? "A verificar…" : "Confirmar"}
+                </button>
+              </footer>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

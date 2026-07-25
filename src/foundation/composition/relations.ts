@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { RelationsService } from "@/application/relations/relations-service";
 import {
   SupabaseContactRepository,
@@ -6,7 +7,7 @@ import {
   SupabaseRelationsReadModel,
 } from "@/persistence/relations/supabase-relations";
 import { createClient } from "@/persistence/supabase/server";
-export async function createRelationsModule() {
+export const createRelationsModule = cache(async () => {
   const supabase = await createClient();
   return {
     service: new RelationsService(
@@ -15,4 +16,4 @@ export async function createRelationsModule() {
     ),
     readModel: new SupabaseRelationsReadModel(supabase),
   };
-}
+});

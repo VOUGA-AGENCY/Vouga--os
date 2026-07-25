@@ -38,10 +38,29 @@ export async function createVaultEntryAction(
   }
 }
 
-export async function revealVaultEntryAction(id: string): Promise<VaultRevealState> {
+import { getAuthenticatedUser } from "@/application/auth/current-user";
+import { createClient } from "@/persistence/supabase/server";
+
+export async function revealVaultEntryAction(id: string, accountPassword?: string): Promise<VaultRevealState> {
   noStore();
   try {
-    await requireGovernanceAccess("/vault");
+    const user = await getAuthenticatedUser();
+    if (!user || !user.email) return { ok: false, message: "Sessão inválida." };
+
+    if (!accountPassword) {
+      return { ok: false, message: "Palavra-passe da conta necessária." };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: accountPassword,
+    });
+
+    if (error) {
+      return { ok: false, message: "Palavra-passe da conta incorreta." };
+    }
+
     const { service } = await createVaultModule();
     return { ok: true, secret: await service.revealEntry(id) };
   } catch (error) {

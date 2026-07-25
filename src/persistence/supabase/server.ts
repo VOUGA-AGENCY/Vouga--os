@@ -1,11 +1,12 @@
 import "server-only";
 
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import { requireSupabasePublicEnv } from "@/foundation/config/supabase-env";
 
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
   const { url, publishableKey } = requireSupabasePublicEnv();
 
@@ -23,4 +24,4 @@ export async function createClient() {
       }
     }
   });
-}
+});

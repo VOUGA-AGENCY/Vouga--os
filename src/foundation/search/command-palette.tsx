@@ -10,6 +10,7 @@ import {
   GanttChartSquare,
   ListTodo,
   Milestone,
+  PanelsTopLeft,
   Search,
   Sparkles,
   UserRound,
@@ -26,6 +27,7 @@ const typeLabels: Record<SearchObjectType, string> = {
   contact: "Perfil",
   decision: "Decision",
   meeting: "Meeting",
+  project: "Project",
   roadmap: "Roadmap Item",
   sprint: "Sprint",
   task: "Task",
@@ -44,6 +46,7 @@ const quickActions = [
   },
   { description: "Propósito, tempo e participantes", href: "/meetings/new", title: "New meeting" },
   { description: "Resultado, owner e prazo", href: "/tasks/new", title: "New task" },
+  { description: "Cliente, entrega e âmbito", href: "/projects/new", title: "Novo Project" },
   { description: "Escolha, motivo e impacto", href: "/decisions/new", title: "New decision" },
 ] as const;
 
@@ -266,6 +269,7 @@ function CommandIcon({ command }: { command: CommandItem }) {
     contact: UserRound,
     decision: Milestone,
     meeting: CalendarDays,
+    project: PanelsTopLeft,
     roadmap: GanttChartSquare,
     sprint: ListTodo,
     task: CheckSquare2,

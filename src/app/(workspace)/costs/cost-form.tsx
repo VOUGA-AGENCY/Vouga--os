@@ -213,7 +213,7 @@ export function CostForm({
       </FormFields>
       <FormFeedback message={state.message} />
       <div className="form-actions">
-        <FormSubmit idleLabel={cost ? "Save changes" : "Save cost"} />
+        <FormSubmit idleLabel={cost ? "Guardar alterações" : "Guardar custo"} />
         <Link className="button-secondary" href={cost ? `/costs/${cost.id}` : "/costs"}>
           Cancelar
         </Link>

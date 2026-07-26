@@ -6,9 +6,7 @@ export default async function NewCostPage() {
   const options = await service.getFormOptions();
   return (
     <main className="workspace-main module-main module-form-main object-form-page object-form-cost">
-      <p className="eyebrow">Costs</p>
-      <h1 className="display">New cost</h1>
-      <p className="workspace-intro">Pagamento e recorrência.</p>
+      <h1 className="display">Novo custo</h1>
       <CostForm action={createCostAction} options={options} />
     </main>
   );

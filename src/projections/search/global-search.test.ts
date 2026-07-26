@@ -10,6 +10,7 @@ function emptySources(): SearchSources {
     relations: { listContacts: async () => [] },
     decisions: { list: async () => [] },
     meetings: { list: async () => [] },
+    projects: { list: async () => [] },
     roadmap: {
       getGlobal: async () => ({ now: [], next: [], later: [] }),
       listHistory: async () => [],
@@ -31,16 +32,22 @@ describe("composeGlobalSearch", () => {
     const result = await composeGlobalSearch(
       {
         ...sources,
-        companies: { list: async () => { throw new Error("unavailable"); } },
+        companies: {
+          list: async () => {
+            throw new Error("unavailable");
+          },
+        },
         tasks: {
-          list: async () => [{
-            id: "task-1",
-            title: "Fechar proposta",
-            expectedResult: "Proposta pronta",
-            status: "todo",
-            ownerDisplayName: "Miguel",
-            companyNames: ["Alder"],
-          }],
+          list: async () => [
+            {
+              id: "task-1",
+              title: "Fechar proposta",
+              expectedResult: "Proposta pronta",
+              status: "todo",
+              ownerDisplayName: "Miguel",
+              companyNames: ["Alder"],
+            },
+          ],
         },
       } as unknown as SearchSources,
       "2026-07-19T12:00:00.000Z",

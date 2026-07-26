@@ -116,7 +116,7 @@ function PipelineLists({
       {PROSPECTING_STAGES.map((stage) => {
         const items = rows.filter((row) => row.stage === stage);
         return (
-          <details className="crm-pipeline-list" key={stage} open={items.length > 0}>
+          <details className="crm-pipeline-list" data-stage={stage} key={stage} open={items.length > 0}>
             <summary>
               <span>{PROSPECTING_STAGE_LABELS[stage]}</span>
               <small>{items.length}</small>
@@ -148,7 +148,7 @@ function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
   }[] = [
     {
       stage: "replied",
-      title: "A Responder",
+      title: "Por responder",
       empty: "Não há mensagens a responder.",
     },
     {
@@ -168,10 +168,10 @@ function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
         {groups.map((group) => {
           const items = rows.filter((row) => row.stage === group.stage);
           return (
-            <section className="crm-followup-group" key={group.stage}>
+            <section className="crm-followup-group" data-stage={group.stage} key={group.stage}>
               <header>
                 <h3>{group.title}</h3>
-                <span>{items.length}</span>
+                <span className="crm-followup-count">{items.length}</span>
               </header>
               <div>
                 {items.length ? (
@@ -324,7 +324,7 @@ export default async function RelationsPage({
                   <span>
                     {people.length} {people.length === 1 ? "perfil" : "perfis"}
                   </span>
-                  <span>
+                  <span className={company.prospectingStage ? `crm-stage-badge crm-stage-${company.prospectingStage}` : ""}>
                     {company.prospectingStage
                       ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
                       : "—"}

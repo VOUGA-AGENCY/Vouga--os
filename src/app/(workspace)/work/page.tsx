@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, ListChecks } from "lucide-react";
+import { FileText, ListChecks, PanelsTopLeft } from "lucide-react";
 
 export default function WorkPage() {
   return (
@@ -29,6 +29,15 @@ export default function WorkPage() {
             <small>Documentos Google num único ponto de acesso.</small>
           </span>
         </Link>
+        <Link className="intent-card work-square-card" href="/projects">
+          <div className="work-card-icon">
+            <PanelsTopLeft aria-hidden="true" />
+          </div>
+          <span className="work-card-content">
+            <strong>Projects</strong>
+            <small>Entregas, âmbito e próxima ação por cliente.</small>
+          </span>
+        </Link>
       </section>
       <footer className="work-tagline">
         <p className="work-tagline-text">
@@ -40,4 +49,3 @@ export default function WorkPage() {
     </main>
   );
 }
-

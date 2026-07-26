@@ -9,9 +9,8 @@ export default async function EditCostPage({ params }: { params: Promise<{ costI
   if (!cost || ["paid", "ended", "cancelled"].includes(cost.status)) notFound();
   return (
     <main className="workspace-main module-main module-form-main object-form-page object-form-cost">
-      <p className="eyebrow">Costs</p>
-      <h1 className="display">{cost.title}</h1>
-      <p className="workspace-intro">Pagamento e recorrência.</p>
+      <h1 className="display">Editar custo</h1>
+      <p className="workspace-intro">{cost.title}</p>
       <CostForm action={updateCostAction.bind(null, costId)} cost={cost} options={options} />
     </main>
   );

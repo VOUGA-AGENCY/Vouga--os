@@ -8,6 +8,7 @@ import {
   Layers3,
   ListChecks,
   Map,
+  PanelsTopLeft,
   ShieldCheck,
   WalletCards,
   type LucideIcon,
@@ -36,6 +37,12 @@ export const navigationItems: NavigationItem[] = [
     href: "/work",
     children: [
       { label: "Tasks", description: "Compromissos executáveis", icon: ListChecks, href: "/tasks" },
+      {
+        label: "Projects",
+        description: "Entregas acordadas com clientes",
+        icon: PanelsTopLeft,
+        href: "/projects",
+      },
       { label: "Notes", description: "Documentos e apontamentos", icon: FileText, href: "/notes" },
     ],
   },
@@ -51,7 +58,12 @@ export const navigationItems: NavigationItem[] = [
     icon: ShieldCheck,
     href: "/governance",
     children: [
-      { label: "Costs", description: "Caixa, runway e pagamentos", icon: WalletCards, href: "/costs" },
+      {
+        label: "Costs",
+        description: "Caixa, runway e pagamentos",
+        icon: WalletCards,
+        href: "/costs",
+      },
       { label: "Vault", description: "Credenciais protegidas", icon: KeyRound, href: "/vault" },
     ],
   },
@@ -62,9 +74,19 @@ export const navigationItems: NavigationItem[] = [
     href: "/advanced",
     section: "advanced",
     children: [
-      { label: "Sprints", description: "Ciclos partilhados de compromisso", icon: CalendarRange, href: "/sprints" },
+      {
+        label: "Sprints",
+        description: "Ciclos partilhados de compromisso",
+        icon: CalendarRange,
+        href: "/sprints",
+      },
       { label: "Roadmap", description: "Direção estratégica global", icon: Map, href: "/roadmap" },
-      { label: "Decisions", description: "Escolhas materiais e histórico", icon: Gavel, href: "/decisions" },
+      {
+        label: "Decisions",
+        description: "Escolhas materiais e histórico",
+        icon: Gavel,
+        href: "/decisions",
+      },
     ],
   },
 ];

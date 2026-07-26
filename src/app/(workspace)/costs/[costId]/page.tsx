@@ -34,14 +34,16 @@ export default async function CostPage({ params }: { params: Promise<{ costId: s
       <Link className="back-link" href="/costs">
         ← Costs
       </Link>
-      <div className="detail-heading object-hero">
+      <div className="detail-heading object-hero cost-detail-hero">
         <div>
-          <span className={`status-pill status-pill-${cost.status}`}>
-            {COST_STATUS_LABELS[cost.status]}
-          </span>
-          <p className="eyebrow">
-            {COST_TYPE_LABELS[cost.costType]} · {COST_CATEGORY_LABELS[cost.category]}
-          </p>
+          <div className="cost-detail-kicker">
+            <span className={`status-pill status-pill-${cost.status}`}>
+              {COST_STATUS_LABELS[cost.status]}
+            </span>
+            <span>
+              {COST_TYPE_LABELS[cost.costType]} · {COST_CATEGORY_LABELS[cost.category]}
+            </span>
+          </div>
           <h1 className="display">{cost.title}</h1>
           <p className="workspace-intro">{cost.description}</p>
         </div>
@@ -58,62 +60,54 @@ export default async function CostPage({ params }: { params: Promise<{ costId: s
           )}
         </div>
       </div>
-      <div className="detail-grid">
-        <Card label={cost.status === "paid" ? "Valor real" : "Valor esperado"}>
-          <p className="cost-detail-value">
+
+      <div className="cost-detail-content">
+        <section className="cost-detail-amount">
+          <span>{cost.status === "paid" ? "Valor real" : "Valor esperado"}</span>
+          <strong>
             {money(cost.actualAmountMinor ?? cost.expectedAmountMinor, cost.currency)}
-          </p>
-        </Card>
-        <Card label="Calendário">
-          <p>
+          </strong>
+        </section>
+
+        <dl className="cost-detail-facts">
+          <Fact label="Calendário">
             {cost.costType === "one_off"
               ? date(cost.paidOn ?? cost.expectedOn!)
               : `${COST_RECURRENCE_LABELS[cost.recurrence!]} · desde ${date(cost.startsOn!)}`}
-          </p>
-        </Card>
-        <Card label="Owner">
-          <p>{cost.ownerDisplayName ?? "Sem owner"}</p>
-        </Card>
-        <Card label="Fornecedor">
-          <p>{cost.supplier ?? "Não registado"}</p>
-        </Card>
-        <Card label="Organisation">
+          </Fact>
+          <Fact label="Owner">{cost.ownerDisplayName ?? "Sem owner"}</Fact>
+          {cost.supplier ? <Fact label="Fornecedor">{cost.supplier}</Fact> : null}
           {cost.company ? (
-            <Link href={`/companies/${cost.company.id}`}>{cost.company.label}</Link>
-          ) : (
-            <p>Sem Organisation relacionada</p>
-          )}
-        </Card>
-        <Card label="Roadmap">
+            <Fact label="Organisation">
+              <Link href={`/companies/${cost.company.id}`}>{cost.company.label}</Link>
+            </Fact>
+          ) : null}
           {cost.roadmapItem ? (
-            <Link href={`/roadmap/${cost.roadmapItem.id}`}>{cost.roadmapItem.label}</Link>
-          ) : (
-            <p>Sem Roadmap Item</p>
-          )}
-        </Card>
-        <Card label="Decision de origem">
+            <Fact label="Roadmap">
+              <Link href={`/roadmap/${cost.roadmapItem.id}`}>{cost.roadmapItem.label}</Link>
+            </Fact>
+          ) : null}
           {cost.sourceDecision ? (
-            <Link href={`/decisions/${cost.sourceDecision.id}`}>{cost.sourceDecision.label}</Link>
-          ) : (
-            <p>Sem Decision de origem</p>
-          )}
-        </Card>
-        <Card label="Tasks">
-          <p>
-            {cost.tasks.length
-              ? cost.tasks.map((x, i) => (
-                  <span key={x.id}>
-                    <Link href={`/tasks/${x.id}`}>{x.label}</Link>
-                    {i < cost.tasks.length - 1 ? " · " : ""}
-                  </span>
-                ))
-              : "Sem Tasks relacionadas"}
-          </p>
-        </Card>
+            <Fact label="Decision de origem">
+              <Link href={`/decisions/${cost.sourceDecision.id}`}>{cost.sourceDecision.label}</Link>
+            </Fact>
+          ) : null}
+          {cost.tasks.length ? (
+            <Fact label="Tasks">
+              {cost.tasks.map((task, index) => (
+                <span key={task.id}>
+                  <Link href={`/tasks/${task.id}`}>{task.label}</Link>
+                  {index < cost.tasks.length - 1 ? " · " : ""}
+                </span>
+              ))}
+            </Fact>
+          ) : null}
+        </dl>
       </div>
+
       {cost.status === "planned" && cost.costType === "one_off" && (
-        <section className="detail-card cost-transition">
-          <p className="eyebrow">Confirmar pagamento</p>
+        <section className="cost-transition cost-action-panel">
+          <h2>Confirmar pagamento</h2>
           <form action={payCostAction.bind(null, cost.id)}>
             <div className="field field-light">
               <label htmlFor="actual_amount">Valor real</label>
@@ -136,8 +130,8 @@ export default async function CostPage({ params }: { params: Promise<{ costId: s
         </section>
       )}
       {cost.status === "active" && (
-        <section className="detail-card cost-transition">
-          <p className="eyebrow">Terminar recorrência</p>
+        <section className="cost-transition cost-action-panel">
+          <h2>Terminar recorrência</h2>
           <form action={endCostAction.bind(null, cost.id)}>
             <div className="field field-light">
               <label htmlFor="ended_on">Terminado em</label>
@@ -157,16 +151,16 @@ export default async function CostPage({ params }: { params: Promise<{ costId: s
           Cancelar Cost
         </ConfirmAction>
       )}
-      <ContextPanel context={context} />
+      <ContextPanel collapsible context={context} />
     </main>
   );
 }
-function Card({ label, children }: { label: string; children: React.ReactNode }) {
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section className="detail-card">
-      <p className="eyebrow">{label}</p>
-      {children}
-    </section>
+    <div>
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
   );
 }
 function money(value: number, currency: string) {

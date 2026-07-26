@@ -7,6 +7,7 @@ const WORKSPACE_RETURN_PREFIXES = [
   "/governance",
   "/meetings",
   "/notes",
+  "/projects",
   "/relations",
   "/roadmap",
   "/settings",

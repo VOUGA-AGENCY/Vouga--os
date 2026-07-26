@@ -76,78 +76,84 @@ export default async function CostsPage({
       <div className="module-heading">
         <div>
           <h1 className="display">Costs</h1>
-          <p className="workspace-intro">Caixa, runway e próximos pagamentos.</p>
+          <p className="workspace-intro">Caixa e compromissos.</p>
         </div>
         <div className="calendar-create-links">
           <Link className="button-secondary" href={history ? "/costs" : "/costs?view=history"}>
-            {history ? "Voltar ao overview" : "Ver histórico"}
+            {history ? "Overview" : "Histórico"}
           </Link>
-          <Link className="button-primary" href="/costs/new">New cost</Link>
+          <Link className="button-primary" href="/costs/new">
+            Novo custo
+          </Link>
         </div>
       </div>
 
       {history ? (
         <CostSection
           costs={historical}
-          description="Custos pagos, terminados ou cancelados continuam preservados."
           empty="Ainda não existem Costs encerrados."
           title="Histórico"
         />
       ) : (
         <>
-          <section className="cost-metrics" aria-label="Posição financeira conhecida">
+          <section className="cost-overview" aria-label="Posição financeira conhecida">
             <Metric label="Este mês" values={month} empty="Sem custos conhecidos" />
             <Metric label="Este ano" values={year} empty="Sem custos conhecidos" />
-            <div className="detail-card">
-              <p className="eyebrow">Caixa estimada hoje</p>
-              {positions.length ? positions.map((position) => (
-                <div className="cost-metric-line" key={position.currency}>
-                  <strong>{money(position.estimatedBalanceMinor, position.currency)}</strong>
-                  <span>{money(position.confirmedBalanceMinor, position.currency)} confirmado</span>
-                </div>
-              )) : <p>Confirma um saldo para calcular a posição.</p>}
+            <div className="cost-overview-item">
+              <p>Caixa hoje</p>
+              {positions.length ? (
+                positions.map((position) => (
+                  <div className="cost-metric-line" key={position.currency}>
+                    <strong>{money(position.estimatedBalanceMinor, position.currency)}</strong>
+                    <span>
+                      {money(position.confirmedBalanceMinor, position.currency)} confirmado
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span className="cost-overview-empty">Saldo por confirmar</span>
+              )}
             </div>
-            <div className="detail-card">
-              <p className="eyebrow">Runway · apenas Costs</p>
-              {positions.length ? positions.map((position) => (
-                <div className="cost-metric-line" key={position.currency}>
-                  <strong>
-                    {position.runwayMonths === null ? "Mais de 24 meses" : `${position.runwayMonths} meses`}
-                  </strong>
-                  <span>
-                    {position.runwayExhaustedOn ? `até ${date(position.runwayExhaustedOn)}` : "não esgota na janela"}
-                    {" · assume receita zero"}
-                  </span>
-                </div>
-              )) : <p>Indisponível sem saldo confirmado.</p>}
+            <div className="cost-overview-item">
+              <p>Runway</p>
+              {positions.length ? (
+                positions.map((position) => (
+                  <div className="cost-metric-line" key={position.currency}>
+                    <strong>
+                      {position.runwayMonths === null
+                        ? "Mais de 24 meses"
+                        : `${position.runwayMonths} meses`}
+                    </strong>
+                    <span>
+                      {position.runwayExhaustedOn
+                        ? `até ${date(position.runwayExhaustedOn)}`
+                        : "não esgota na janela"}
+                      {" · receita zero"}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span className="cost-overview-empty">Indisponível sem saldo</span>
+              )}
             </div>
           </section>
 
-          <details className="detail-card cost-balance-panel">
-            <summary>Atualizar saldo confirmado</summary>
-            <div className="collection-heading">
-              <p>Cada confirmação cria um snapshot imutável; não é uma conta bancária nem um ledger.</p>
+          <details className="cost-balance-disclosure">
+            <summary>
+              <span>Saldo confirmado</span>
+              <small>Atualizar</small>
+            </summary>
+            <div className="cost-balance-content">
+              <p>Cada confirmação guarda um snapshot imutável.</p>
+              <CashBalanceForm members={options.members} />
             </div>
-            <CashBalanceForm members={options.members} />
           </details>
 
           <CostSection
             costs={upcoming}
-            description="Próximos compromissos com uma data conhecida."
             empty="Não existem pagamentos futuros conhecidos."
-            title="A seguir"
-          />
-          <CostSection
-            costs={recurring}
-            description="Subscrições e outros compromissos recorrentes ativos."
-            empty="Não existem Costs recorrentes ativos."
-            title="Recorrentes"
-          />
-          <CostSection
-            costs={oneOff}
-            description="Compromissos pontuais ainda abertos."
-            empty="Não existem Costs pontuais em aberto."
-            title="Pontuais"
+            nextOccurrenceByCost={nextOccurrenceByCost}
+            title="Compromissos"
           />
         </>
       )}
@@ -157,59 +163,62 @@ export default async function CostsPage({
 
 function CostSection({
   costs,
-  description,
   empty,
+  nextOccurrenceByCost,
   title,
 }: {
   costs: readonly CostListItem[];
-  description: string;
   empty: string;
+  nextOccurrenceByCost?: ReadonlyMap<string, string>;
   title: string;
 }) {
   return (
-    <section className="collection-section">
-      <div className="collection-heading">
-        <div>
-          <p className="eyebrow">{costs.length} {costs.length === 1 ? "Cost" : "Costs"}</p>
-          <h2 className="section-title">{title}</h2>
-        </div>
-        <p>{description}</p>
-      </div>
+    <section className="cost-list-section">
+      <header className="cost-list-heading">
+        <h2>{title}</h2>
+        <span>{costs.length}</span>
+      </header>
       {costs.length ? (
-        <div className="collection-list">
-          {costs.map((cost) => <CostRow cost={cost} key={cost.id} />)}
+        <div className="cost-list">
+          {costs.map((cost) => (
+            <CostRow
+              cost={cost}
+              key={cost.id}
+              nextOccurrence={nextOccurrenceByCost?.get(cost.id)}
+            />
+          ))}
         </div>
       ) : (
-        <div className="empty-state empty-state-compact">
-          <p>{empty}</p>
-        </div>
+        <p className="cost-list-empty">{empty}</p>
       )}
     </section>
   );
 }
 
-function CostRow({ cost }: { cost: CostListItem }) {
-  const next = cost.paidOn ?? cost.expectedOn ?? cost.billingAnchorOn;
+function CostRow({ cost, nextOccurrence }: { cost: CostListItem; nextOccurrence?: string }) {
+  const next = nextOccurrence ?? cost.paidOn ?? cost.expectedOn ?? cost.billingAnchorOn;
+  const context = cost.companyName ?? cost.roadmapItemTitle ?? cost.sourceDecisionTitle;
   return (
-    <Link className="collection-row collection-row-cost" href={`/costs/${cost.id}`}>
-      <div className="collection-primary">
-        <span className={`status-pill status-pill-${cost.status}`}>
-          {COST_STATUS_LABELS[cost.status]}
-        </span>
-        <h2>{cost.title}</h2>
-        <p>{cost.description}</p>
+    <Link className="cost-list-row" href={`/costs/${cost.id}`}>
+      <div className="cost-list-primary">
+        <div className="cost-list-title">
+          <h3>{cost.title}</h3>
+          <span className={`cost-list-status status-pill-${cost.status}`}>
+            {COST_STATUS_LABELS[cost.status]}
+          </span>
+        </div>
+        <p>
+          {COST_CATEGORY_LABELS[cost.category]}
+          {cost.supplier ? ` · ${cost.supplier}` : ""}
+          {context ? ` · ${context}` : ""}
+        </p>
       </div>
-      <div className="collection-meta">
-        <span><b>Valor</b>{money(cost.actualAmountMinor ?? cost.expectedAmountMinor, cost.currency)}</span>
+      <div className="cost-list-amount">
+        <strong>{money(cost.actualAmountMinor ?? cost.expectedAmountMinor, cost.currency)}</strong>
         <span>
-          <b>Calendário</b>
-          {cost.recurrence ? COST_RECURRENCE_LABELS[cost.recurrence] : next ? date(next) : "Sem data"}
+          {next ? date(next) : "Sem data"}
+          {cost.recurrence ? ` · ${COST_RECURRENCE_LABELS[cost.recurrence]}` : ""}
         </span>
-        <span>
-          <b>Contexto</b>
-          {cost.companyName ?? cost.roadmapItemTitle ?? cost.sourceDecisionTitle ?? "Sem relação direta"}
-        </span>
-        <span><b>Categoria</b>{COST_CATEGORY_LABELS[cost.category]}</span>
       </div>
     </Link>
   );
@@ -231,17 +240,21 @@ function Metric({
   empty: string;
 }) {
   return (
-    <div className="detail-card">
-      <p className="eyebrow">{label}</p>
-      {values.length ? values.map((value) => (
-        <div className="cost-metric-line" key={value.currency}>
-          <strong>{money(value.amountMinor, value.currency)}</strong>
-          <span>
-            {money(value.confirmedMinor, value.currency)} confirmado ·{" "}
-            {money(value.expectedMinor + value.derivedMinor, value.currency)} conhecido
-          </span>
-        </div>
-      )) : <p>{empty}</p>}
+    <div className="cost-overview-item">
+      <p>{label}</p>
+      {values.length ? (
+        values.map((value) => (
+          <div className="cost-metric-line" key={value.currency}>
+            <strong>{money(value.amountMinor, value.currency)}</strong>
+            <span>
+              {money(value.confirmedMinor, value.currency)} confirmado ·{" "}
+              {money(value.expectedMinor + value.derivedMinor, value.currency)} conhecido
+            </span>
+          </div>
+        ))
+      ) : (
+        <span className="cost-overview-empty">{empty}</span>
+      )}
     </div>
   );
 }

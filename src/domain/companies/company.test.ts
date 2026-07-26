@@ -47,7 +47,7 @@ describe("Company", () => {
     expect(PROSPECTING_STAGE_LABELS).toEqual({
       to_contact: "Por contactar",
       contacted: "Contactados",
-      replied: "A Responder",
+      replied: "Por responder",
       meeting_scheduled: "Agendado",
       not_interested: "Não avançou",
       agreed: "Acordado",

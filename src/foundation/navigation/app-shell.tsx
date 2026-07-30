@@ -42,7 +42,8 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
             className="app-sidebar-logo"
             height={200}
             priority
-            src="/2.png"
+            src="/2.png?v=transparent"
+            unoptimized
             width={500}
           />
         </Link>

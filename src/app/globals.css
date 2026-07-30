@@ -4488,7 +4488,7 @@ a {
     text-decoration: none;
   }
   .app-sidebar-logo {
-    height: var(--control-height-sm);
+    height: var(--control-height-md);
     object-fit: contain;
     object-position: left center;
     width: auto;
@@ -4633,7 +4633,7 @@ a {
 }
 .module-heading,
 .detail-heading {
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 .module-heading > div > .eyebrow {
   display: none;
@@ -4935,7 +4935,7 @@ a {
 /* Object views */
 .detail-grid {
   gap: var(--space-4);
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
 }
 .detail-card {
   min-height: 0;
@@ -4971,7 +4971,7 @@ a {
 .meeting-section,
 .task-actions-section,
 .sprint-add-card {
-  margin-top: var(--space-5);
+  margin-top: var(--space-8);
 }
 .plain-list {
   gap: var(--space-1);
@@ -5016,7 +5016,7 @@ a {
 
 /* Forms */
 .company-form {
-  margin-top: var(--space-5);
+  margin-top: var(--space-8);
 }
 .object-form {
   padding: 0;
@@ -5026,6 +5026,9 @@ a {
   border: 0;
   border-top: var(--border-width) solid var(--color-border);
   padding: var(--space-6) 0 0;
+}
+.form-actions {
+  margin-top: var(--space-7);
 }
 .object-form-task .object-form,
 .object-form-sprint .object-form,
@@ -7191,7 +7194,8 @@ a {
 
 /* Contact profile is read-only; prospecting owns new interaction capture. */
 .crm-contact-profile {
-  gap: var(--space-7);
+  display: grid;
+  gap: var(--space-8);
   max-width: 68rem;
 }
 .crm-contact-hero {
@@ -7381,6 +7385,7 @@ a {
 }
 
 .crm-company-profile {
+  display: grid;
   gap: var(--space-8);
   max-width: 1200px;
 }

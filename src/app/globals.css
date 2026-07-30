@@ -113,6 +113,13 @@ a {
   top: var(--space-7);
   z-index: 2;
 }
+.login-logo {
+  display: block;
+  height: var(--control-height-md);
+  object-fit: contain;
+  object-position: left center;
+  width: auto;
+}
 .login-visual {
   display: none;
   overflow: hidden;

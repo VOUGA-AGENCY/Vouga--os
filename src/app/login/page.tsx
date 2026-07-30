@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { BrandMark } from "@/foundation/appearance/brand-mark";
 import { getSupabasePublicEnv } from "@/foundation/config/supabase-env";
 
@@ -8,9 +10,16 @@ export default function LoginPage() {
 
   return (
     <main className="login-shell">
-      <div className="login-brand brand">
-        <BrandMark priority />
-        <span>Vouga OS</span>
+      <div className="login-brand">
+        <Image
+          alt="Vouga OS"
+          className="login-logo"
+          height={200}
+          priority
+          src="/2.png?v=transparent"
+          unoptimized
+          width={500}
+        />
       </div>
       <section aria-hidden="true" className="login-visual">
         <BrandMark className="login-mark" priority size={112} />

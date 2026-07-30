@@ -1,4 +1,5 @@
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const LOCAL_DATE_TIME_PATTERN = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/;
 const DAY = 86_400_000;
 
 export type CalendarView = "week" | "month" | "agenda";
@@ -87,8 +88,7 @@ export function entryOccursOn(
 
 export function daysBetween(start: string, end: string): number {
   return Math.round(
-    (new Date(`${end}T00:00:00.000Z`).getTime() -
-      new Date(`${start}T00:00:00.000Z`).getTime()) /
+    (new Date(`${end}T00:00:00.000Z`).getTime() - new Date(`${start}T00:00:00.000Z`).getTime()) /
       DAY,
   );
 }
@@ -123,4 +123,30 @@ export function lisbonLocalTimeToIso(dateKey: string, hour: number, minute: numb
   }
 
   return new Date(candidate).toISOString();
+}
+
+export function lisbonLocalDateTimeToIso(value: string): string | null {
+  const match = LOCAL_DATE_TIME_PATTERN.exec(value);
+  if (!match || !isDateKey(match[1])) return null;
+  const hour = Number(match[2]);
+  const minute = Number(match[3]);
+  if (hour > 23 || minute > 59) return null;
+  return lisbonLocalTimeToIso(match[1], hour, minute);
+}
+
+export function isoToLisbonLocalDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    month: "2-digit",
+    timeZone: "Europe/Lisbon",
+    year: "numeric",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }

@@ -9,7 +9,7 @@ import {
 } from "@/application/projects/project-service";
 import type { ProjectOwnedItemValues, ProjectValues } from "@/domain/projects/project";
 import { createProjectModule } from "@/foundation/composition/projects";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 
 function money(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "")
@@ -141,7 +141,7 @@ export async function transitionProjectAction(id: string, form: FormData) {
     );
     refresh(id);
   } catch (error) {
-    redirect(withFeedback(`/projects/${id}`, getProjectApplicationErrorMessage(error)));
+    redirect(withErrorFeedback(`/projects/${id}`, getProjectApplicationErrorMessage(error)));
   }
   redirect(withFeedback(`/projects/${id}`, "Estado atualizado."));
 }

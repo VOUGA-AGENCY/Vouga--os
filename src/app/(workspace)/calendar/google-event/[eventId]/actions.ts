@@ -7,7 +7,7 @@ import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { getGoogleEventArtifactErrorMessage } from "@/application/google/google-event-artifact-service";
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 
 export type GoogleEventArtifactFormState = { message: string | null };
 
@@ -51,7 +51,7 @@ export async function deleteGoogleEventAction(
     ).eventArtifactService.delete(user.id, calendarId, eventId);
   } catch (error) {
     redirect(
-      withFeedback(
+      withErrorFeedback(
         detailHref(eventId, calendarId, returnTo),
         getGoogleEventArtifactErrorMessage(error),
       ),

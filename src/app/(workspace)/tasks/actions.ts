@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 import { getTaskApplicationErrorMessage } from "@/application/tasks/task-service";
 import type { TaskValues } from "@/domain/tasks/task";
 import { createTaskModule } from "@/foundation/composition/tasks";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
+import { lisbonLocalDateTimeToIso } from "@/projections/calendar/calendar-time";
 export type TaskFormState = { message: string | null };
 function values(form: FormData): TaskValues {
   const payload = String(form.get("origin_payload") ?? "planning");
+  const dueAt = String(form.get("due_at") ?? "").trim();
   const [type, ...parts] = payload.split(":");
   const origin =
     type === "meeting"
@@ -28,7 +30,7 @@ function values(form: FormData): TaskValues {
   return {
     title: String(form.get("title") ?? ""),
     ownerMemberId: String(form.get("owner_member_id") ?? ""),
-    dueAt: String(form.get("due_at") ?? "") || null,
+    dueAt: dueAt ? (lisbonLocalDateTimeToIso(dueAt) ?? dueAt) : null,
     origin,
     companyIds: form.getAll("company_id").map(String),
     meetingIds: form.getAll("meeting_id").map(String),
@@ -147,7 +149,7 @@ export async function updateTaskStatusAction(id: string, form: FormData) {
     else throw new Error("O estado selecionado não é válido.");
     refresh(id);
   } catch (error) {
-    redirect(withFeedback(`/tasks/${id}`, getTaskApplicationErrorMessage(error)));
+    redirect(withErrorFeedback(`/tasks/${id}`, getTaskApplicationErrorMessage(error)));
   }
   redirect(withFeedback(`/tasks/${id}`, message));
 }
@@ -156,7 +158,7 @@ export async function deleteTaskAction(id: string) {
     const { service } = await createTaskModule();
     await service.deleteTask(id);
   } catch (error) {
-    redirect(withFeedback(`/tasks/${id}`, getTaskApplicationErrorMessage(error)));
+    redirect(withErrorFeedback(`/tasks/${id}`, getTaskApplicationErrorMessage(error)));
   }
   refresh(id);
   redirect(withFeedback("/tasks", "Task eliminada."));

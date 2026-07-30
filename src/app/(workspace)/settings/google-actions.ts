@@ -5,13 +5,14 @@ import { redirect } from "next/navigation";
 
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 
 export async function disconnectGoogleAction(): Promise<void> {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
 
   let message: string;
+  let failed = false;
   try {
     const result = await (await createGoogleIntegrationModule()).service.disconnect(user.id);
     message = result.remotelyRevoked
@@ -19,8 +20,11 @@ export async function disconnectGoogleAction(): Promise<void> {
       : "Conta desligada no OS. Confirma também a revogação na tua Conta Google.";
   } catch {
     message = "Não foi possível desligar a conta Google.";
+    failed = true;
   }
-  redirect(`${withFeedback("/settings", message)}#google`);
+  redirect(
+    `${failed ? withErrorFeedback("/settings", message) : withFeedback("/settings", message)}#google`,
+  );
 }
 
 export async function saveGoogleCalendarsAction(formData: FormData): Promise<void> {
@@ -28,6 +32,7 @@ export async function saveGoogleCalendarsAction(formData: FormData): Promise<voi
   if (!user) redirect("/login");
 
   let message: string;
+  let failed = false;
   try {
     const calendarIds = formData.getAll("calendar_id").map(String).filter(Boolean);
     const publishCalendarId = String(formData.get("publish_calendar_id") ?? "") || null;
@@ -38,6 +43,9 @@ export async function saveGoogleCalendarsAction(formData: FormData): Promise<voi
     message = "Calendários atualizados.";
   } catch {
     message = "Não foi possível guardar os calendários.";
+    failed = true;
   }
-  redirect(`${withFeedback("/settings", message)}#google`);
+  redirect(
+    `${failed ? withErrorFeedback("/settings", message) : withFeedback("/settings", message)}#google`,
+  );
 }

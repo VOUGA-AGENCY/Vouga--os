@@ -6,6 +6,7 @@ import { requireGovernanceAccess } from "@/application/governance/require-govern
 import type { CostCategory, CostRecurrence, CostType, CostValues } from "@/domain/costs/cost";
 import { createCostModule } from "@/foundation/composition/costs";
 import { withFeedback } from "@/foundation/ui/feedback";
+import { lisbonLocalDateTimeToIso } from "@/projections/calendar/calendar-time";
 
 export type CostFormState = { message: string | null };
 function amount(value: FormDataEntryValue | null) {
@@ -110,10 +111,11 @@ export async function recordCashBalanceAction(
   try {
     await requireGovernanceAccess("/costs");
     const { service } = await createCostModule();
+    const confirmedAt = String(form.get("confirmed_at") ?? "").trim();
     await service.recordCashBalance({
       balanceMinor: amount(form.get("balance")),
       currency: String(form.get("currency") ?? "EUR"),
-      confirmedAt: String(form.get("confirmed_at") ?? ""),
+      confirmedAt: lisbonLocalDateTimeToIso(confirmedAt) ?? confirmedAt,
       confirmedByMemberId: String(form.get("confirmed_by_member_id") ?? ""),
       description: String(form.get("description") ?? "") || null,
     });

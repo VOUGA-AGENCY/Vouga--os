@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Ellipsis, Settings, X } from "lucide-react";
@@ -35,9 +36,15 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
       </a>
 
       <aside aria-label="Workspace Vouga" className="app-sidebar">
-        <Link className="brand app-sidebar-brand" href="/context">
-          <BrandMark priority />
-          <span>Vouga OS</span>
+        <Link aria-label="Vouga OS — Context Engine" className="app-sidebar-brand" href="/context">
+          <Image
+            alt="Vouga OS"
+            className="app-sidebar-logo"
+            height={200}
+            priority
+            src="/2.png"
+            width={500}
+          />
         </Link>
 
         <DesktopNavigation pathname={pathname} />

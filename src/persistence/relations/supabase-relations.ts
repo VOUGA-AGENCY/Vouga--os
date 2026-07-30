@@ -138,13 +138,12 @@ export class SupabaseContactRepository implements ContactRepository {
       throw new ContactValidationError(
         "Este Perfil ainda está ligado a contexto protegido e não pode ser eliminado.",
       );
-    if (error.code === "P0002")
-      throw new ContactValidationError("Este Perfil já não existe.");
+    if (error.code === "P0002") throw new ContactValidationError("Este Perfil já não existe.");
     if (error.code === "42501")
       throw new ContactValidationError(
         "A sessão atual não tem permissão para eliminar este Perfil. Volta a entrar e tenta novamente.",
       );
-    throw new Error("Não foi possível eliminar o Perfil.");
+    throw new ContactValidationError("Não foi possível eliminar o Perfil.");
   }
   async createTemplate(values: {
     name: string;
@@ -299,14 +298,17 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
           .order("occurred_at", { ascending: false }),
         this.supabase
           .from("task_companies")
-          .select("company_id,task:tasks!task_companies_task_id_fkey(id,title,due_at,status,purpose)")
+          .select(
+            "company_id,task:tasks!task_companies_task_id_fkey(id,title,due_at,status,purpose)",
+          ),
       ]);
     if (
       companiesResult.error ||
       contactsResult.error ||
       interactionsResult.error ||
       followUpsResult.error
-    ) throw new Error("Não foi possível carregar a prospeção.");
+    )
+      throw new Error("Não foi possível carregar a prospeção.");
     const contacts = (contactsResult.data ?? []) as Array<{
       id: string;
       display_name: string;
@@ -316,25 +318,37 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
       relationship_role: ContactRole;
     }>;
     const interactions = (interactionsResult.data ?? []) as Array<{
-      contact_id: string; channel: ContactChannel; body: string; occurred_at: string;
+      contact_id: string;
+      channel: ContactChannel;
+      body: string;
+      occurred_at: string;
     }>;
     const followUps = (followUpsResult.data ?? []) as unknown as Array<{
       company_id: string;
-      task: { id: string; title: string; due_at: string | null; status: string; purpose: string } | null;
+      task: {
+        id: string;
+        title: string;
+        due_at: string | null;
+        status: string;
+        purpose: string;
+      } | null;
     }>;
     return (companiesResult.data ?? []).map((company) => {
       const ownContacts = contacts.filter((contact) => contact.company_id === company.id);
       const contactIds = new Set(ownContacts.map((contact) => contact.id));
       const last = interactions.find((interaction) => contactIds.has(interaction.contact_id));
       const next = followUps
-        .filter((item) =>
-          item.company_id === company.id && item.task?.purpose === "relationship_follow_up" &&
-          item.task.status !== "completed" && item.task.status !== "cancelled")
+        .filter(
+          (item) =>
+            item.company_id === company.id &&
+            item.task?.purpose === "relationship_follow_up" &&
+            item.task.status !== "completed" &&
+            item.task.status !== "cancelled",
+        )
         .map((item) => item.task!)
         .sort((a, b) => (a.due_at ?? "9999").localeCompare(b.due_at ?? "9999"))[0];
       const primary =
-        ownContacts.find((contact) => contact.id === company.primary_contact_id) ??
-        ownContacts[0];
+        ownContacts.find((contact) => contact.id === company.primary_contact_id) ?? ownContacts[0];
       return {
         companyId: String(company.id),
         companyName: String(company.name),
@@ -350,7 +364,9 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
           avatarUrl: contact.avatar_url,
           relationshipRole: contact.relationship_role,
         })),
-        lastContact: last ? { channel: last.channel, body: last.body, occurredAt: last.occurred_at } : null,
+        lastContact: last
+          ? { channel: last.channel, body: last.body, occurredAt: last.occurred_at }
+          : null,
         nextStep: next ? { id: next.id, title: next.title, dueAt: next.due_at } : null,
       };
     });

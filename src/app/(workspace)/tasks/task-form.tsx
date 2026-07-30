@@ -9,6 +9,7 @@ import {
   RequiredFieldsNote,
 } from "@/foundation/ui/form-controls";
 import type { TaskDetail } from "@/projections/tasks/task-read-model";
+import { isoToLisbonLocalDateTime } from "@/projections/calendar/calendar-time";
 import type { TaskFormState } from "./actions";
 type Action = (state: TaskFormState, data: FormData) => Promise<TaskFormState>;
 function payload(task: TaskDetail) {
@@ -73,7 +74,7 @@ export function TaskForm({
           <div className="field field-light">
             <label htmlFor="due_at">Data limite</label>
             <input
-              defaultValue={task?.dueAt?.slice(0, 16) ?? ""}
+              defaultValue={task?.dueAt ? isoToLisbonLocalDateTime(task.dueAt) : ""}
               id="due_at"
               name="due_at"
               type="datetime-local"

@@ -191,7 +191,9 @@ export async function recordContactInteractionAction(fd: FormData) {
       stage: String(fd.get("stage") ?? "contacted") as ProspectingStage,
     });
   } catch (error) {
-    redirect(withFeedback(`/relations?segment=${returnSegment}`, getRelationsErrorMessage(error)));
+    redirect(
+      withErrorFeedback(`/relations?segment=${returnSegment}`, getRelationsErrorMessage(error)),
+    );
   }
   revalidatePath("/relations");
   revalidatePath("/companies");

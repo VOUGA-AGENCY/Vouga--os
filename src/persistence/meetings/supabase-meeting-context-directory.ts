@@ -37,11 +37,14 @@ export class SupabaseMeetingContextDirectory implements MeetingContextDirectory 
       .eq("status", "active")
       .order("display_name");
     if (error) throw new Error("Não foi possível carregar Contacts.");
-    return (data ?? []).map((row) => ({
-      id: row.id,
-      displayName: row.display_name,
-      companyName: row.company?.[0]?.name ?? null,
-    }));
+    return (data ?? []).map((row) => {
+      const company = Array.isArray(row.company) ? row.company[0] : row.company;
+      return {
+        id: row.id,
+        displayName: row.display_name,
+        companyName: company?.name ?? null,
+      };
+    });
   }
   async contactsExist(ids: readonly string[]) {
     const unique = [...new Set(ids)];

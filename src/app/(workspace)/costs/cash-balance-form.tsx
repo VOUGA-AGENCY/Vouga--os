@@ -2,13 +2,14 @@
 import { useActionState } from "react";
 import type { ActiveMember } from "@/application/members/contracts";
 import { FormFeedback, FormSubmit } from "@/foundation/ui/form-controls";
+import { isoToLisbonLocalDateTime } from "@/projections/calendar/calendar-time";
 import { recordCashBalanceAction, type CostFormState } from "./actions";
 
 export function CashBalanceForm({ members }: { members: readonly ActiveMember[] }) {
   const [state, action] = useActionState<CostFormState, FormData>(recordCashBalanceAction, {
     message: null,
   });
-  const now = new Date().toISOString().slice(0, 16);
+  const now = isoToLisbonLocalDateTime(new Date().toISOString());
   return (
     <form action={action} className="cash-balance-form">
       <div className="company-form-grid">

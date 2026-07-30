@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { requireGovernanceAccess } from "@/application/governance/require-governance-access";
 import { getVaultApplicationErrorMessage } from "@/application/vault/vault-service";
 import { createVaultModule } from "@/foundation/composition/vault";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 
 export type VaultFormState = { message: string | null };
 export type VaultRevealState =
@@ -41,7 +41,10 @@ export async function createVaultEntryAction(
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createClient } from "@/persistence/supabase/server";
 
-export async function revealVaultEntryAction(id: string, accountPassword?: string): Promise<VaultRevealState> {
+export async function revealVaultEntryAction(
+  id: string,
+  accountPassword?: string,
+): Promise<VaultRevealState> {
   noStore();
   try {
     const user = await getAuthenticatedUser();
@@ -75,7 +78,7 @@ export async function deleteVaultEntryAction(id: string): Promise<void> {
     const { service } = await createVaultModule();
     await service.deleteEntry(id);
   } catch (error) {
-    redirect(withFeedback("/vault", getVaultApplicationErrorMessage(error)));
+    redirect(withErrorFeedback("/vault", getVaultApplicationErrorMessage(error)));
   }
   revalidatePath("/vault");
   redirect(withFeedback("/vault", "Credencial eliminada."));

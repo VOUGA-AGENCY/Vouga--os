@@ -4480,8 +4480,18 @@ a {
     z-index: 20;
   }
   .app-sidebar-brand {
+    align-items: center;
+    color: inherit;
+    display: flex;
     min-height: var(--workspace-header-height);
     padding: 0 var(--space-3);
+    text-decoration: none;
+  }
+  .app-sidebar-logo {
+    height: var(--control-height-sm);
+    object-fit: contain;
+    object-position: left center;
+    width: auto;
   }
   .sidebar-navigation {
     flex-direction: column;

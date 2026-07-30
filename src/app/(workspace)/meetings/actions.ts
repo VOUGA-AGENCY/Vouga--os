@@ -10,7 +10,7 @@ import {
 } from "@/application/meetings/meeting-service";
 import { createMeetingModule } from "@/foundation/composition/meetings";
 import { safeWorkspaceReturnTo, withReturnTo } from "@/foundation/navigation/return-to";
-import { withFeedback } from "@/foundation/ui/feedback";
+import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 import type { Meeting } from "@/domain/meetings/meeting";
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
 
@@ -123,7 +123,7 @@ export async function deleteMeetingAction(meetingId: string): Promise<void> {
   const mirror = await removeGoogleMirror(context.userId, meeting);
   if (mirror === "error")
     redirect(
-      withFeedback(
+      withErrorFeedback(
         `/meetings/${meetingId}`,
         "Não foi possível eliminar no Google. Nada foi removido do OS.",
       ),
@@ -131,7 +131,7 @@ export async function deleteMeetingAction(meetingId: string): Promise<void> {
   try {
     await context.service.deleteMeeting(meetingId);
   } catch (error) {
-    redirect(withFeedback(`/meetings/${meetingId}`, getMeetingApplicationErrorMessage(error)));
+    redirect(withErrorFeedback(`/meetings/${meetingId}`, getMeetingApplicationErrorMessage(error)));
   }
   revalidateMeetingPaths(meetingId);
   redirect(withFeedback("/calendar", "Meeting ou Event eliminado."));

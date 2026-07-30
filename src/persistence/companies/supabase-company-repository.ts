@@ -94,8 +94,7 @@ export class SupabaseCompanyRepository implements CompanyRepository {
       )
       .single();
 
-    if (error || !data)
-      throw new CompanyPersistenceError("Não foi possível criar a Organisation.");
+    if (error || !data) throw new CompanyPersistenceError("Não foi possível criar a Organisation.");
     return toCompany(data as CompanyRow);
   }
 
@@ -131,7 +130,8 @@ export class SupabaseCompanyRepository implements CompanyRepository {
     if (!error) return "deleted";
     const message = error.message.toLocaleLowerCase("en");
     if (message.includes("profiles first")) return "profiles";
-    if (message.includes("protected operational context")) return "protected";
+    if (error.code === "23503" || message.includes("protected operational context"))
+      return "protected";
     if (message.includes("not found")) return "not_found";
     throw new CompanyPersistenceError("Não foi possível eliminar a Organisation.");
   }

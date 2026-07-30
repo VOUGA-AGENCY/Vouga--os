@@ -105,10 +105,18 @@ export class CostService {
     if (!/^[A-Z]{3}$/.test(currency)) {
       throw new CostValidationError("A moeda deve usar um código ISO com três letras.");
     }
+    const confirmedAt = new Date(values.confirmedAt);
+    if (Number.isNaN(confirmedAt.getTime())) {
+      throw new CostValidationError("A data de confirmação não é válida.");
+    }
     if (!(await this.members.isActive(values.confirmedByMemberId))) {
       throw new CostReferenceError("Seleciona um membro ativo para confirmar o saldo.");
     }
-    return this.balances.create({ ...values, currency });
+    return this.balances.create({
+      ...values,
+      confirmedAt: confirmedAt.toISOString(),
+      currency,
+    });
   }
 
   private async assertReferences(values: ReturnType<typeof validateCostValues>) {

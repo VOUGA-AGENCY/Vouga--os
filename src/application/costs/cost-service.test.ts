@@ -44,8 +44,27 @@ describe("CostService", () => {
       confirmedByMemberId: "member",
     });
     expect(balances.create).toHaveBeenCalledWith(
-      expect.objectContaining({ balanceMinor: 100_000, currency: "EUR" }),
+      expect.objectContaining({
+        balanceMinor: 100_000,
+        confirmedAt: "2026-07-16T10:00:00.000Z",
+        currency: "EUR",
+      }),
     );
+  });
+
+  it("rejects an invalid cash snapshot instant before persistence", async () => {
+    const balances = cashRepository();
+    const service = createService(costRepository(), true, balances);
+
+    await expect(
+      service.recordCashBalance({
+        balanceMinor: 100_000,
+        currency: "EUR",
+        confirmedAt: "not-a-date",
+        confirmedByMemberId: "member",
+      }),
+    ).rejects.toThrow("data de confirmação");
+    expect(balances.create).not.toHaveBeenCalled();
   });
 });
 

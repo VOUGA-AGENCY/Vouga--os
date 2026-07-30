@@ -5,6 +5,8 @@ import {
   addMonths,
   dateKeyInLisbon,
   entryOccursOn,
+  isoToLisbonLocalDateTime,
+  lisbonLocalDateTimeToIso,
   lisbonLocalTimeToIso,
   rangeForView,
   startOfWeek,
@@ -40,6 +42,15 @@ describe("calendar time", () => {
     expect(dateKeyInLisbon("2026-03-29T23:30:00.000Z")).toBe("2026-03-30");
     expect(lisbonLocalTimeToIso("2026-07-20", 9, 30)).toBe("2026-07-20T08:30:00.000Z");
     expect(lisbonLocalTimeToIso("2026-01-20", 9, 30)).toBe("2026-01-20T09:30:00.000Z");
+  });
+
+  it("round-trips datetime-local values through Europe/Lisbon", () => {
+    expect(lisbonLocalDateTimeToIso("2026-07-20T09:30")).toBe("2026-07-20T08:30:00.000Z");
+    expect(isoToLisbonLocalDateTime("2026-07-20T08:30:00.000Z")).toBe("2026-07-20T09:30");
+    expect(lisbonLocalDateTimeToIso("2026-01-20T09:30")).toBe("2026-01-20T09:30:00.000Z");
+    expect(isoToLisbonLocalDateTime("2026-01-20T09:30:00.000Z")).toBe("2026-01-20T09:30");
+    expect(lisbonLocalDateTimeToIso("not-a-date")).toBeNull();
+    expect(isoToLisbonLocalDateTime("not-a-date")).toBe("");
   });
 
   it("treats Sprint end dates as inclusive", () => {

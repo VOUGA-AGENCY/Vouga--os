@@ -12,20 +12,14 @@ import {
 import {
   addDays,
   dateKeyInLisbon,
+  isoToLisbonLocalDateTime,
+  lisbonLocalDateTimeToIso,
   lisbonLocalTimeToIso,
 } from "@/projections/calendar/calendar-time";
 import type { MeetingDetail } from "@/projections/meetings/meeting-read-model";
 import type { MeetingFormState } from "./actions";
 type Action = (state: MeetingFormState, data: FormData) => Promise<MeetingFormState>;
 const initial = { message: null };
-function local(iso: string) {
-  const date = new Date(iso);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-function iso(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
-}
 export function MeetingForm({
   action,
   defaults,
@@ -43,8 +37,8 @@ export function MeetingForm({
   const initialStartsAt = meeting?.startsAt ?? defaults.startsAt;
   const initialEndsAt = meeting?.endsAt ?? defaults.endsAt;
   const [kind, setKind] = useState<MeetingKind>(meeting?.kind ?? "meeting");
-  const [start, setStart] = useState(local(initialStartsAt));
-  const [end, setEnd] = useState(local(initialEndsAt));
+  const [start, setStart] = useState(isoToLisbonLocalDateTime(initialStartsAt));
+  const [end, setEnd] = useState(isoToLisbonLocalDateTime(initialEndsAt));
   const [vacationStart, setVacationStart] = useState(dateKeyInLisbon(initialStartsAt));
   const [vacationEnd, setVacationEnd] = useState(
     meeting?.kind === "vacation"
@@ -64,9 +58,13 @@ export function MeetingForm({
       <input
         name="starts_at"
         type="hidden"
-        value={kind === "vacation" ? vacationStartsAt : iso(start)}
+        value={kind === "vacation" ? vacationStartsAt : (lisbonLocalDateTimeToIso(start) ?? "")}
       />
-      <input name="ends_at" type="hidden" value={kind === "vacation" ? vacationEndsAt : iso(end)} />
+      <input
+        name="ends_at"
+        type="hidden"
+        value={kind === "vacation" ? vacationEndsAt : (lisbonLocalDateTimeToIso(end) ?? "")}
+      />
       {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       {kind === "vacation" ? null : <RequiredFieldsNote />}
       <FormFields>

@@ -162,7 +162,7 @@ export default async function SprintDetailPage({
                       <Link className="table-primary-link" href={`/tasks/${task.taskId}`}>
                         {task.title}
                       </Link>
-                      <small>{task.expectedResult}</small>
+                      {task.expectedResult ? <small>{task.expectedResult}</small> : null}
                     </td>
                     <td>
                       <span className={`status-pill status-pill-${task.status}`}>

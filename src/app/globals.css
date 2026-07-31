@@ -6408,7 +6408,7 @@ a {
 }
 .object-form {
   border-top: var(--border-width) solid var(--color-border);
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
   padding: var(--space-6) 0 0;
 }
 .settings-section {
@@ -6539,7 +6539,8 @@ a {
 
 /* Founder CRM — one calm, data-first surface built from the existing Vouga tokens. */
 .crm-main {
-  gap: var(--space-6);
+  display: grid;
+  gap: var(--space-8);
   max-width: 1500px;
 }
 .crm-page-heading h1 {
@@ -7050,7 +7051,7 @@ a {
 .crm-editor {
   display: grid;
   gap: var(--space-4);
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
   max-width: 54rem;
 }
 .crm-editor .form-fields {
@@ -7567,7 +7568,7 @@ a {
 /* Contacts workspace — follow-ups first, pipeline as quiet expandable lists. */
 .crm-contacts-workspace {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-8);
 }
 .crm-segment-switcher {
   align-items: center;
@@ -7595,7 +7596,7 @@ a {
 }
 .crm-followups {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-7);
 }
 .crm-followups > header h2 {
   font-size: var(--text-xl);
@@ -7609,7 +7610,7 @@ a {
 }
 .crm-followup-groups {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-8);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .crm-followup-group > header {

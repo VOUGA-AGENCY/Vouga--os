@@ -11,6 +11,7 @@ import type { ContactChannel } from "@/domain/relations/contact";
 import type { ProspectingStage } from "@/domain/companies/company";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createRelationsModule } from "@/foundation/composition/relations";
+import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
 import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
 export type RelationsFormState = { message: string | null };
 const RELATIONS_GENERIC_ERROR = "Não foi possível guardar esta relação.";
@@ -177,27 +178,28 @@ export async function recordProspectingTouchAction(companyId: string, fd: FormDa
 
 export async function recordContactInteractionAction(fd: FormData) {
   if (!(await getAuthenticatedUser())) redirect("/login");
-  const [companyId, contactId] = String(fd.get("contact_pair") ?? "").split(":");
-  const returnSegment =
-    String(fd.get("return_segment") ?? "") === "internal" ? "internal" : "prospecting";
+  const companyId = String(fd.get("company_id") ?? "").trim();
+  const contactId = String(fd.get("contact_id") ?? "").trim() || null;
+  const returnTo = safeWorkspaceReturnTo(
+    String(fd.get("return_to") ?? ""),
+    "/relations?segment=prospecting",
+  );
   try {
     const { service } = await createRelationsModule();
     await service.recordContactInteraction({
-      companyId: companyId ?? "",
-      contactId: contactId ?? "",
+      companyId,
+      contactId,
       channel: String(fd.get("channel") ?? "linkedin") as ContactChannel,
       body: String(fd.get("body") ?? ""),
       sourceTemplateId: String(fd.get("source_template_id") ?? "") || null,
       stage: String(fd.get("stage") ?? "contacted") as ProspectingStage,
     });
   } catch (error) {
-    redirect(
-      withErrorFeedback(`/relations?segment=${returnSegment}`, getRelationsErrorMessage(error)),
-    );
+    redirect(withErrorFeedback(returnTo, getRelationsErrorMessage(error)));
   }
   revalidatePath("/relations");
   revalidatePath("/companies");
   revalidatePath(`/companies/${companyId}`);
-  revalidatePath(`/relations/contacts/${contactId}`);
-  redirect(withFeedback(`/relations?segment=${returnSegment}`, "Interação registada."));
+  if (contactId) revalidatePath(`/relations/contacts/${contactId}`);
+  redirect(withFeedback(returnTo, "Interação registada."));
 }

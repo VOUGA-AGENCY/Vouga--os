@@ -7,10 +7,7 @@ import {
   type ContactRole,
   type ContactValues,
 } from "@/domain/relations/contact";
-import {
-  PROSPECTING_STAGES,
-  type ProspectingStage,
-} from "@/domain/companies/company";
+import { PROSPECTING_STAGES, type ProspectingStage } from "@/domain/companies/company";
 import type { ContactRepository, RelationsDirectory } from "./contracts";
 
 export class RelationsService {
@@ -88,13 +85,16 @@ export class RelationsService {
   }
   async recordContactInteraction(values: {
     companyId: string;
-    contactId: string;
+    contactId: string | null;
     channel: ContactChannel;
     body: string;
     sourceTemplateId?: string | null;
     stage: ProspectingStage;
   }) {
+    const companyId = values.companyId.trim();
+    const contactId = values.contactId?.trim() || null;
     const body = values.body.trim();
+    if (!companyId) throw new ContactValidationError("Seleciona uma Organisation.");
     if (!body) throw new ContactValidationError("Escreve a mensagem ou escolhe um guião.");
     if (!CONTACT_CHANNELS.includes(values.channel))
       throw new ContactValidationError("O tipo de interação não é válido.");
@@ -102,12 +102,15 @@ export class RelationsService {
       throw new ContactValidationError("O estado da relação não é válido.");
     return this.repository.recordContactInteraction({
       ...values,
+      companyId,
+      contactId,
       body,
       sourceTemplateId: values.sourceTemplateId || null,
     });
   }
   async createInteraction(values: {
-    contactId: string;
+    companyId: string;
+    contactId: string | null;
     direction: ContactDirection;
     channel: ContactChannel;
     body: string;
@@ -116,12 +119,17 @@ export class RelationsService {
     sourceTemplateId?: string | null;
     memberId: string;
   }) {
+    const companyId = values.companyId.trim();
+    const contactId = values.contactId?.trim() || null;
     const body = values.body.trim();
+    if (!companyId) throw new ContactValidationError("Seleciona uma Organisation.");
     if (!body) throw new ContactValidationError("A mensagem ou nota da chamada é obrigatória.");
     if (Number.isNaN(Date.parse(values.occurredAt)))
       throw new ContactValidationError("A data do contacto não é válida.");
     return this.repository.createInteraction({
       ...values,
+      companyId,
+      contactId,
       body,
       occurredAt: new Date(values.occurredAt).toISOString(),
       replyToInteractionId: values.replyToInteractionId || null,

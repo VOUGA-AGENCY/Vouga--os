@@ -12,6 +12,7 @@ import type {
 } from "@/domain/relations/contact";
 import type { ProspectingStage } from "@/domain/companies/company";
 import type {
+  CompanyInteractionItem,
   ContactDetail,
   ContactInteractionItem,
   ContactListItem,
@@ -43,12 +44,14 @@ type ContactRow = {
 };
 type InteractionRow = {
   id: string;
-  contact_id: string;
+  company_id: string;
+  contact_id: string | null;
   direction: ContactDirection;
   channel: ContactChannel;
   body: string;
   occurred_at: string;
   reply_to_interaction_id: string | null;
+  contact?: { display_name: string } | null;
   recorder?: { display_name: string } | null;
 };
 const isMissingSchema = (error: { code?: string } | null) =>
@@ -186,7 +189,7 @@ export class SupabaseContactRepository implements ContactRepository {
   }
   async recordContactInteraction(values: {
     companyId: string;
-    contactId: string;
+    contactId: string | null;
     channel: ContactChannel;
     body: string;
     sourceTemplateId: string | null;
@@ -204,7 +207,8 @@ export class SupabaseContactRepository implements ContactRepository {
     return String(data);
   }
   async createInteraction(values: {
-    contactId: string;
+    companyId: string;
+    contactId: string | null;
     direction: ContactDirection;
     channel: ContactChannel;
     body: string;
@@ -216,6 +220,7 @@ export class SupabaseContactRepository implements ContactRepository {
     const { data, error } = await this.supabase
       .from("contact_interactions")
       .insert({
+        company_id: values.companyId,
         contact_id: values.contactId,
         direction: values.direction,
         channel: values.channel,
@@ -294,7 +299,7 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
           .eq("status", "active"),
         this.supabase
           .from("contact_interactions")
-          .select("contact_id,channel,body,occurred_at")
+          .select("company_id,contact_id,channel,body,occurred_at")
           .order("occurred_at", { ascending: false }),
         this.supabase
           .from("task_companies")
@@ -318,7 +323,8 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
       relationship_role: ContactRole;
     }>;
     const interactions = (interactionsResult.data ?? []) as Array<{
-      contact_id: string;
+      company_id: string;
+      contact_id: string | null;
       channel: ContactChannel;
       body: string;
       occurred_at: string;
@@ -335,8 +341,7 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
     }>;
     return (companiesResult.data ?? []).map((company) => {
       const ownContacts = contacts.filter((contact) => contact.company_id === company.id);
-      const contactIds = new Set(ownContacts.map((contact) => contact.id));
-      const last = interactions.find((interaction) => contactIds.has(interaction.contact_id));
+      const last = interactions.find((interaction) => interaction.company_id === company.id);
       const next = followUps
         .filter(
           (item) =>
@@ -353,7 +358,6 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
         companyId: String(company.id),
         companyName: String(company.name),
         stage: company.prospecting_stage as ContactPipelineRow["stage"],
-        segment: primary?.relationship_role === "prospect" ? "prospecting" : "internal",
         primaryContactId: primary?.id ?? null,
         primaryContactName: primary?.display_name ?? null,
         primaryContactAvatarUrl: primary?.avatar_url ?? null,
@@ -381,7 +385,9 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
         .order("display_name"),
       this.supabase
         .from("contact_interactions")
-        .select("id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id")
+        .select(
+          "id,company_id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id",
+        )
         .order("occurred_at", { ascending: false }),
     ]);
     if (isMissingSchema(contactsResult.error)) return [];
@@ -430,7 +436,7 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
       this.supabase
         .from("contact_interactions")
         .select(
-          "id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id,recorder:members!contact_interactions_recorded_by_member_id_fkey(display_name)",
+          "id,company_id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id,recorder:members!contact_interactions_recorded_by_member_id_fkey(display_name)",
         )
         .eq("contact_id", id)
         .order("occurred_at"),
@@ -448,6 +454,8 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
     const raw = (interactionResult.data ?? []) as unknown as InteractionRow[];
     const interactions: ContactInteractionItem[] = raw.map((i) => ({
       id: i.id,
+      companyId: i.company_id,
+      contactId: i.contact_id,
       direction: i.direction,
       channel: i.channel,
       body: i.body,
@@ -481,6 +489,24 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
       interactions,
       meetings,
     };
+  }
+  async listInteractionsByCompany(companyId: string): Promise<CompanyInteractionItem[]> {
+    const { data, error } = await this.supabase
+      .from("contact_interactions")
+      .select(
+        "id,company_id,contact_id,channel,body,occurred_at,contact:contacts!contact_interactions_contact_id_fkey(display_name)",
+      )
+      .eq("company_id", companyId)
+      .order("occurred_at", { ascending: false });
+    if (error) throw new Error("Não foi possível carregar o histórico da Organisation.");
+    return ((data ?? []) as unknown as InteractionRow[]).map((row) => ({
+      id: row.id,
+      contactId: row.contact_id,
+      contactName: row.contact?.display_name ?? null,
+      channel: row.channel,
+      body: row.body,
+      occurredAt: row.occurred_at,
+    }));
   }
   async listTemplates(): Promise<MessageTemplateItem[]> {
     const { data, error } = await this.supabase

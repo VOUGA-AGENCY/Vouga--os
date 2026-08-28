@@ -14,11 +14,11 @@ begin
   insert into public.contact_message_templates(id,name,channel,body,created_by_member_id) values
   ('f0110002-0000-4000-8000-000000000001','Introdução curta','linkedin','Olá — estou a trabalhar numa abordagem operacional que pode ser relevante para o teu contexto. Faz sentido falarmos 20 minutos?',owner_id),
   ('f0110002-0000-4000-8000-000000000002','Follow-up depois de conversa','email','Obrigado pela conversa. Deixo abaixo o ponto central e o próximo passo que combinámos.',owner_id);
-  insert into public.contact_interactions(id,contact_id,direction,channel,body,occurred_at,source_template_id,recorded_by_member_id) values
-  ('f0110003-0000-4000-8000-000000000001','f0110001-0000-4000-8000-000000000001','outbound','linkedin','Olá — estou a trabalhar numa abordagem operacional que pode ser relevante para o teu contexto. Faz sentido falarmos 20 minutos?',now()-interval '8 days','f0110002-0000-4000-8000-000000000001',owner_id),
-  ('f0110003-0000-4000-8000-000000000003','f0110001-0000-4000-8000-000000000002','outbound','email','Envio uma introdução curta à Vouga e ao problema que estamos a resolver.',now()-interval '2 days',null,owner_id);
-  insert into public.contact_interactions(id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id,recorded_by_member_id) values
-  ('f0110003-0000-4000-8000-000000000002','f0110001-0000-4000-8000-000000000001','inbound','linkedin','Sim, vamos marcar. Tenho disponibilidade na próxima semana.',now()-interval '7 days','f0110003-0000-4000-8000-000000000001',owner_id);
+  insert into public.contact_interactions(id,company_id,contact_id,direction,channel,body,occurred_at,source_template_id,recorded_by_member_id) values
+  ('f0110003-0000-4000-8000-000000000001','f0040001-0000-4000-8000-000000000001','f0110001-0000-4000-8000-000000000001','outbound','linkedin','Olá — estou a trabalhar numa abordagem operacional que pode ser relevante para o teu contexto. Faz sentido falarmos 20 minutos?',now()-interval '8 days','f0110002-0000-4000-8000-000000000001',owner_id),
+  ('f0110003-0000-4000-8000-000000000003','f0040001-0000-4000-8000-000000000002','f0110001-0000-4000-8000-000000000002','outbound','email','Envio uma introdução curta à Vouga e ao problema que estamos a resolver.',now()-interval '2 days',null,owner_id);
+  insert into public.contact_interactions(id,company_id,contact_id,direction,channel,body,occurred_at,reply_to_interaction_id,recorded_by_member_id) values
+  ('f0110003-0000-4000-8000-000000000002','f0040001-0000-4000-8000-000000000001','f0110001-0000-4000-8000-000000000001','inbound','linkedin','Sim, vamos marcar. Tenho disponibilidade na próxima semana.',now()-interval '7 days','f0110003-0000-4000-8000-000000000001',owner_id);
   insert into public.meeting_participants(meeting_id,contact_id,external_name)
   select 'f0040002-0000-4000-8000-000000000001','f0110001-0000-4000-8000-000000000001','Marta Correia'
   where exists(select 1 from public.meetings where id='f0040002-0000-4000-8000-000000000001');

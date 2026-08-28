@@ -1,34 +1,37 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ContactChannel } from "@/domain/relations/contact";
 import { PROSPECTING_STAGE_LABELS, PROSPECTING_STAGES } from "@/domain/companies/company";
 import { FormSubmit } from "@/foundation/ui/form-controls";
 import type { MessageTemplateItem } from "@/projections/relations/relations-read-model";
 import { recordContactInteractionAction } from "./actions";
-
-type ContactPair = Readonly<{
-  companyId: string;
-  companyName: string;
-  contactId: string;
-  contactName: string;
-}>;
+import { profilesForInteractionCompany, type InteractionCompanyOption } from "./relations-view";
 
 export function InteractionModal({
-  pairs,
+  companies,
+  returnTo,
   templates,
-  segment,
 }: {
-  pairs: readonly ContactPair[];
+  companies: readonly InteractionCompanyOption[];
+  returnTo: string;
   templates: readonly MessageTemplateItem[];
-  segment: "prospecting" | "internal";
 }) {
   const [open, setOpen] = useState(false);
+  const [companyId, setCompanyId] = useState("");
+  const [contactId, setContactId] = useState("");
   const [channel, setChannel] = useState<ContactChannel>("linkedin");
   const [body, setBody] = useState("");
   const [templateId, setTemplateId] = useState("");
+  const availableCompanies = useMemo(
+    () => [...companies].sort((a, b) => a.name.localeCompare(b.name, "pt-PT")),
+    [companies],
+  );
+  const profiles = useMemo(
+    () => profilesForInteractionCompany(availableCompanies, companyId),
+    [availableCompanies, companyId],
+  );
   const availableTemplates = useMemo(
     () => templates.filter((template) => template.status === "active"),
     [templates],
@@ -48,14 +51,6 @@ export function InteractionModal({
         <Plus aria-hidden="true" />
         Nova interação
       </button>
-      {segment === "prospecting" ? (
-        <Link
-          className="button-secondary"
-          href="/relations/contacts/new?prospecting=1&returnTo=/relations?segment=prospecting"
-        >
-          Novo por contactar
-        </Link>
-      ) : null}
       {open ? (
         <div className="crm-modal-backdrop" onMouseDown={() => setOpen(false)}>
           <section
@@ -72,20 +67,49 @@ export function InteractionModal({
               </button>
             </header>
             <form action={recordContactInteractionAction}>
-              <input name="return_segment" type="hidden" value={segment} />
-              <div className="field">
-                <label htmlFor="contact_pair">Perfil e Organisation</label>
-                <select id="contact_pair" name="contact_pair" required>
-                  <option value="">Selecionar</option>
-                  {pairs.map((pair) => (
-                    <option
-                      key={`${pair.companyId}:${pair.contactId}`}
-                      value={`${pair.companyId}:${pair.contactId}`}
-                    >
-                      {pair.companyName} · {pair.contactName}
+              <input name="return_to" type="hidden" value={returnTo} />
+              <div className="crm-modal-grid">
+                <div className="field">
+                  <label htmlFor="interaction_company_id">Organização</label>
+                  <select
+                    id="interaction_company_id"
+                    name="company_id"
+                    onChange={(event) => {
+                      setCompanyId(event.target.value);
+                      setContactId("");
+                    }}
+                    required
+                    value={companyId}
+                  >
+                    <option value="">Selecionar organização</option>
+                    {availableCompanies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="interaction_contact_id">Perfil (opcional)</label>
+                  <select
+                    disabled={!companyId || profiles.length === 0}
+                    id="interaction_contact_id"
+                    name="contact_id"
+                    onChange={(event) => setContactId(event.target.value)}
+                    value={contactId}
+                  >
+                    <option value="">
+                      {companyId && profiles.length === 0
+                        ? "Sem perfis nesta organização"
+                        : "Sem perfil específico"}
                     </option>
-                  ))}
-                </select>
+                    {profiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="crm-modal-grid">
                 <div className="field">

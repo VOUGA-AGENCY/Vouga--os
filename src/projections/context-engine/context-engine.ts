@@ -107,8 +107,8 @@ type SectionRequest = Readonly<{
 export class ContextEngine {
   constructor(private readonly readModels: ContextReadModels) {}
 
-  async get(target: ContextTarget, nowIso: string): Promise<ObjectContext> {
-    const requests = this.requestsFor(target, nowIso);
+  async get(target: ContextTarget, nowIso: string, role: string = "admin"): Promise<ObjectContext> {
+    const requests = this.requestsFor(target, nowIso, role);
     const sections = await Promise.all(requests.map(loadSection));
     return {
       target,
@@ -117,28 +117,29 @@ export class ContextEngine {
     };
   }
 
-  private requestsFor(target: ContextTarget, nowIso: string): readonly SectionRequest[] {
+  private requestsFor(target: ContextTarget, nowIso: string, role: string = "admin"): readonly SectionRequest[] {
     switch (target.type) {
       case "company":
-        return this.companyRequests(target.id, nowIso);
+        return this.companyRequests(target.id, nowIso, role);
       case "task":
-        return this.taskRequests(target.id);
+        return this.taskRequests(target.id, role);
       case "meeting":
         return this.meetingRequests(target.id, nowIso);
       case "decision":
-        return this.decisionRequests(target.id);
+        return this.decisionRequests(target.id, role);
       case "sprint":
-        return this.sprintRequests(target.id);
+        return this.sprintRequests(target.id, role);
       case "roadmap-item":
-        return this.roadmapRequests(target.id);
+        return this.roadmapRequests(target.id, role);
       case "cost":
-        return this.costRequests(target.id);
+        return role === "admin" ? this.costRequests(target.id) : [];
       case "contact":
         return this.contactRequests(target.id);
     }
   }
 
-  async getFullGraph(nowIso: string): Promise<FullContextGraph> {
+  async getFullGraph(nowIso: string, role: string = "admin"): Promise<FullContextGraph> {
+    const isCostAllowed = role === "admin";
     const [companies, contacts, meetings, tasks, sprints, decisions, globalRoadmap, costs] =
       await Promise.all([
         this.readModels.companies.list(),
@@ -148,7 +149,7 @@ export class ContextEngine {
         this.readModels.sprints.list(),
         this.readModels.decisions.list(),
         this.readModels.roadmap.getGlobal(),
-        this.readModels.costs.list(),
+        isCostAllowed ? this.readModels.costs.list() : Promise.resolve([]),
       ]);
     const roadmap = [...globalRoadmap.now, ...globalRoadmap.next, ...globalRoadmap.later];
 
@@ -268,27 +269,29 @@ export class ContextEngine {
       }
     }
 
-    for (const cost of costs) {
-      nodeMap.set(`cost:${cost.id}`, {
-        id: `cost:${cost.id}`,
-        type: "cost",
-        label: cost.title || cost.description,
-        sublabel: `${cost.currency} ${(cost.expectedAmountMinor / 100).toFixed(2)}`,
-        status: cost.status,
-        href: `/costs/${cost.id}`,
-        layer: 4,
-        connectionsCount: 0,
-      });
-      if (cost.companyName) {
-        const matchingCompany = companies.find((c) => c.name === cost.companyName);
-        if (matchingCompany) {
-          addEdge(`cost:${cost.id}`, `company:${matchingCompany.id}`, "Custo de Organização");
+    if (isCostAllowed) {
+      for (const cost of costs) {
+        nodeMap.set(`cost:${cost.id}`, {
+          id: `cost:${cost.id}`,
+          type: "cost",
+          label: cost.title || cost.description,
+          sublabel: `${cost.currency} ${(cost.expectedAmountMinor / 100).toFixed(2)}`,
+          status: cost.status,
+          href: `/costs/${cost.id}`,
+          layer: 4,
+          connectionsCount: 0,
+        });
+        if (cost.companyName) {
+          const matchingCompany = companies.find((c) => c.name === cost.companyName);
+          if (matchingCompany) {
+            addEdge(`cost:${cost.id}`, `company:${matchingCompany.id}`, "Custo de Organização");
+          }
         }
-      }
-      if (cost.sourceDecisionTitle) {
-        const matchingDecision = decisions.find((d) => d.title === cost.sourceDecisionTitle);
-        if (matchingDecision) {
-          addEdge(`cost:${cost.id}`, `decision:${matchingDecision.id}`, "Origem em Decisão");
+        if (cost.sourceDecisionTitle) {
+          const matchingDecision = decisions.find((d) => d.title === cost.sourceDecisionTitle);
+          if (matchingDecision) {
+            addEdge(`cost:${cost.id}`, `decision:${matchingDecision.id}`, "Origem em Decisão");
+          }
         }
       }
     }
@@ -330,9 +333,9 @@ export class ContextEngine {
     };
   }
 
-  private companyRequests(companyId: string, nowIso: string): readonly SectionRequest[] {
+  private companyRequests(companyId: string, nowIso: string, role?: string): readonly SectionRequest[] {
     const tasks = this.readModels.tasks.listByCompany(companyId);
-    return [
+    const list = [
       request(
         "company-contacts",
         "Pessoas relacionadas",
@@ -392,15 +395,22 @@ export class ContextEngine {
         roadmapItems,
         "Sem Roadmap Items relacionados.",
       ),
-      request(
-        "company-costs",
-        "Custos relacionados",
-        "Costs",
-        () => this.readModels.costs.listByCompany(companyId),
-        costItems,
-        "Sem Costs relacionados.",
-      ),
     ];
+
+    if (role === "admin") {
+      list.push(
+        request(
+          "company-costs",
+          "Custos relacionados",
+          "Costs",
+          () => this.readModels.costs.listByCompany(companyId),
+          costItems,
+          "Sem Costs relacionados.",
+        ),
+      );
+    }
+
+    return list;
   }
 
   private contactRequests(contactId: string): readonly SectionRequest[] {
@@ -448,9 +458,9 @@ export class ContextEngine {
     ];
   }
 
-  private taskRequests(taskId: string): readonly SectionRequest[] {
+  private taskRequests(taskId: string, role?: string): readonly SectionRequest[] {
     const task = required(this.readModels.tasks.findById(taskId), "Task não encontrada.");
-    return [
+    const list = [
       request(
         "task-origin",
         "Origem demonstrável",
@@ -502,15 +512,22 @@ export class ContextEngine {
         roadmapItems,
         "Sem Roadmap Items relacionados.",
       ),
-      request(
-        "task-costs",
-        "Custos relacionados",
-        "Costs",
-        () => this.readModels.costs.listByTask(taskId),
-        costItems,
-        "Sem Costs relacionados.",
-      ),
     ];
+
+    if (role === "admin") {
+      list.push(
+        request(
+          "task-costs",
+          "Custos relacionados",
+          "Costs",
+          () => this.readModels.costs.listByTask(taskId),
+          costItems,
+          "Sem Costs relacionados.",
+        ),
+      );
+    }
+
+    return list;
   }
 
   private meetingRequests(meetingId: string, nowIso: string): readonly SectionRequest[] {
@@ -569,13 +586,13 @@ export class ContextEngine {
     ];
   }
 
-  private decisionRequests(decisionId: string): readonly SectionRequest[] {
+  private decisionRequests(decisionId: string, role?: string): readonly SectionRequest[] {
     const decision = required(
       this.readModels.decisions.findById(decisionId),
       "Decision não encontrada.",
     );
     const taskIds = decision.then((value) => value.tasks.map((task) => task.id));
-    return [
+    const list = [
       request(
         "decision-origin",
         "Origem",
@@ -634,18 +651,25 @@ export class ContextEngine {
         roadmapItems,
         "Sem Roadmap Items relacionados.",
       ),
-      request(
-        "decision-costs",
-        "Custos resultantes",
-        "Costs",
-        () => this.readModels.costs.listByDecision(decisionId),
-        costItems,
-        "Sem Costs originados por esta Decision.",
-      ),
     ];
+
+    if (role === "admin") {
+      list.push(
+        request(
+          "decision-costs",
+          "Custos resultantes",
+          "Costs",
+          () => this.readModels.costs.listByDecision(decisionId),
+          costItems,
+          "Sem Costs originados por esta Decision.",
+        ),
+      );
+    }
+
+    return list;
   }
 
-  private sprintRequests(sprintId: string): readonly SectionRequest[] {
+  private sprintRequests(sprintId: string, role?: string): readonly SectionRequest[] {
     const sprint = required(this.readModels.sprints.findById(sprintId), "Sprint não encontrada.");
     const taskDetails = sprint.then((value) =>
       Promise.all(
@@ -654,7 +678,7 @@ export class ContextEngine {
         ),
       ),
     );
-    return [
+    const list = [
       request(
         "sprint-tasks",
         "Compromisso",
@@ -719,26 +743,33 @@ export class ContextEngine {
         roadmapItems,
         "Sem Roadmap Items relacionados.",
       ),
-      request(
-        "sprint-costs",
-        "Custos ligados ao trabalho",
-        "Costs através das Tasks comprometidas",
-        () =>
-          sprint.then((value) =>
-            this.readModels.costs.listByTaskIds(value.tasks.map((task) => task.taskId)),
-          ),
-        costItems,
-        "Sem Costs relacionados através das Tasks.",
-      ),
     ];
+
+    if (role === "admin") {
+      list.push(
+        request(
+          "sprint-costs",
+          "Custos ligados ao trabalho",
+          "Costs através das Tasks comprometidas",
+          () =>
+            sprint.then((value) =>
+              this.readModels.costs.listByTaskIds(value.tasks.map((task) => task.taskId)),
+            ),
+          costItems,
+          "Sem Costs relacionados através das Tasks.",
+        ),
+      );
+    }
+
+    return list;
   }
 
-  private roadmapRequests(roadmapItemId: string): readonly SectionRequest[] {
+  private roadmapRequests(roadmapItemId: string, role?: string): readonly SectionRequest[] {
     const roadmapItem = required(
       this.readModels.roadmap.findById(roadmapItemId),
       "Roadmap Item não encontrado.",
     );
-    return [
+    const list = [
       request(
         "roadmap-decisions",
         "Decisions justificativas",
@@ -771,15 +802,22 @@ export class ContextEngine {
         (value) => contextLinks(value.sprints, "sprints"),
         "Sem Sprints relacionadas.",
       ),
-      request(
-        "roadmap-costs",
-        "Custos de suporte",
-        "Costs",
-        () => this.readModels.costs.listByRoadmapItem(roadmapItemId),
-        costItems,
-        "Sem Costs associados.",
-      ),
     ];
+
+    if (role === "admin") {
+      list.push(
+        request(
+          "roadmap-costs",
+          "Custos de suporte",
+          "Costs",
+          () => this.readModels.costs.listByRoadmapItem(roadmapItemId),
+          costItems,
+          "Sem Costs associados.",
+        ),
+      );
+    }
+
+    return list;
   }
 
   private costRequests(costId: string): readonly SectionRequest[] {

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ContextPanel } from "@/app/(workspace)/context-panel";
 import { CONTACT_CHANNEL_LABELS, CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createRelationsModule } from "@/foundation/composition/relations";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
@@ -39,14 +40,16 @@ export default async function ContactPage({
         ? "Prospeção"
         : "Contacts";
   const { readModel } = await createRelationsModule();
-  const [contact, contextEngine] = await Promise.all([
+  const [contact, contextEngine, user] = await Promise.all([
     readModel.findContact(contactId),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   if (!contact) notFound();
   const context = await contextEngine.get(
     { type: "contact", id: contactId },
     new Date().toISOString(),
+    user?.role ?? "engineer",
   );
 
   return (

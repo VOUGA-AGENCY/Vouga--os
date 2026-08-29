@@ -14,6 +14,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { UserRole } from "@/application/auth/current-user";
+
 export type NavigationItem = {
   label: string;
   description: string;
@@ -21,6 +23,7 @@ export type NavigationItem = {
   href: string;
   children?: readonly NavigationItem[];
   section?: "primary" | "advanced";
+  adminOnly?: boolean;
 };
 
 export const navigationItems: NavigationItem[] = [
@@ -57,6 +60,7 @@ export const navigationItems: NavigationItem[] = [
     description: "Controlo e informação sensível",
     icon: ShieldCheck,
     href: "/governance",
+    adminOnly: true,
     children: [
       {
         label: "Costs",
@@ -64,36 +68,19 @@ export const navigationItems: NavigationItem[] = [
         icon: WalletCards,
         href: "/costs",
       },
-      { label: "Vault", description: "Credenciais protegidas", icon: KeyRound, href: "/vault" },
-    ],
-  },
-  {
-    label: "Advanced",
-    description: "Capacidades de planeamento avançado",
-    icon: Layers3,
-    href: "/advanced",
-    section: "advanced",
-    children: [
-      {
-        label: "Sprints",
-        description: "Ciclos partilhados de compromisso",
-        icon: CalendarRange,
-        href: "/sprints",
-      },
-      { label: "Roadmap", description: "Direção estratégica global", icon: Map, href: "/roadmap" },
-      {
-        label: "Decisions",
-        description: "Escolhas materiais e histórico",
-        icon: Gavel,
-        href: "/decisions",
-      },
     ],
   },
 ];
 
-export const mobileNavigationItems = navigationItems.filter((item) =>
-  ["/calendar", "/work", "/relations", "/governance"].includes(item.href),
-);
+export function getVisibleNavigationItems(role: UserRole): NavigationItem[] {
+  return navigationItems.filter((item) => !item.adminOnly || role === "admin");
+}
+
+export function getVisibleMobileNavigationItems(role: UserRole): NavigationItem[] {
+  return getVisibleNavigationItems(role).filter((item) =>
+    ["/calendar", "/work", "/relations", "/governance"].includes(item.href)
+  );
+}
 
 export function flattenNavigation(
   items: readonly NavigationItem[] = navigationItems,

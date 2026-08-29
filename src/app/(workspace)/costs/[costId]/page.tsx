@@ -6,6 +6,8 @@ import {
   COST_STATUS_LABELS,
   COST_TYPE_LABELS,
 } from "@/domain/costs/cost";
+import { requireGovernanceAccess } from "@/application/governance/require-governance-access";
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createCostModule } from "@/foundation/composition/costs";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
@@ -19,13 +21,15 @@ import {
 
 export default async function CostPage({ params }: { params: Promise<{ costId: string }> }) {
   const { costId } = await params;
-  const [{ readModel }, contextEngine] = await Promise.all([
+  await requireGovernanceAccess(`/costs/${costId}`);
+  const [{ readModel }, contextEngine, user] = await Promise.all([
     createCostModule(),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   const [cost, context] = await Promise.all([
     readModel.findById(costId),
-    contextEngine.get({ type: "cost", id: costId }, new Date().toISOString()),
+    contextEngine.get({ type: "cost", id: costId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!cost) notFound();
   const today = new Date().toISOString().slice(0, 10);

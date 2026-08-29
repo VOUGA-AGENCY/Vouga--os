@@ -10,6 +10,11 @@ export default defineConfig({
     }
   },
   test: {
-    environment: "node"
+    environment: "node",
+    setupFiles: ["./src/test/setup.ts"],
+    alias: {
+      "server-only": fileURLToPath(new URL("./src/test/server-only.ts", import.meta.url)),
+      "@": fileURLToPath(new URL("./src", import.meta.url))
+    }
   }
 });

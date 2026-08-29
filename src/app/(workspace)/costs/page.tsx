@@ -13,6 +13,8 @@ import {
 } from "@/projections/costs/cost-finance";
 import type { CostListItem } from "@/projections/costs/cost-read-model";
 
+import { requireGovernanceAccess } from "@/application/governance/require-governance-access";
+
 import { CashBalanceForm } from "./cash-balance-form";
 
 export default async function CostsPage({
@@ -20,6 +22,7 @@ export default async function CostsPage({
 }: {
   searchParams: Promise<{ view?: string }>;
 }) {
+  await requireGovernanceAccess("/costs");
   const params = await searchParams;
   const history = params.view === "history";
   const { readModel, service } = await createCostModule();

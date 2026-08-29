@@ -21,6 +21,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
       memberLabel={user.email ?? "Sessão Vouga"}
       searchIsPartial={search.isPartial}
       searchItems={search.items}
+      userRole={user.role}
     >
       {children}
     </AppShell>

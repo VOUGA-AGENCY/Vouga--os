@@ -7,7 +7,7 @@ const sql = readFileSync(
     import.meta.url,
   ),
   "utf8",
-).toLowerCase();
+).toLowerCase().replace(/\r\n/g, "\n");
 const compactSql = sql.replace(/\s+/g, " ");
 
 describe("Company-owned Contact Interactions migration", () => {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { TASK_STATUS_LABELS } from "@/domain/tasks/task";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createTaskModule } from "@/foundation/composition/tasks";
@@ -21,13 +22,14 @@ export default async function TaskDetailPage({
   const { returnTo } = await searchParams;
   const backHref = safeWorkspaceReturnTo(returnTo, "/tasks");
   const backLabel = returnLabel(backHref, "Tasks");
-  const [{ readModel }, contextEngine] = await Promise.all([
+  const [{ readModel }, contextEngine, user] = await Promise.all([
     createTaskModule(),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   const [task, context] = await Promise.all([
     readModel.findById(taskId),
-    contextEngine.get({ type: "task", id: taskId }, new Date().toISOString()),
+    contextEngine.get({ type: "task", id: taskId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!task) notFound();
 

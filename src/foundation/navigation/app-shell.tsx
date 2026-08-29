@@ -12,10 +12,11 @@ import { CommandPalette } from "@/foundation/search/command-palette";
 import { FeedbackCenter } from "@/foundation/ui/feedback-center";
 import type { GlobalSearchItem } from "@/projections/search/global-search";
 
+import type { UserRole } from "@/application/auth/current-user";
 import {
   isNavigationItemActive,
-  mobileNavigationItems,
-  navigationItems,
+  getVisibleNavigationItems,
+  getVisibleMobileNavigationItems,
   type NavigationItem,
 } from "./navigation";
 
@@ -24,9 +25,10 @@ type AppShellProps = {
   memberLabel: string;
   searchIsPartial: boolean;
   searchItems: readonly GlobalSearchItem[];
+  userRole: UserRole;
 };
 
-export function AppShell({ children, memberLabel, searchIsPartial, searchItems }: AppShellProps) {
+export function AppShell({ children, memberLabel, searchIsPartial, searchItems, userRole }: AppShellProps) {
   const pathname = usePathname();
 
   return (
@@ -48,7 +50,7 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
           />
         </Link>
 
-        <DesktopNavigation pathname={pathname} />
+        <DesktopNavigation pathname={pathname} userRole={userRole} />
 
         <div className="sidebar-member">
           <UserMenu memberLabel={memberLabel} variant="sidebar" />
@@ -75,26 +77,20 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems }
         </div>
       </div>
 
-      <MobileNavigation pathname={pathname} />
+      <MobileNavigation pathname={pathname} userRole={userRole} />
       <FeedbackCenter />
     </div>
   );
 }
 
-function DesktopNavigation({ pathname }: { pathname: string }) {
-  const primary = navigationItems.filter((item) => item.section !== "advanced");
-  const advanced = navigationItems.filter((item) => item.section === "advanced");
+function DesktopNavigation({ pathname, userRole }: { pathname: string; userRole: UserRole }) {
+  const visibleItems = getVisibleNavigationItems(userRole);
 
   return (
     <nav aria-label="Navegação principal" className="sidebar-navigation">
-      {primary.map((item) => (
+      {visibleItems.map((item) => (
         <DesktopNavigationItem item={item} key={item.href} pathname={pathname} />
       ))}
-      <div className="sidebar-navigation-section">
-        {advanced.map((item) => (
-          <DesktopNavigationItem item={item} key={item.href} pathname={pathname} />
-        ))}
-      </div>
     </nav>
   );
 }
@@ -149,10 +145,11 @@ function DesktopNavigationItem({
   );
 }
 
-function MobileNavigation({ pathname }: { pathname: string }) {
+function MobileNavigation({ pathname, userRole }: { pathname: string; userRole: UserRole }) {
+  const visibleMobileItems = getVisibleMobileNavigationItems(userRole);
   return (
     <nav aria-label="Navegação principal" className="bottom-navigation">
-      {mobileNavigationItems.map((item) => (
+      {visibleMobileItems.map((item) => (
         <NavigationLink item={item} key={item.href} pathname={pathname} />
       ))}
     </nav>
@@ -184,119 +181,3 @@ function NavigationLink({
   );
 }
 
-function MobileMore({ pathname }: { pathname: string }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(false);
-  const moreItems = navigationItems.filter((item) =>
-    ["/governance", "/advanced"].includes(item.href),
-  );
-  const active =
-    pathname.startsWith("/settings") || moreItems.some((item) => isNavigationItemActive(item, pathname));
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
-
-  return (
-    <>
-      <button
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        className={`navigation-item mobile-more-trigger ${active ? "navigation-item-active" : ""}`}
-        onClick={() => setOpen(true)}
-        type="button"
-      >
-        <Ellipsis aria-hidden="true" />
-        <span>More</span>
-      </button>
-      <dialog
-        aria-labelledby="mobile-more-title"
-        className="mobile-more-dialog"
-        onCancel={() => setOpen(false)}
-        onClose={() => setOpen(false)}
-        ref={dialogRef}
-      >
-        <section className="mobile-more-panel">
-          <header>
-            <div>
-              <h2 id="mobile-more-title">More</h2>
-            </div>
-            <button aria-label="Fechar menu" onClick={() => setOpen(false)} type="button">
-              <X aria-hidden="true" />
-            </button>
-          </header>
-          <div className="mobile-more-groups">
-            {moreItems.map((item) => (
-              <MobileMoreGroup
-                item={item}
-                key={item.href}
-                onNavigate={() => setOpen(false)}
-                pathname={pathname}
-              />
-            ))}
-            <section>
-              <Link className="navigation-item" href="/settings" onClick={() => setOpen(false)}>
-                <Settings aria-hidden="true" />
-                <span>Settings</span>
-              </Link>
-            </section>
-          </div>
-        </section>
-      </dialog>
-    </>
-  );
-}
-
-function MobileMoreGroup({
-  item,
-  onNavigate,
-  pathname,
-}: {
-  item: NavigationItem;
-  onNavigate: () => void;
-  pathname: string;
-}) {
-  const active = isNavigationItemActive(item, pathname);
-  const children = item.children ?? [];
-  const hasChildren = children.length > 0;
-  const [expanded, setExpanded] = useState<boolean | null>(null);
-  const open = expanded ?? active;
-
-  return (
-    <section>
-      {hasChildren ? (
-        <div className="navigation-parent-row">
-          <NavigationLink
-            item={item}
-            onNavigate={() => {
-              setExpanded(true);
-              onNavigate();
-            }}
-            pathname={pathname}
-          />
-          <button
-            aria-expanded={open}
-            aria-label={`${open ? "Fechar" : "Abrir"} ${item.label}`}
-            className="navigation-disclosure"
-            onClick={() => setExpanded(!open)}
-            type="button"
-          >
-            <ChevronDown aria-hidden="true" />
-          </button>
-        </div>
-      ) : (
-        <NavigationLink item={item} onNavigate={onNavigate} pathname={pathname} />
-      )}
-      {hasChildren ? (
-        <div className={`mobile-more-children${open ? " mobile-more-children-open" : ""}`}>
-          {children.map((child) => (
-            <NavigationLink item={child} key={child.href} onNavigate={onNavigate} pathname={pathname} />
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
-}

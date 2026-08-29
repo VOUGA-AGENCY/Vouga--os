@@ -1,10 +1,12 @@
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { ContextEngineView } from "./context-engine-view";
 
 export default async function ContextPage() {
+  const user = await getAuthenticatedUser();
   const engine = await createContextEngine();
   const nowIso = new Date().toISOString();
-  const graph = await engine.getFullGraph(nowIso);
+  const graph = await engine.getFullGraph(nowIso, user?.role ?? "engineer");
 
   return (
     <main className="workspace-main module-main context-hub-main">

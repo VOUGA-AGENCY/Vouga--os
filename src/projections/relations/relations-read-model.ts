@@ -25,6 +25,8 @@ export type ContactListItem = Readonly<{
 }>;
 export type ContactInteractionItem = Readonly<{
   id: string;
+  companyId: string;
+  contactId: string | null;
   direction: ContactDirection;
   channel: ContactChannel;
   body: string;
@@ -32,6 +34,14 @@ export type ContactInteractionItem = Readonly<{
   replyToInteractionId: string | null;
   recorderName: string;
   hasReply: boolean;
+}>;
+export type CompanyInteractionItem = Readonly<{
+  id: string;
+  contactId: string | null;
+  contactName: string | null;
+  channel: ContactChannel;
+  body: string;
+  occurredAt: string;
 }>;
 export type ContactDetail = ContactListItem &
   Readonly<{
@@ -49,12 +59,10 @@ export type MessageTemplateItem = Readonly<{
   body: string;
   status: "active" | "archived";
 }>;
-export type ContactSegment = "prospecting" | "internal";
 export type ContactPipelineRow = Readonly<{
   companyId: string;
   companyName: string;
   stage: ProspectingStage;
-  segment: ContactSegment;
   primaryContactId: string | null;
   primaryContactName: string | null;
   primaryContactAvatarUrl: string | null;
@@ -76,5 +84,6 @@ export interface RelationsReadModel {
   listContactPipeline(): Promise<ContactPipelineRow[]>;
   listContacts(): Promise<ContactListItem[]>;
   findContact(id: string): Promise<ContactDetail | null>;
+  listInteractionsByCompany(companyId: string): Promise<CompanyInteractionItem[]>;
   listTemplates(): Promise<MessageTemplateItem[]>;
 }

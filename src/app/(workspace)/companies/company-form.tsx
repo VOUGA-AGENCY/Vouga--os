@@ -30,7 +30,7 @@ export function CompanyForm({ action, company, defaultOwnerId, owners, defaultPr
         <div className="crm-editor-grid">
           <div className="field field-light crm-span-2"><label htmlFor="name">Nome</label><input autoFocus defaultValue={company?.name} id="name" maxLength={160} name="name" placeholder="Nome da organização" required /></div>
           <div className="field field-light"><label htmlFor="owner_member_id">Owner</label><select defaultValue={company?.ownerMemberId ?? defaultOwnerId ?? owners[0]?.id} id="owner_member_id" name="owner_member_id" required>{owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.displayName}</option>)}</select></div>
-          <div className="field field-light"><label htmlFor="prospecting_stage">Prospeção</label><select defaultValue={company?.prospectingStage ?? defaultProspectingStage ?? ""} id="prospecting_stage" name="prospecting_stage"><option value="">Fora da prospeção</option>{PROSPECTING_STAGES.map((stage) => <option key={stage} value={stage}>{PROSPECTING_STAGE_LABELS[stage]}</option>)}</select></div>
+          <div className="field field-light"><label htmlFor="prospecting_stage">Prospeção</label><select defaultValue={company?.prospectingStage ?? defaultProspectingStage ?? ""} id="prospecting_stage" name="prospecting_stage">{defaultProspectingStage ? null : <option value="">Fora da prospeção</option>}{PROSPECTING_STAGES.map((stage) => <option key={stage} value={stage}>{PROSPECTING_STAGE_LABELS[stage]}</option>)}</select></div>
         </div>
       </section>
 

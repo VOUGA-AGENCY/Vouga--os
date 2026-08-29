@@ -32,14 +32,15 @@ export interface ContactRepository {
   }): Promise<void>;
   recordContactInteraction(values: {
     companyId: string;
-    contactId: string;
+    contactId: string | null;
     channel: ContactChannel;
     body: string;
     sourceTemplateId: string | null;
     stage: ProspectingStage;
   }): Promise<string>;
   createInteraction(values: {
-    contactId: string;
+    companyId: string;
+    contactId: string | null;
     direction: ContactDirection;
     channel: ContactChannel;
     body: string;

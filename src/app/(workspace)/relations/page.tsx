@@ -1,38 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Building2, Linkedin, Plus } from "lucide-react";
+import { Building2, LayoutGrid, Linkedin, List, Plus } from "lucide-react";
 import {
   PROSPECTING_STAGE_LABELS,
   PROSPECTING_STAGES,
   type ProspectingStage,
 } from "@/domain/companies/company";
-import {
-  CONTACT_CHANNEL_LABELS,
-  CONTACT_ROLE_LABELS,
-  initials,
-} from "@/domain/relations/contact";
+import { CONTACT_CHANNEL_LABELS, CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createRelationsModule } from "@/foundation/composition/relations";
-import type {
-  ContactPipelineRow,
-  ContactSegment,
-} from "@/projections/relations/relations-read-model";
+import { withReturnTo } from "@/foundation/navigation/return-to";
+import type { ContactPipelineRow } from "@/projections/relations/relations-read-model";
 import { CopyScriptButton } from "./copy-script-button";
 import { InteractionModal } from "./interaction-modal";
-
-type View = "contacts" | "profiles" | "organizations" | "scripts";
-
-function resolvedView(value?: string): View {
-  if (value === "profiles") return "profiles";
-  if (value === "organizations") return "organizations";
-  if (value === "messages" || value === "scripts") return "scripts";
-  return "contacts";
-}
-
-function resolvedSegment(value?: string): ContactSegment | null {
-  if (value === "prospecting" || value === "internal") return value;
-  return null;
-}
+import {
+  relationsHref,
+  resolveRelationsLayout,
+  resolveRelationsSegment,
+  resolveRelationsSort,
+  resolveRelationsView,
+  sortRelationItems,
+  type RelationsLayout,
+  type RelationsSegment,
+  type RelationsSort,
+  type RelationsView,
+} from "./relations-view";
 
 const dateTime = new Intl.DateTimeFormat("pt-PT", {
   day: "numeric",
@@ -41,18 +33,75 @@ const dateTime = new Intl.DateTimeFormat("pt-PT", {
   minute: "2-digit",
 });
 
+function LayoutSwitcher({
+  layout,
+  segment,
+  sort,
+  view,
+}: {
+  layout: RelationsLayout;
+  segment: RelationsSegment;
+  sort: RelationsSort;
+  view: RelationsView;
+}) {
+  return (
+    <nav aria-label="Apresentação" className="crm-layout-switcher">
+      <Link
+        aria-current={layout === "list" ? "page" : undefined}
+        aria-label="Ver como lista"
+        className={layout === "list" ? "active" : ""}
+        href={relationsHref({ layout: "list", segment, sort, view })}
+      >
+        <List aria-hidden="true" />
+        <span>Lista</span>
+      </Link>
+      <Link
+        aria-current={layout === "grid" ? "page" : undefined}
+        aria-label="Ver como quadrados"
+        className={layout === "grid" ? "active" : ""}
+        href={relationsHref({ layout: "grid", segment, sort, view })}
+      >
+        <LayoutGrid aria-hidden="true" />
+        <span>Quadrados</span>
+      </Link>
+    </nav>
+  );
+}
+
+function DirectorySort({
+  layout,
+  segment,
+  sort,
+  view,
+}: {
+  layout: RelationsLayout;
+  segment: RelationsSegment;
+  sort: RelationsSort;
+  view: "profiles" | "organizations";
+}) {
+  return (
+    <form className="crm-directory-sort" method="get">
+      <input name="view" type="hidden" value={view} />
+      <input name="layout" type="hidden" value={layout} />
+      {segment ? <input name="segment" type="hidden" value={segment} /> : null}
+      <label htmlFor={`${view}-sort`}>Ordenar</label>
+      <select defaultValue={sort} id={`${view}-sort`} name="sort">
+        <option value="name_asc">Nome A–Z</option>
+        <option value="name_desc">Nome Z–A</option>
+        <option value="owner">Owner</option>
+        <option value="recent">Mais recentes</option>
+      </select>
+      <button type="submit">Aplicar</button>
+    </form>
+  );
+}
+
 function PipelineIdentity({ row }: { row: ContactPipelineRow }) {
   return (
     <>
       <span className="crm-pipeline-avatar" aria-hidden="true">
         {row.primaryContactAvatarUrl ? (
-          <Image
-            alt=""
-            height={38}
-            src={row.primaryContactAvatarUrl}
-            unoptimized
-            width={38}
-          />
+          <Image alt="" height={38} src={row.primaryContactAvatarUrl} unoptimized width={38} />
         ) : (
           initials(row.primaryContactName ?? row.companyName)
         )}
@@ -65,22 +114,9 @@ function PipelineIdentity({ row }: { row: ContactPipelineRow }) {
   );
 }
 
-function PipelineRow({
-  row,
-  showSegment = false,
-}: {
-  row: ContactPipelineRow;
-  showSegment?: boolean;
-}) {
+function PipelineRow({ row, returnTo }: { row: ContactPipelineRow; returnTo: string }) {
   return (
-    <Link
-      className="crm-pipeline-row"
-      href={
-        row.primaryContactId
-          ? `/relations/contacts/${row.primaryContactId}`
-          : `/companies/${row.companyId}`
-      }
-    >
+    <Link className="crm-pipeline-row" href={withReturnTo(`/companies/${row.companyId}`, returnTo)}>
       <PipelineIdentity row={row} />
       <span className="crm-pipeline-message">
         {row.lastContact ? (
@@ -95,35 +131,37 @@ function PipelineRow({
           <small>Sem interações</small>
         )}
       </span>
-      {showSegment ? (
-        <span className="crm-segment-label">
-          {row.segment === "prospecting" ? "Prospeção" : "Interno"}
-        </span>
-      ) : null}
     </Link>
   );
 }
 
 function PipelineLists({
   rows,
-  segment,
+  returnTo,
 }: {
   rows: readonly ContactPipelineRow[];
-  segment: ContactSegment;
+  returnTo: string;
 }) {
   return (
     <div className="crm-pipeline-lists">
       {PROSPECTING_STAGES.map((stage) => {
         const items = rows.filter((row) => row.stage === stage);
         return (
-          <details className="crm-pipeline-list" data-stage={stage} key={stage} open={items.length > 0}>
+          <details
+            className="crm-pipeline-list"
+            data-stage={stage}
+            key={stage}
+            open={items.length > 0}
+          >
             <summary>
               <span>{PROSPECTING_STAGE_LABELS[stage]}</span>
               <small>{items.length}</small>
             </summary>
             <div>
               {items.length > 0 ? (
-                items.map((row) => <PipelineRow key={row.companyId} row={row} />)
+                items.map((row) => (
+                  <PipelineRow key={row.companyId} returnTo={returnTo} row={row} />
+                ))
               ) : (
                 <p>Sem contactos neste estado.</p>
               )}
@@ -132,15 +170,13 @@ function PipelineLists({
         );
       })}
       {rows.length === 0 ? (
-        <p className="crm-empty">
-          Ainda não existem relações em {segment === "prospecting" ? "prospeção" : "interno"}.
-        </p>
+        <p className="crm-empty">Ainda não existem relações em prospeção.</p>
       ) : null}
     </div>
   );
 }
 
-function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
+function FollowUps({ rows, returnTo }: { rows: readonly ContactPipelineRow[]; returnTo: string }) {
   const groups: readonly {
     stage: ProspectingStage;
     title: string;
@@ -176,7 +212,7 @@ function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
               <div>
                 {items.length ? (
                   items.map((row) => (
-                    <PipelineRow key={row.companyId} row={row} showSegment />
+                    <PipelineRow key={row.companyId} returnTo={returnTo} row={row} />
                   ))
                 ) : (
                   <p>{group.empty}</p>
@@ -193,11 +229,13 @@ function FollowUps({ rows }: { rows: readonly ContactPipelineRow[] }) {
 export default async function RelationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; segment?: string }>;
+  searchParams: Promise<{ view?: string; segment?: string; layout?: string; sort?: string }>;
 }) {
   const query = await searchParams;
-  const view = resolvedView(query.view);
-  const segment = resolvedSegment(query.segment);
+  const view = resolveRelationsView(query.view);
+  const segment = resolveRelationsSegment(query.segment);
+  const layout = resolveRelationsLayout(query.layout);
+  const sort = resolveRelationsSort(query.sort);
   const [{ readModel }, companyModule] = await Promise.all([
     createRelationsModule(),
     createCompanyModule(),
@@ -209,127 +247,160 @@ export default async function RelationsPage({
     companyModule.readModel.list(),
   ]);
   const activeContacts = contacts.filter((contact) => contact.status === "active");
-  const segmentRows = segment
-    ? pipeline.filter((row) => row.segment === segment)
-    : pipeline;
-  const pairs = activeContacts.flatMap((contact) =>
-    contact.companyId && contact.companyName
-      ? [
-          {
-            companyId: contact.companyId,
-            companyName: contact.companyName,
-            contactId: contact.id,
-            contactName: contact.displayName,
-          },
-        ]
-      : [],
+  const sortedCompanies = sortRelationItems(
+    companies.map((company) => ({
+      ...company,
+      name: company.name,
+      ownerName: company.ownerDisplayName,
+      recentAt: company.updatedAt,
+    })),
+    sort,
   );
+  const sortedContacts = sortRelationItems(
+    activeContacts.map((contact) => ({
+      ...contact,
+      name: contact.displayName,
+      ownerName: contact.ownerDisplayName,
+      recentAt: contact.lastContactAt,
+    })),
+    sort,
+  );
+  const interactionCompanies = pipeline.map((row) => ({
+    id: row.companyId,
+    name: row.companyName,
+    profiles: row.contacts.map((contact) => ({
+      id: contact.id,
+      name: contact.displayName,
+    })),
+  }));
+  const currentHref = relationsHref({ layout, segment, sort, view });
 
   return (
-    <main className="workspace-main module-main relations-main crm-main">
+    <main className={`workspace-main module-main relations-main crm-main crm-layout-${layout}`}>
       <header className="crm-page-heading">
         <h1 className="display">Contacts</h1>
       </header>
 
       <div className="crm-subnav">
         <nav aria-label="Contacts" className="crm-tabs">
-          <Link className={view === "contacts" ? "active" : ""} href="/relations">
+          <Link
+            className={view === "contacts" ? "active" : ""}
+            href={relationsHref({ layout, segment, sort, view: "contacts" })}
+          >
             Contacts
           </Link>
           <Link
             className={view === "profiles" ? "active" : ""}
-            href="/relations?view=profiles"
+            href={relationsHref({ layout, segment, sort, view: "profiles" })}
           >
             Perfis
           </Link>
           <Link
             className={view === "organizations" ? "active" : ""}
-            href="/relations?view=organizations"
+            href={relationsHref({ layout, segment, sort, view: "organizations" })}
           >
             Organizações
           </Link>
           <Link
             className={view === "scripts" ? "active" : ""}
-            href="/relations?view=scripts"
+            href={relationsHref({ layout, segment, sort, view: "scripts" })}
           >
             Guiões
           </Link>
         </nav>
-        <div className="crm-context-actions">
-          {view === "contacts" && segment ? (
-            <InteractionModal pairs={pairs} segment={segment} templates={templates} />
-          ) : view === "profiles" ? (
-            <Link
-              className="button-primary"
-              href="/relations/contacts/new?returnTo=/relations?view=profiles"
-            >
-              <Plus aria-hidden="true" /> Perfil
-            </Link>
-          ) : view === "organizations" ? (
-            <Link
-              className="button-primary"
-              href="/companies/new?returnTo=/relations?view=organizations"
-            >
-              <Plus aria-hidden="true" /> Organização
-            </Link>
-          ) : view === "scripts" ? (
-            <Link className="button-primary" href="/relations/messages/new">
-              <Plus aria-hidden="true" /> Guião
-            </Link>
-          ) : null}
+        <div className="crm-subnav-actions">
+          <LayoutSwitcher layout={layout} segment={segment} sort={sort} view={view} />
+          <div className="crm-context-actions">
+            {view === "contacts" && segment ? (
+              <InteractionModal
+                companies={interactionCompanies}
+                returnTo={currentHref}
+                templates={templates}
+              />
+            ) : view === "profiles" ? (
+              <Link
+                className="button-primary"
+                href={withReturnTo("/relations/contacts/new", currentHref)}
+              >
+                <Plus aria-hidden="true" /> Perfil
+              </Link>
+            ) : view === "organizations" ? (
+              <Link
+                className="button-primary"
+                href={withReturnTo("/companies/new?prospecting=1", currentHref)}
+              >
+                <Plus aria-hidden="true" /> Organização
+              </Link>
+            ) : view === "scripts" ? (
+              <Link className="button-primary" href="/relations/messages/new">
+                <Plus aria-hidden="true" /> Guião
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
 
       {view === "contacts" ? (
         <section className="crm-contacts-workspace">
           <nav aria-label="Segmento" className="crm-segment-switcher">
-            <Link className={!segment ? "active" : ""} href="/relations">
+            <Link
+              className={!segment ? "active" : ""}
+              href={relationsHref({ layout, segment: null, sort, view: "contacts" })}
+            >
               Follow-ups
             </Link>
             <Link
               className={segment === "prospecting" ? "active" : ""}
-              href="/relations?segment=prospecting"
+              href={relationsHref({ layout, segment: "prospecting", sort, view: "contacts" })}
             >
               Prospeção
             </Link>
-            <Link
-              className={segment === "internal" ? "active" : ""}
-              href="/relations?segment=internal"
-            >
-              Interno
-            </Link>
           </nav>
-          {segment ? <PipelineLists rows={segmentRows} segment={segment} /> : <FollowUps rows={pipeline} />}
+          {segment ? (
+            <PipelineLists returnTo={currentHref} rows={pipeline} />
+          ) : (
+            <FollowUps returnTo={currentHref} rows={pipeline} />
+          )}
         </section>
       ) : view === "organizations" ? (
         <section className="crm-directory">
           <div className="crm-directory-head">
             <span>{companies.length} organizações</span>
+            <DirectorySort layout={layout} segment={segment} sort={sort} view="organizations" />
           </div>
-          <div className="crm-table crm-organisation-table">
-            {companies.map((company) => {
-              const people = activeContacts.filter(
-                (contact) => contact.companyId === company.id,
-              );
+          <div className="crm-table crm-organisation-table crm-layout-collection">
+            {sortedCompanies.map((company) => {
+              const people = activeContacts.filter((contact) => contact.companyId === company.id);
               return (
                 <Link
                   className="crm-organisation-row"
-                  href={`/companies/${company.id}`}
+                  href={withReturnTo(`/companies/${company.id}`, currentHref)}
                   key={company.id}
                 >
                   <span className="crm-icon">
                     <Building2 aria-hidden="true" />
                   </span>
                   <strong>{company.name}</strong>
-                  <span>
+                  <span className="crm-card-field" data-label="Perfis">
                     {people.length} {people.length === 1 ? "perfil" : "perfis"}
                   </span>
-                  <span className={company.prospectingStage ? `crm-stage-badge crm-stage-${company.prospectingStage}` : ""}>
+                  <span
+                    className={`crm-card-field${
+                      company.prospectingStage
+                        ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
+                        : ""
+                    }`}
+                    data-label="Estado"
+                  >
                     {company.prospectingStage
                       ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
                       : "—"}
                   </span>
-                  <span>{company.currentContext ?? "Sem notas"}</span>
+                  {layout === "list" ? (
+                    <span className="crm-card-field" data-label="Nota">
+                      {company.currentContext ?? "Sem notas"}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -339,50 +410,47 @@ export default async function RelationsPage({
         <section className="crm-directory">
           <div className="crm-directory-head">
             <span>{activeContacts.length} perfis</span>
+            <DirectorySort layout={layout} segment={segment} sort={sort} view="profiles" />
           </div>
-          <div className="crm-contact-list">
-            {activeContacts.map((contact) => (
+          <div className="crm-contact-list crm-layout-collection">
+            {sortedContacts.map((contact) => (
               <Link
                 className="crm-contact-row"
-                href={`/relations/contacts/${contact.id}`}
+                href={withReturnTo(`/relations/contacts/${contact.id}`, currentHref)}
                 key={contact.id}
               >
                 <span className="crm-contact-avatar">
                   {contact.avatarUrl ? (
-                    <Image
-                      alt=""
-                      height={44}
-                      src={contact.avatarUrl}
-                      unoptimized
-                      width={44}
-                    />
+                    <Image alt="" height={44} src={contact.avatarUrl} unoptimized width={44} />
                   ) : (
                     initials(contact.displayName)
                   )}
                 </span>
                 <span className="crm-cell-stack">
                   <strong>{contact.displayName}</strong>
-                  <small>
-                    {contact.jobTitle ?? CONTACT_ROLE_LABELS[contact.relationshipRole]}
-                  </small>
+                  <small>{contact.jobTitle ?? CONTACT_ROLE_LABELS[contact.relationshipRole]}</small>
                 </span>
-                <span>{contact.companyName ?? "Independente"}</span>
-                <span>{contact.email ?? "—"}</span>
-                <span>{contact.phone ?? "—"}</span>
-                <span>
-                  {contact.linkedinUrl ? (
-                    <Linkedin aria-label="LinkedIn" />
-                  ) : (
-                    "—"
-                  )}
+                <span className="crm-card-field" data-label="Organização">
+                  {contact.companyName ?? "Independente"}
                 </span>
-                <span>{contact.importantContext ?? "—"}</span>
+                <span className="crm-card-field" data-label="Email">
+                  {contact.email ?? "—"}
+                </span>
+                <span className="crm-card-field" data-label="Telefone">
+                  {contact.phone ?? "—"}
+                </span>
+                <span className="crm-card-field" data-label="LinkedIn">
+                  {contact.linkedinUrl ? <Linkedin aria-label="LinkedIn" /> : "—"}
+                </span>
+                <span className="crm-card-field" data-label="Nota">
+                  {contact.importantContext ?? "—"}
+                </span>
               </Link>
             ))}
           </div>
         </section>
       ) : (
-        <section className="crm-scripts">
+        <section className="crm-scripts crm-layout-collection">
           {templates.length === 0 ? (
             <div className="crm-empty">Ainda não existem guiões.</div>
           ) : (

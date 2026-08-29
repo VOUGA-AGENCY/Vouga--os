@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { SPRINT_CLOSURE_DISPOSITION_LABELS, SPRINT_STATUS_LABELS } from "@/domain/sprints/sprint";
 import { TASK_STATUS_LABELS } from "@/domain/tasks/task";
 import { createContextEngine } from "@/foundation/composition/context-engine";
@@ -27,14 +28,15 @@ export default async function SprintDetailPage({
   const { returnTo } = await searchParams;
   const backHref = safeWorkspaceReturnTo(returnTo, "/sprints");
   const backLabel = returnLabel(backHref, "Sprints");
-  const [{ readModel, service }, contextEngine] = await Promise.all([
+  const [{ readModel, service }, contextEngine, user] = await Promise.all([
     createSprintModule(),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   const [sprint, options, context] = await Promise.all([
     readModel.findById(sprintId),
     service.getFormOptions(),
-    contextEngine.get({ type: "sprint", id: sprintId }, new Date().toISOString()),
+    contextEngine.get({ type: "sprint", id: sprintId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!sprint) notFound();
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { DECISION_REVIEW_EFFECT_LABELS, DECISION_STATUS_LABELS } from "@/domain/decisions/decision";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createDecisionModule } from "@/foundation/composition/decisions";
@@ -13,13 +14,14 @@ export default async function DecisionDetailPage({
   params: Promise<{ decisionId: string }>;
 }) {
   const { decisionId } = await params;
-  const [{ readModel }, contextEngine] = await Promise.all([
+  const [{ readModel }, contextEngine, user] = await Promise.all([
     createDecisionModule(),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   const [decision, context] = await Promise.all([
     readModel.findById(decisionId),
-    contextEngine.get({ type: "decision", id: decisionId }, new Date().toISOString()),
+    contextEngine.get({ type: "decision", id: decisionId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!decision) notFound();
 

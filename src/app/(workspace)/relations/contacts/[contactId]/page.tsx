@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, Building2, CalendarDays, Linkedin, Mail, Phone } from "lucide-react";
 import { ContextPanel } from "@/app/(workspace)/context-panel";
 import { CONTACT_CHANNEL_LABELS, CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createRelationsModule } from "@/foundation/composition/relations";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
@@ -15,9 +16,13 @@ const date = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium" });
 export default async function ContactPage({ params }: { params: Promise<{ contactId: string }> }) {
   const { contactId } = await params;
   const { readModel } = await createRelationsModule();
-  const [contact, contextEngine] = await Promise.all([readModel.findContact(contactId), createContextEngine()]);
+  const [contact, contextEngine, user] = await Promise.all([
+    readModel.findContact(contactId),
+    createContextEngine(),
+    getAuthenticatedUser(),
+  ]);
   if (!contact) notFound();
-  const context = await contextEngine.get({ type: "contact", id: contactId }, new Date().toISOString());
+  const context = await contextEngine.get({ type: "contact", id: contactId }, new Date().toISOString(), user?.role ?? "engineer");
 
   return <main className="workspace-main module-main contact-profile crm-contact-profile">
     <header className="crm-contact-hero">

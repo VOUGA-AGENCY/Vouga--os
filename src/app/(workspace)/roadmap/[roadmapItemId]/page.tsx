@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import {
   ROADMAP_HORIZON_LABELS,
   ROADMAP_KIND_LABELS,
@@ -19,13 +20,14 @@ export default async function RoadmapItemPage({
   params: Promise<{ roadmapItemId: string }>;
 }) {
   const { roadmapItemId } = await params;
-  const [{ readModel }, contextEngine] = await Promise.all([
+  const [{ readModel }, contextEngine, user] = await Promise.all([
     createRoadmapModule(),
     createContextEngine(),
+    getAuthenticatedUser(),
   ]);
   const [item, context] = await Promise.all([
     readModel.findById(roadmapItemId),
-    contextEngine.get({ type: "roadmap-item", id: roadmapItemId }, new Date().toISOString()),
+    contextEngine.get({ type: "roadmap-item", id: roadmapItemId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!item) notFound();
 

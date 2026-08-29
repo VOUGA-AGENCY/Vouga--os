@@ -8,5 +8,8 @@ export async function requireGovernanceAccess(_returnTo: string): Promise<void> 
   if (!user) {
     redirect("/login");
   }
+  if (user.role !== "admin") {
+    redirect("/");
+  }
 }
 

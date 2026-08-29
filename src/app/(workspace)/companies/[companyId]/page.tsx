@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { COMPANY_STATUS_LABELS, PROSPECTING_STAGE_LABELS } from "@/domain/companies/company";
 import { CONTACT_CHANNEL_LABELS, initials } from "@/domain/relations/contact";
+import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createRelationsModule } from "@/foundation/composition/relations";
@@ -16,14 +17,14 @@ const fullDate = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium", timeSty
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
-  const [companies, relations, tasks, contextEngine] = await Promise.all([
-    createCompanyModule(), createRelationsModule(), createTaskModule(), createContextEngine(),
+  const [companies, relations, tasks, contextEngine, user] = await Promise.all([
+    createCompanyModule(), createRelationsModule(), createTaskModule(), createContextEngine(), getAuthenticatedUser(),
   ]);
   const [company, allContacts, companyTasks, context] = await Promise.all([
     companies.readModel.findById(companyId),
     relations.readModel.listContacts(),
     tasks.readModel.listByCompany(companyId),
-    contextEngine.get({ type: "company", id: companyId }, new Date().toISOString()),
+    contextEngine.get({ type: "company", id: companyId }, new Date().toISOString(), user?.role ?? "engineer"),
   ]);
   if (!company) notFound();
   const contacts = allContacts.filter((contact) => contact.status === "active" && contact.companyId === companyId);

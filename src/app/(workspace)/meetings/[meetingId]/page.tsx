@@ -39,7 +39,7 @@ export default async function MeetingDetailPage({
   ]);
   const [meeting, context] = await Promise.all([
     readModel.findById(meetingId, nowIso),
-    contextEngine.get({ type: "meeting", id: meetingId }, nowIso),
+    contextEngine.get({ type: "meeting", id: meetingId }, nowIso, user?.role ?? "engineer"),
   ]);
   if (!meeting) notFound();
   const terminal = meeting.status === "closed" || meeting.status === "cancelled";

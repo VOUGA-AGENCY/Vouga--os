@@ -5,7 +5,9 @@ import {
   relationsHref,
   resolveRelationsLayout,
   resolveRelationsSegment,
+  resolveRelationsSort,
   resolveRelationsView,
+  sortRelationItems,
 } from "./relations-view";
 
 describe("Contacts presentation state", () => {
@@ -13,6 +15,21 @@ describe("Contacts presentation state", () => {
     expect(resolveRelationsView("unknown")).toBe("contacts");
     expect(resolveRelationsSegment("internal")).toBeNull();
     expect(resolveRelationsLayout("tiles")).toBe("list");
+    expect(resolveRelationsSort("unknown")).toBe("name_asc");
+  });
+
+  it("orders directory items without mutating the source", () => {
+    const source = [
+      { name: "Zeta", ownerName: "Ana", recentAt: "2026-08-01" },
+      { name: "Alfa", ownerName: "Miguel", recentAt: "2026-08-29" },
+    ] as const;
+
+    expect(sortRelationItems(source, "name_asc").map((item) => item.name)).toEqual([
+      "Alfa",
+      "Zeta",
+    ]);
+    expect(sortRelationItems(source, "recent").map((item) => item.name)).toEqual(["Alfa", "Zeta"]);
+    expect(source[0].name).toBe("Zeta");
   });
 
   it("preserves tab, segment and layout in the URL", () => {

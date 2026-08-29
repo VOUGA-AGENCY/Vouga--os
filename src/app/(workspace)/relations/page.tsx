@@ -17,9 +17,12 @@ import {
   relationsHref,
   resolveRelationsLayout,
   resolveRelationsSegment,
+  resolveRelationsSort,
   resolveRelationsView,
+  sortRelationItems,
   type RelationsLayout,
   type RelationsSegment,
+  type RelationsSort,
   type RelationsView,
 } from "./relations-view";
 
@@ -33,10 +36,12 @@ const dateTime = new Intl.DateTimeFormat("pt-PT", {
 function LayoutSwitcher({
   layout,
   segment,
+  sort,
   view,
 }: {
   layout: RelationsLayout;
   segment: RelationsSegment;
+  sort: RelationsSort;
   view: RelationsView;
 }) {
   return (
@@ -45,7 +50,7 @@ function LayoutSwitcher({
         aria-current={layout === "list" ? "page" : undefined}
         aria-label="Ver como lista"
         className={layout === "list" ? "active" : ""}
-        href={relationsHref({ layout: "list", segment, view })}
+        href={relationsHref({ layout: "list", segment, sort, view })}
       >
         <List aria-hidden="true" />
         <span>Lista</span>
@@ -54,12 +59,40 @@ function LayoutSwitcher({
         aria-current={layout === "grid" ? "page" : undefined}
         aria-label="Ver como quadrados"
         className={layout === "grid" ? "active" : ""}
-        href={relationsHref({ layout: "grid", segment, view })}
+        href={relationsHref({ layout: "grid", segment, sort, view })}
       >
         <LayoutGrid aria-hidden="true" />
         <span>Quadrados</span>
       </Link>
     </nav>
+  );
+}
+
+function DirectorySort({
+  layout,
+  segment,
+  sort,
+  view,
+}: {
+  layout: RelationsLayout;
+  segment: RelationsSegment;
+  sort: RelationsSort;
+  view: "profiles" | "organizations";
+}) {
+  return (
+    <form className="crm-directory-sort" method="get">
+      <input name="view" type="hidden" value={view} />
+      <input name="layout" type="hidden" value={layout} />
+      {segment ? <input name="segment" type="hidden" value={segment} /> : null}
+      <label htmlFor={`${view}-sort`}>Ordenar</label>
+      <select defaultValue={sort} id={`${view}-sort`} name="sort">
+        <option value="name_asc">Nome A–Z</option>
+        <option value="name_desc">Nome Z–A</option>
+        <option value="owner">Owner</option>
+        <option value="recent">Mais recentes</option>
+      </select>
+      <button type="submit">Aplicar</button>
+    </form>
   );
 }
 
@@ -196,12 +229,13 @@ function FollowUps({ rows, returnTo }: { rows: readonly ContactPipelineRow[]; re
 export default async function RelationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; segment?: string; layout?: string }>;
+  searchParams: Promise<{ view?: string; segment?: string; layout?: string; sort?: string }>;
 }) {
   const query = await searchParams;
   const view = resolveRelationsView(query.view);
   const segment = resolveRelationsSegment(query.segment);
   const layout = resolveRelationsLayout(query.layout);
+  const sort = resolveRelationsSort(query.sort);
   const [{ readModel }, companyModule] = await Promise.all([
     createRelationsModule(),
     createCompanyModule(),
@@ -213,6 +247,24 @@ export default async function RelationsPage({
     companyModule.readModel.list(),
   ]);
   const activeContacts = contacts.filter((contact) => contact.status === "active");
+  const sortedCompanies = sortRelationItems(
+    companies.map((company) => ({
+      ...company,
+      name: company.name,
+      ownerName: company.ownerDisplayName,
+      recentAt: company.updatedAt,
+    })),
+    sort,
+  );
+  const sortedContacts = sortRelationItems(
+    activeContacts.map((contact) => ({
+      ...contact,
+      name: contact.displayName,
+      ownerName: contact.ownerDisplayName,
+      recentAt: contact.lastContactAt,
+    })),
+    sort,
+  );
   const interactionCompanies = pipeline.map((row) => ({
     id: row.companyId,
     name: row.companyName,
@@ -221,7 +273,7 @@ export default async function RelationsPage({
       name: contact.displayName,
     })),
   }));
-  const currentHref = relationsHref({ layout, segment, view });
+  const currentHref = relationsHref({ layout, segment, sort, view });
 
   return (
     <main className={`workspace-main module-main relations-main crm-main crm-layout-${layout}`}>
@@ -233,31 +285,31 @@ export default async function RelationsPage({
         <nav aria-label="Contacts" className="crm-tabs">
           <Link
             className={view === "contacts" ? "active" : ""}
-            href={relationsHref({ layout, segment, view: "contacts" })}
+            href={relationsHref({ layout, segment, sort, view: "contacts" })}
           >
             Contacts
           </Link>
           <Link
             className={view === "profiles" ? "active" : ""}
-            href={relationsHref({ layout, segment, view: "profiles" })}
+            href={relationsHref({ layout, segment, sort, view: "profiles" })}
           >
             Perfis
           </Link>
           <Link
             className={view === "organizations" ? "active" : ""}
-            href={relationsHref({ layout, segment, view: "organizations" })}
+            href={relationsHref({ layout, segment, sort, view: "organizations" })}
           >
             Organizações
           </Link>
           <Link
             className={view === "scripts" ? "active" : ""}
-            href={relationsHref({ layout, segment, view: "scripts" })}
+            href={relationsHref({ layout, segment, sort, view: "scripts" })}
           >
             Guiões
           </Link>
         </nav>
         <div className="crm-subnav-actions">
-          <LayoutSwitcher layout={layout} segment={segment} view={view} />
+          <LayoutSwitcher layout={layout} segment={segment} sort={sort} view={view} />
           <div className="crm-context-actions">
             {view === "contacts" && segment ? (
               <InteractionModal
@@ -293,13 +345,13 @@ export default async function RelationsPage({
           <nav aria-label="Segmento" className="crm-segment-switcher">
             <Link
               className={!segment ? "active" : ""}
-              href={relationsHref({ layout, segment: null, view: "contacts" })}
+              href={relationsHref({ layout, segment: null, sort, view: "contacts" })}
             >
               Follow-ups
             </Link>
             <Link
               className={segment === "prospecting" ? "active" : ""}
-              href={relationsHref({ layout, segment: "prospecting", view: "contacts" })}
+              href={relationsHref({ layout, segment: "prospecting", sort, view: "contacts" })}
             >
               Prospeção
             </Link>
@@ -314,9 +366,10 @@ export default async function RelationsPage({
         <section className="crm-directory">
           <div className="crm-directory-head">
             <span>{companies.length} organizações</span>
+            <DirectorySort layout={layout} segment={segment} sort={sort} view="organizations" />
           </div>
           <div className="crm-table crm-organisation-table crm-layout-collection">
-            {companies.map((company) => {
+            {sortedCompanies.map((company) => {
               const people = activeContacts.filter((contact) => contact.companyId === company.id);
               return (
                 <Link
@@ -343,9 +396,11 @@ export default async function RelationsPage({
                       ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
                       : "—"}
                   </span>
-                  <span className="crm-card-field" data-label="Nota">
-                    {company.currentContext ?? "Sem notas"}
-                  </span>
+                  {layout === "list" ? (
+                    <span className="crm-card-field" data-label="Nota">
+                      {company.currentContext ?? "Sem notas"}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -355,9 +410,10 @@ export default async function RelationsPage({
         <section className="crm-directory">
           <div className="crm-directory-head">
             <span>{activeContacts.length} perfis</span>
+            <DirectorySort layout={layout} segment={segment} sort={sort} view="profiles" />
           </div>
           <div className="crm-contact-list crm-layout-collection">
-            {activeContacts.map((contact) => (
+            {sortedContacts.map((contact) => (
               <Link
                 className="crm-contact-row"
                 href={withReturnTo(`/relations/contacts/${contact.id}`, currentHref)}

@@ -648,27 +648,17 @@ a {
   height: 1.75rem;
   width: 1.75rem;
 }
-.theme-aware-mark {
+.vouga-mark {
   display: inline-grid;
   flex: 0 0 auto;
   height: 1.75rem;
   place-items: center;
   width: 1.75rem;
 }
-.theme-aware-mark img {
+.vouga-mark-image {
   grid-area: 1 / 1;
   height: 100%;
-  transition: opacity var(--duration-fast) var(--ease-standard);
   width: 100%;
-}
-.theme-aware-mark-light {
-  opacity: 0;
-}
-[data-theme="light"] .theme-aware-mark-dark {
-  opacity: 0;
-}
-[data-theme="light"] .theme-aware-mark-light {
-  opacity: 1;
 }
 .brand span {
   font-size: var(--text-md);
@@ -1172,99 +1162,6 @@ a {
   font-size: var(--text-xs);
   overflow-wrap: anywhere;
 }
-.theme-switcher {
-  border: 0;
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  min-width: 0;
-  padding: 0;
-}
-.theme-switcher legend {
-  align-items: baseline;
-  display: flex;
-  gap: var(--space-3);
-  justify-content: space-between;
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  width: 100%;
-}
-.theme-switcher legend span:last-child {
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-}
-.theme-options {
-  display: grid;
-  gap: var(--space-2);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.theme-option {
-  align-items: center;
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: grid;
-  font-size: var(--text-xs);
-  gap: var(--space-1);
-  justify-items: center;
-  min-height: 4.75rem;
-  min-width: 0;
-  padding: var(--space-3) var(--space-2);
-  position: relative;
-  transition:
-    background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
-}
-.theme-option:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-.theme-option-active {
-  background: var(--color-surface-active);
-  border-color: var(--color-accent-border);
-  color: var(--color-text-primary);
-}
-.theme-option:focus-within {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 1px var(--color-bg);
-}
-.theme-option input {
-  cursor: pointer;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  position: absolute;
-}
-.theme-option svg {
-  height: var(--navigation-icon-size);
-  width: var(--navigation-icon-size);
-}
-.theme-option-indicator {
-  align-items: center;
-  background: var(--color-accent);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-inverse);
-  display: inline-flex;
-  height: 1rem;
-  justify-content: center;
-  opacity: 0;
-  position: absolute;
-  right: var(--space-1);
-  top: var(--space-1);
-  width: 1rem;
-}
-.theme-option-active .theme-option-indicator {
-  opacity: 1;
-}
-.theme-option-indicator svg {
-  height: 0.7rem;
-  width: 0.7rem;
-}
 .user-menu-action {
   align-items: center;
   background: transparent;
@@ -1289,6 +1186,17 @@ a {
   color: var(--color-text-primary);
 }
 .workspace-content {
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--color-bg) 75%, transparent),
+      color-mix(in srgb, var(--color-bg) 75%, transparent)
+    ),
+    url("/background.png");
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  min-height: calc(100dvh - var(--workspace-header-height));
   min-width: 0;
 }
 .workspace-content:focus {
@@ -3490,9 +3398,6 @@ a {
 .settings-section-content {
   padding: var(--space-5);
 }
-.settings-section .theme-switcher {
-  max-width: 34rem;
-}
 .settings-definition {
   display: grid;
   margin: 0;
@@ -5348,14 +5253,11 @@ a {
   background: var(--color-panel-cell-hover);
   border-color: transparent;
 }
-.theme-option,
 .user-menu-action {
   background: var(--color-panel-cell);
   border-color: var(--color-panel-border);
   border-radius: var(--radius-md);
 }
-.theme-option:hover,
-.theme-option-active,
 .user-menu-action:hover {
   background: var(--color-panel-cell-hover);
   border-color: transparent;
@@ -7005,7 +6907,6 @@ a {
   text-transform: none;
 }
 .company-tile-icon,
-.theme-option-indicator,
 .brief-panel-icon {
   border-radius: var(--radius-sm);
 }
@@ -9153,61 +9054,26 @@ a {
     top: 100%;
   }
 
-  /* Inverted color themes for Mobile Calendar Day Panel:
-     - Light Mode: Dark Grey card (#222320) with light text
-     - Dark Mode: White card (#ffffff) with dark text */
-  [data-theme="light"] .calendar-day-panel-mobile {
-    background: #222320 !important;
-    color: #f2f1ec !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-  }
-
-  [data-theme="light"] .calendar-day-panel-mobile h2,
-  [data-theme="light"] .calendar-day-panel-mobile header span,
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-panel-entry strong,
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-add {
-    color: #f2f1ec !important;
-  }
-
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-panel-entry small,
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-panel-entry time,
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-panel-empty {
-    color: #aaa9a3 !important;
-  }
-
-  [data-theme="light"] .calendar-day-panel-mobile .calendar-day-panel-entry {
-    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-  }
-
-  [data-theme="dark"] .calendar-day-panel-mobile,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile {
+  .calendar-day-panel-mobile {
     background: #ffffff !important;
     color: #111210 !important;
     border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 
-  [data-theme="dark"] .calendar-day-panel-mobile h2,
-  [data-theme="dark"] .calendar-day-panel-mobile header span,
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-panel-entry strong,
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-add,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile h2,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile header span,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-panel-entry strong,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-add {
+  .calendar-day-panel-mobile h2,
+  .calendar-day-panel-mobile header span,
+  .calendar-day-panel-mobile .calendar-day-panel-entry strong,
+  .calendar-day-panel-mobile .calendar-day-add {
     color: #111210 !important;
   }
 
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-panel-entry small,
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-panel-entry time,
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-panel-empty,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-panel-entry small,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-panel-entry time,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-panel-empty {
+  .calendar-day-panel-mobile .calendar-day-panel-entry small,
+  .calendar-day-panel-mobile .calendar-day-panel-entry time,
+  .calendar-day-panel-mobile .calendar-day-panel-empty {
     color: #62625d !important;
   }
 
-  [data-theme="dark"] .calendar-day-panel-mobile .calendar-day-panel-entry,
-  :root:not([data-theme="light"]) .calendar-day-panel-mobile .calendar-day-panel-entry {
+  .calendar-day-panel-mobile .calendar-day-panel-entry {
     border-bottom-color: rgba(0, 0, 0, 0.08) !important;
   }
 

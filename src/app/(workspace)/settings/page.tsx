@@ -1,8 +1,7 @@
-import { Link2, LogOut, MonitorCog, UserCircle2 } from "lucide-react";
+import { Link2, LogOut, UserCircle2 } from "lucide-react";
 
 import { signOut } from "@/application/auth/actions";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
-import { ThemeSwitcher } from "@/foundation/appearance/theme-switcher";
 import {
   createGoogleConnectionReadModel,
   createGoogleIntegrationModule,
@@ -51,7 +50,6 @@ export default async function SettingsPage() {
       <nav aria-label="Secções de Settings" className="settings-index">
         <a href="#profile">Profile</a>
         {managesGoogle ? <a href="#google">Google</a> : null}
-        <a href="#appearance">Appearance</a>
         <a href="#language">Language</a>
         <a href="#session">Session</a>
         <a href="#about">About</a>
@@ -170,15 +168,6 @@ export default async function SettingsPage() {
               </a>
             </div>
           )}
-        </SettingsSection>
-
-        <SettingsSection
-          description="Escolhe como os tokens oficiais são resolvidos nesta aplicação."
-          icon={<MonitorCog aria-hidden="true" />}
-          id="appearance"
-          title="Appearance"
-        >
-          <ThemeSwitcher />
         </SettingsSection>
 
         <SettingsSection

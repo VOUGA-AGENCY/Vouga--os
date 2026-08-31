@@ -1,6 +1,5 @@
-:root,
-[data-theme="dark"] {
-  color-scheme: dark;
+:root {
+  color-scheme: light;
 
   /* Vouga identity */
   --vouga-orange: #d98218;
@@ -8,24 +7,24 @@
   --vouga-orange-active: #bd6b12;
 
   /* Backgrounds and surfaces */
-  --color-bg: #111210;
-  --color-bg-elevated: #151614;
-  --color-surface: #1a1b19;
-  --color-surface-raised: #20211f;
-  --color-surface-hover: #262724;
-  --color-surface-active: #2b2c29;
+  --color-bg: #f1f0eb;
+  --color-bg-elevated: #ebeae4;
+  --color-surface: #e5e4de;
+  --color-surface-raised: #deddd7;
+  --color-surface-hover: #d7d6d0;
+  --color-surface-active: #cfcec8;
 
   /* Text */
-  --color-text-primary: #f2f1ec;
-  --color-text-secondary: #aaa9a3;
-  --color-text-tertiary: #81817b;
-  --color-text-disabled: #62625d;
-  --color-text-inverse: #181818;
+  --color-text-primary: #181818;
+  --color-text-secondary: #676762;
+  --color-text-tertiary: #6d6d68;
+  --color-text-disabled: #a09f99;
+  --color-text-inverse: #f2f1ec;
 
   /* Borders */
-  --color-border: rgb(242 241 236 / 10%);
-  --color-border-strong: rgb(242 241 236 / 18%);
-  --color-border-focus: rgb(242 241 236 / 34%);
+  --color-border: rgb(24 24 24 / 14%);
+  --color-border-strong: rgb(24 24 24 / 26%);
+  --color-border-focus: rgb(24 24 24 / 40%);
 
   /* Accent */
   --color-accent: var(--vouga-orange);
@@ -35,30 +34,30 @@
   --color-accent-border: color-mix(in srgb, var(--vouga-orange) 42%, transparent);
 
   /* Semantic states */
-  --color-success: #91a66f;
+  --color-success: #5f7446;
   --color-success-soft: color-mix(in srgb, var(--color-success) 12%, transparent);
-  --color-warning: #d2a04f;
+  --color-warning: #90651f;
   --color-warning-soft: color-mix(in srgb, var(--color-warning) 12%, transparent);
-  --color-danger: #d77b6b;
+  --color-danger: #a64f42;
   --color-danger-soft: color-mix(in srgb, var(--color-danger) 12%, transparent);
-  --color-info: #82aeb9;
+  --color-info: #4f7480;
   --color-info-soft: color-mix(in srgb, var(--color-info) 12%, transparent);
 
   /* Product materials */
-  --color-panel-neutral-start: #1d1e1c;
-  --color-panel-neutral-end: #191a18;
-  --color-panel-warm-start: #211c17;
-  --color-panel-warm-end: #1d1915;
-  --color-panel-cool-start: #171d20;
-  --color-panel-cool-end: #161a1d;
-  --color-panel-positive-start: #182019;
-  --color-panel-positive-end: #171c17;
-  --color-panel-attention-start: #211918;
-  --color-panel-attention-end: #1d1717;
-  --color-panel-border: rgb(255 255 255 / 8%);
-  --color-panel-cell: rgb(255 255 255 / 3.5%);
-  --color-panel-cell-hover: rgb(255 255 255 / 9%);
-  --shadow-panel: 0 1px 1px rgb(0 0 0 / 14%), 0 14px 40px rgb(0 0 0 / 8%);
+  --color-panel-neutral-start: #fbfaf7;
+  --color-panel-neutral-end: #f6f5f0;
+  --color-panel-warm-start: #fff8f1;
+  --color-panel-warm-end: #fff3e6;
+  --color-panel-cool-start: #f6faff;
+  --color-panel-cool-end: #eef6ff;
+  --color-panel-positive-start: #f5fcf7;
+  --color-panel-positive-end: #eef8f2;
+  --color-panel-attention-start: #fff6f5;
+  --color-panel-attention-end: #ffefef;
+  --color-panel-border: rgb(255 255 255 / 72%);
+  --color-panel-cell: rgb(255 255 255 / 48%);
+  --color-panel-cell-hover: rgb(24 24 24 / 7%);
+  --shadow-panel: 0 1px 2px rgb(37 32 25 / 4%), 0 14px 40px rgb(37 32 25 / 5%);
 
   /* Legacy aliases retained while older surfaces adopt the Founder Workspace names. */
   --color-brief-today-start: var(--color-panel-warm-start);
@@ -167,47 +166,6 @@
   --ring: var(--color-accent);
   --danger: var(--color-danger);
   --font-serif: "Instrument Serif", Georgia, serif;
-}
-
-[data-theme="light"] {
-  color-scheme: light;
-
-  --color-bg: #f1f0eb;
-  --color-bg-elevated: #ebeae4;
-  --color-surface: #e5e4de;
-  --color-surface-raised: #deddd7;
-  --color-surface-hover: #d7d6d0;
-  --color-surface-active: #cfcec8;
-
-  --color-text-primary: #181818;
-  --color-text-secondary: #676762;
-  --color-text-tertiary: #6d6d68;
-  --color-text-disabled: #a09f99;
-  --color-text-inverse: #f2f1ec;
-
-  --color-border: rgb(24 24 24 / 14%);
-  --color-border-strong: rgb(24 24 24 / 26%);
-  --color-border-focus: rgb(24 24 24 / 40%);
-
-  --color-success: #5f7446;
-  --color-warning: #90651f;
-  --color-danger: #a64f42;
-  --color-info: #4f7480;
-
-  --color-panel-neutral-start: #fbfaf7;
-  --color-panel-neutral-end: #f6f5f0;
-  --color-panel-warm-start: #fff8f1;
-  --color-panel-warm-end: #fff3e6;
-  --color-panel-cool-start: #f6faff;
-  --color-panel-cool-end: #eef6ff;
-  --color-panel-positive-start: #f5fcf7;
-  --color-panel-positive-end: #eef8f2;
-  --color-panel-attention-start: #fff6f5;
-  --color-panel-attention-end: #ffefef;
-  --color-panel-border: rgb(255 255 255 / 72%);
-  --color-panel-cell: rgb(255 255 255 / 48%);
-  --color-panel-cell-hover: rgb(24 24 24 / 7%);
-  --shadow-panel: 0 1px 2px rgb(37 32 25 / 4%), 0 14px 40px rgb(37 32 25 / 5%);
 }
 
 .editorial-grid {

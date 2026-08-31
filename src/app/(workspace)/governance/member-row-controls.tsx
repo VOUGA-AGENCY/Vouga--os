@@ -22,8 +22,8 @@ export function MemberRowControls({
     startTransition(async () => {
       try {
         await changeUserRoleAction(memberId, newRole);
-      } catch (err: any) {
-        alert(err.message || "Erro ao alterar a função.");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Erro ao alterar a função.");
       }
     });
   };
@@ -32,8 +32,8 @@ export function MemberRowControls({
     startTransition(async () => {
       try {
         await toggleUserActiveAction(memberId, isActive);
-      } catch (err: any) {
-        alert(err.message || "Erro ao alterar o estado de atividade.");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Erro ao alterar o estado de atividade.");
       }
     });
   };

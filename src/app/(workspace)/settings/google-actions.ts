@@ -6,10 +6,12 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
 import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
+import { canManageGoogle } from "@/foundation/security/google-access";
 
 export async function disconnectGoogleAction(): Promise<void> {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
+  if (!canManageGoogle(user.role)) redirect(withErrorFeedback("/settings", "A ligação Google é gerida por Admin."));
 
   let message: string;
   let failed = false;
@@ -30,6 +32,7 @@ export async function disconnectGoogleAction(): Promise<void> {
 export async function saveGoogleCalendarsAction(formData: FormData): Promise<void> {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
+  if (!canManageGoogle(user.role)) redirect(withErrorFeedback("/settings", "A ligação Google é gerida por Admin."));
 
   let message: string;
   let failed = false;

@@ -36,6 +36,25 @@ export class GoogleDriveDocumentService {
     return this.documents.listDocuments(accessToken, query?.trim() || null);
   }
 
+  async getDocument(memberId: string, documentId: string): Promise<GoogleDriveDocument> {
+    return this.documents.getDocument(await this.accessToken(memberId), documentId);
+  }
+
+  async getDocumentContent(memberId: string, documentId: string) {
+    return this.documents.getDocumentContent(await this.accessToken(memberId), documentId);
+  }
+
+  async trashDocument(memberId: string, documentId: string): Promise<void> {
+    return this.documents.trashDocument(await this.accessToken(memberId), documentId);
+  }
+
+  async replaceDocumentContent(
+    memberId: string,
+    values: Parameters<GoogleDriveDocumentGateway["replaceDocumentContent"]>[1],
+  ) {
+    return this.documents.replaceDocumentContent(await this.accessToken(memberId), values);
+  }
+
   private async accessToken(memberId: string): Promise<string> {
     const stored = await this.connectionRepository.findActiveByMemberId(memberId);
     if (!stored) throw new GoogleDriveDocumentError("Liga primeiro uma conta Google.");

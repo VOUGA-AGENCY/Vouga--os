@@ -12,10 +12,14 @@ import {
   GOOGLE_OAUTH_STATE_TTL_SECONDS,
 } from "@/foundation/security/google-oauth-state";
 import { FEEDBACK_QUERY_KEY } from "@/foundation/ui/feedback";
+import { canManageGoogle } from "@/foundation/security/google-access";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.redirect(new URL("/login", request.url));
+  if (!canManageGoogle(user.role)) {
+    return redirectToSettings(request, "A ligação Google é gerida por Admin.");
+  }
 
   try {
     await (await createGoogleConnectionReadModel()).findActiveByMemberId(user.id);

@@ -93,8 +93,8 @@ export function LoginForm({ configured }: { configured: boolean }) {
 
       router.push("/");
       router.refresh();
-    } catch (err: any) {
-      setModalError(err.message || "Erro ao atualizar a palavra-passe.");
+    } catch (err: unknown) {
+      setModalError(err instanceof Error ? err.message : "Erro ao atualizar a palavra-passe.");
       setModalPending(false);
     }
   }

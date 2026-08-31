@@ -9,6 +9,9 @@ import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
 import { GoogleEventArtifactForm } from "./google-event-artifact-form";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { deleteGoogleEventAction } from "./actions";
+import { canManageGoogle } from "@/foundation/security/google-access";
+import { createClient } from "@/persistence/supabase/server";
+import { SupabaseGoogleCalendarEventProjectionRepository } from "@/persistence/google/supabase-google-calendar-event-projection-repository";
 
 export default async function GoogleEventPage({
   params,
@@ -24,6 +27,37 @@ export default async function GoogleEventPage({
   ]);
   if (!user || !query.calendar) notFound();
   const returnTo = safeWorkspaceReturnTo(query.returnTo, "/calendar");
+  if (!canManageGoogle(user.role)) {
+    const event = await new SupabaseGoogleCalendarEventProjectionRepository(
+      await createClient(),
+    ).findShared(query.calendar, eventId);
+    if (!event) notFound();
+    let artifact = null;
+    try {
+      artifact = (await (await createGoogleIntegrationModule()).artifactRepository.listShared())
+        .find((item) => item.calendarId === query.calendar && item.googleEventId === eventId) ?? null;
+    } catch {
+      artifact = null;
+    }
+    return (
+      <main className="workspace-main module-main google-event-detail">
+        <div className="detail-heading">
+          <div>
+            <Link className="back-link" href={returnTo}>← Calendar</Link>
+            <p className="eyebrow">Google Calendar · Read only</p>
+            <h1 className="display">{event.title}</h1>
+          </div>
+        </div>
+        <dl className="google-event-official-data">
+          <div><dt>Quando</dt><dd>{formatInterval(event.start, event.end, event.allDay)}</dd></div>
+          {event.location ? <div><dt>Onde</dt><dd>{event.location}</dd></div> : null}
+          <div><dt>Fonte</dt><dd>Google Calendar</dd></div>
+        </dl>
+        {event.description ? <section className="google-event-description"><h2 className="section-title">Descrição</h2><p>{event.description}</p></section> : null}
+        {artifact?.notes || artifact?.output ? <section className="google-event-local-context"><h2 className="section-title">Contexto no OS</h2>{artifact.notes ? <p>{artifact.notes}</p> : null}{artifact.output ? <p>{artifact.output}</p> : null}</section> : null}
+      </main>
+    );
+  }
   let detail;
   try {
     detail = await (

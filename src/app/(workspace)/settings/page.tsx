@@ -8,16 +8,18 @@ import {
   createGoogleIntegrationModule,
 } from "@/foundation/composition/google";
 import { getGoogleOAuthEnv } from "@/foundation/config/google-env";
+import { canManageGoogle } from "@/foundation/security/google-access";
 
 import { disconnectGoogleAction, saveGoogleCalendarsAction } from "./google-actions";
 
 export default async function SettingsPage() {
   const user = await getAuthenticatedUser();
   const email = user?.email ?? "Sessão Vouga";
+  const managesGoogle = user ? canManageGoogle(user.role) : false;
   let googleStorageAvailable = Boolean(user);
   let googleConnection = null;
   let googleCalendars = null;
-  if (user) {
+  if (user && managesGoogle) {
     try {
       googleConnection = await (
         await createGoogleConnectionReadModel()
@@ -27,7 +29,7 @@ export default async function SettingsPage() {
     }
   }
   const googleConfigured = Boolean(getGoogleOAuthEnv());
-  if (user && googleConnection && googleConfigured) {
+  if (user && managesGoogle && googleConnection && googleConfigured) {
     try {
       googleCalendars = await (
         await createGoogleIntegrationModule()
@@ -48,7 +50,7 @@ export default async function SettingsPage() {
 
       <nav aria-label="Secções de Settings" className="settings-index">
         <a href="#profile">Profile</a>
-        <a href="#google">Google</a>
+        {managesGoogle ? <a href="#google">Google</a> : null}
         <a href="#appearance">Appearance</a>
         <a href="#language">Language</a>
         <a href="#session">Session</a>
@@ -56,7 +58,7 @@ export default async function SettingsPage() {
       </nav>
 
       <div className="settings-sections">
-        <SettingsSection
+        {managesGoogle ? <SettingsSection
           description="Identidade usada nesta sessão autenticada."
           icon={<UserCircle2 aria-hidden="true" />}
           id="profile"
@@ -75,7 +77,7 @@ export default async function SettingsPage() {
           <p className="settings-note">
             Edição de perfil e gestão de conta ainda não existem no produto.
           </p>
-        </SettingsSection>
+        </SettingsSection> : null}
 
         <SettingsSection
           description="Calendar e Docs na mesma conta Google."

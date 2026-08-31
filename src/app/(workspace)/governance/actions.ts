@@ -109,7 +109,7 @@ export async function createUserAction(formData: FormData) {
 
     revalidatePath("/governance");
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message || "Erro desconhecido ao criar utilizador." };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "Erro desconhecido ao criar utilizador." };
   }
 }

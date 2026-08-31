@@ -50,6 +50,10 @@ function setup(connection: StoredGoogleConnection | null = stored) {
       title: "Founder notes",
     }),
     listDocuments: vi.fn().mockResolvedValue([]),
+    getDocument: vi.fn(),
+    getDocumentContent: vi.fn(),
+    replaceDocumentContent: vi.fn(),
+    trashDocument: vi.fn(),
   };
   const tokenProtector: GoogleTokenProtector = {
     protect: vi.fn(),
@@ -89,5 +93,13 @@ describe("GoogleDriveDocumentService", () => {
     await expect(service.listDocuments("member-1", null)).rejects.toBeInstanceOf(
       GoogleDriveDocumentError,
     );
+  });
+
+  test("move um documento para o lixo com o token protegido", async () => {
+    const { documents, service } = setup();
+
+    await service.trashDocument("member-1", "doc-1");
+
+    expect(documents.trashDocument).toHaveBeenCalledWith("access-token", "doc-1");
   });
 });

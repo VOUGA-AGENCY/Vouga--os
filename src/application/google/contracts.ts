@@ -69,6 +69,14 @@ export type GoogleDriveDocument = Readonly<{
   createdAt: string | null;
 }>;
 
+export type GoogleDocumentContent = Readonly<{
+  documentId: string;
+  title: string;
+  text: string;
+  revisionId: string;
+  endIndex: number;
+}>;
+
 export type GoogleMeetingMirror = Readonly<{
   calendarId: string;
   googleEventId: string;
@@ -116,6 +124,19 @@ export interface GoogleCalendarGateway {
 export interface GoogleDriveDocumentGateway {
   createDocument(accessToken: string, title: string): Promise<GoogleDriveDocument>;
   listDocuments(accessToken: string, query: string | null): Promise<GoogleDriveDocument[]>;
+  getDocument(accessToken: string, documentId: string): Promise<GoogleDriveDocument>;
+  getDocumentContent(accessToken: string, documentId: string): Promise<GoogleDocumentContent>;
+  trashDocument(accessToken: string, documentId: string): Promise<void>;
+  replaceDocumentContent(
+    accessToken: string,
+    values: Readonly<{
+      documentId: string;
+      title: string;
+      text: string;
+      requiredRevisionId: string;
+      endIndex: number;
+    }>,
+  ): Promise<GoogleDocumentContent>;
 }
 
 export interface GoogleCalendarSelectionRepository {
@@ -141,6 +162,7 @@ export interface GoogleEventArtifactRepository {
   list(
     memberId: string,
   ): Promise<import("@/domain/google/google-event-artifact").GoogleEventArtifact[]>;
+  listShared(): Promise<import("@/domain/google/google-event-artifact").GoogleEventArtifact[]>;
   save(
     artifact: import("@/domain/google/google-event-artifact").GoogleEventArtifact,
   ): Promise<void>;

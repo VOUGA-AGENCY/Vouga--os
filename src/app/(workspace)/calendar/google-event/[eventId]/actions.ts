@@ -8,6 +8,7 @@ import { getGoogleEventArtifactErrorMessage } from "@/application/google/google-
 import { createGoogleIntegrationModule } from "@/foundation/composition/google";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
 import { withErrorFeedback, withFeedback } from "@/foundation/ui/feedback";
+import { canManageGoogle } from "@/foundation/security/google-access";
 
 export type GoogleEventArtifactFormState = { message: string | null };
 
@@ -17,6 +18,7 @@ export async function saveGoogleEventArtifactAction(
 ): Promise<GoogleEventArtifactFormState> {
   const user = await getAuthenticatedUser();
   if (!user) return { message: "A sessão terminou. Volta a entrar." };
+  if (!canManageGoogle(user.role)) return { message: "Só Admin pode editar eventos Google." };
   const calendarId = String(formData.get("calendar_id") ?? "");
   const eventId = String(formData.get("event_id") ?? "");
   try {
@@ -45,6 +47,7 @@ export async function deleteGoogleEventAction(
 ) {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
+  if (!canManageGoogle(user.role)) redirect(withErrorFeedback(returnTo, "Só Admin pode eliminar eventos Google."));
   try {
     await (
       await createGoogleIntegrationModule()

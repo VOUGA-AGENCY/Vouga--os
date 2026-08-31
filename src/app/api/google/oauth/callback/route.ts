@@ -10,10 +10,15 @@ import {
   verifyGoogleOAuthState,
 } from "@/foundation/security/google-oauth-state";
 import { FEEDBACK_QUERY_KEY } from "@/foundation/ui/feedback";
+import { canManageGoogle } from "@/foundation/security/google-access";
+import { createGoogleNotesModule } from "@/foundation/composition/notes";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return clearState(NextResponse.redirect(new URL("/login", request.url)));
+  if (!canManageGoogle(user.role)) {
+    return clearState(redirectToSettings(request, "A ligação Google é gerida por Admin."));
+  }
 
   let integration: Awaited<ReturnType<typeof createGoogleIntegrationModule>>;
   try {
@@ -58,6 +63,10 @@ export async function GET(request: NextRequest) {
     if (flow === "picker") {
       await integration.service.completePickerAuthorization(user.id, code);
       const pickedIds = parsePickedFileIds(request.nextUrl.searchParams.get("picked_file_ids"));
+      const notes = await createGoogleNotesModule();
+      for (const documentId of pickedIds) {
+        await notes.googleService.import(user.id, documentId, null);
+      }
       return clearState(
         redirectToNotes(
           request,

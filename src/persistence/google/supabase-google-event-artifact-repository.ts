@@ -79,6 +79,14 @@ export class SupabaseGoogleEventArtifactRepository implements GoogleEventArtifac
     return (data as ArtifactRow[]).map((row) => mapArtifact(row, [], [], [], []));
   }
 
+  async listShared() {
+    const { data, error } = await this.supabase
+      .from("google_event_artifacts")
+      .select("member_id,calendar_id,google_event_id,classification,owner_member_id,purpose,notes,output,output_at");
+    if (error) throw new Error("Google artifacts unavailable");
+    return (data as ArtifactRow[]).map((row) => mapArtifact(row, [], [], [], []));
+  }
+
   async save(artifact: GoogleEventArtifact) {
     const { error } = await this.supabase.rpc("save_google_event_artifact", {
       p_calendar_id: artifact.calendarId,

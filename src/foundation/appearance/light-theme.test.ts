@@ -18,7 +18,7 @@ describe("single light appearance", () => {
     expect(settings).not.toContain("ThemeSwitcher");
     expect(tokens).toContain("color-scheme: light");
     expect(tokens).not.toContain('[data-theme="dark"]');
-    expect(css).toMatch(/\.workspace-content\s*\{[^}]*background-image:[^}]*var\(--color-bg\) 75%[^}]*url\("\/background\.png"\)/);
+    expect(css).toMatch(/\.workspace-content\s*\{[^}]*background-image:[^}]*var\(--color-bg\) 75%[^}]*url\("\/backgorund\.png"\)/);
     expect(css).not.toMatch(/\.app-sidebar\s*\{[^}]*background-image/);
     expect(css).not.toMatch(/\.workspace-header\s*\{[^}]*background-image/);
   });

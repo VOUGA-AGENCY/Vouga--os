@@ -1192,7 +1192,7 @@ a {
       color-mix(in srgb, var(--color-bg) 75%, transparent),
       color-mix(in srgb, var(--color-bg) 75%, transparent)
     ),
-    url("/background.png");
+    url("/backgorund.png");
   background-position: center bottom;
   background-repeat: no-repeat;
   background-size: cover;

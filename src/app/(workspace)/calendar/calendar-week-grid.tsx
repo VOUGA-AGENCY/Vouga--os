@@ -32,6 +32,8 @@ export function CalendarWeekGrid({
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Selection | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const allDayEntries = days.map((day) => entries.filter((entry) => entry.allDay && entryOccursOn(entry, day)));
+  const hasAllDayEntries = allDayEntries.some((dayEntries) => dayEntries.length > 0);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = HOUR_HEIGHT * 7;
@@ -92,16 +94,18 @@ export function CalendarWeekGrid({
         ))}
       </div>
 
-      <div className="calendar-week-all-day">
-        <span>dia</span>
-        {days.map((day) => (
-          <div key={day}>
-            {entries.filter((entry) => entry.allDay && entryOccursOn(entry, day)).map((entry) => (
-              <WeekEvent entry={entry} key={`${entry.entryKey}:${day}`} returnTo={returnTo} />
-            ))}
-          </div>
-        ))}
-      </div>
+      {hasAllDayEntries ? (
+        <div className="calendar-week-all-day">
+          <span>dia</span>
+          {days.map((day, dayIndex) => (
+            <div key={day}>
+              {allDayEntries[dayIndex].map((entry) => (
+                <WeekEvent entry={entry} key={`${entry.entryKey}:${day}`} returnTo={returnTo} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="calendar-week-scroll" ref={scrollRef}>
         <div className="calendar-week-time-grid" style={{ height: DAY_HEIGHT }}>

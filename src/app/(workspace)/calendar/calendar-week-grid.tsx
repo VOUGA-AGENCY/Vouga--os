@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import { withReturnTo } from "@/foundation/navigation/return-to";
 import type { CalendarEntry } from "@/projections/calendar/calendar";
@@ -11,33 +12,35 @@ import { entryOccursOn, lisbonLocalTimeToIso } from "@/projections/calendar/cale
 import { layoutTimedEntries, type CalendarWeekPlacement } from "./calendar-week-layout";
 
 const SLOT_MINUTES = 30;
-const SLOTS_PER_DAY = 48;
+const START_HOUR = 8;
+const END_HOUR = 22;
+const SLOTS_PER_DAY = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
 const HOUR_HEIGHT = 56;
-const DAY_HEIGHT = HOUR_HEIGHT * 24;
+const DAY_HEIGHT = HOUR_HEIGHT * (END_HOUR - START_HOUR);
+const DEFAULT_START_SLOT = ((9 - START_HOUR) * 60) / SLOT_MINUTES;
 
 type Selection = Readonly<{ day: string; startSlot: number; endSlot: number }>;
 
 export function CalendarWeekGrid({
   days,
   entries,
+  nextHref,
+  previousHref,
   returnTo,
   today,
 }: {
   days: readonly string[];
   entries: readonly CalendarEntry[];
+  nextHref: string;
+  previousHref: string;
   returnTo: string;
   today: string;
 }) {
   const router = useRouter();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Selection | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const allDayEntries = days.map((day) => entries.filter((entry) => entry.allDay && entryOccursOn(entry, day)));
   const hasAllDayEntries = allDayEntries.some((dayEntries) => dayEntries.length > 0);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = HOUR_HEIGHT * 7;
-  }, []);
 
   function beginSelection(day: string, event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
@@ -78,14 +81,21 @@ export function CalendarWeekGrid({
   }
 
   return (
-    <section aria-label="Semana, das 00:00 às 24:00" className="calendar-week-hourly">
+    <section aria-label="Semana, das 08:00 às 22:00" className="calendar-week-hourly">
       <div className="calendar-week-header">
-        <span aria-hidden="true" />
+        <nav aria-label="Navegar na semana" className="calendar-grid-navigation">
+          <Link aria-label="Semana anterior" href={previousHref}>
+            <ChevronLeft aria-hidden="true" />
+          </Link>
+          <Link aria-label="Semana seguinte" href={nextHref}>
+            <ChevronRight aria-hidden="true" />
+          </Link>
+        </nav>
         {days.map((day) => (
           <button
             className={day === today ? "calendar-week-heading calendar-week-heading-today" : "calendar-week-heading"}
             key={day}
-            onClick={() => openCreate(day, 18, 19)}
+            onClick={() => openCreate(day, DEFAULT_START_SLOT, DEFAULT_START_SLOT + 1)}
             type="button"
           >
             <span>{weekday(day)}</span>
@@ -107,14 +117,15 @@ export function CalendarWeekGrid({
         </div>
       ) : null}
 
-      <div className="calendar-week-scroll" ref={scrollRef}>
+      <div className="calendar-week-scroll">
         <div className="calendar-week-time-grid" style={{ height: DAY_HEIGHT }}>
           <div className="calendar-week-hours" aria-hidden="true">
-            {Array.from({ length: 24 }, (_, hour) => (
-              <time key={hour} style={{ top: hour * HOUR_HEIGHT }}>
+            {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, hourIndex) => {
+              const hour = START_HOUR + hourIndex;
+              return <time key={hour} style={{ top: hourIndex * HOUR_HEIGHT }}>
                 {String(hour).padStart(2, "0")}:00
-              </time>
-            ))}
+              </time>;
+            })}
           </div>
           <div className="calendar-week-columns">
             {days.map((day) => (
@@ -125,7 +136,7 @@ export function CalendarWeekGrid({
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    openCreate(day, 18, 19);
+                    openCreate(day, DEFAULT_START_SLOT, DEFAULT_START_SLOT + 1);
                   }
                 }}
                 onPointerDown={(event) => beginSelection(day, event)}
@@ -139,6 +150,9 @@ export function CalendarWeekGrid({
                 {layoutTimedEntries(
                   entries.filter((entry) => !entry.allDay && entryOccursOn(entry, day)),
                   day,
+                  HOUR_HEIGHT,
+                  START_HOUR,
+                  END_HOUR,
                 ).map((placement) => (
                     <WeekEvent
                       entry={placement.entry}
@@ -224,15 +238,8 @@ function slotFromPointer(event: ReactPointerEvent<HTMLDivElement>) {
 }
 
 function instantForSlot(day: string, slot: number) {
-  if (slot === SLOTS_PER_DAY) return lisbonLocalTimeToIso(nextDay(day), 0, 0);
-  const minutes = slot * SLOT_MINUTES;
+  const minutes = START_HOUR * 60 + slot * SLOT_MINUTES;
   return lisbonLocalTimeToIso(day, Math.floor(minutes / 60), minutes % 60);
-}
-
-function nextDay(day: string) {
-  const date = new Date(`${day}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
 }
 
 function slotsToPixels(slots: number) {

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -56,8 +58,21 @@ describe("CalendarSurface month composition", () => {
 
     expect(markup).toContain("calendar-month-layout");
     expect(markup).toContain("calendar-mobile-month");
+    expect(markup).toContain("calendar-grid-navigation");
+    expect(markup).toContain("julho de 2026");
     expect(markup).toContain("Founder sync");
     expect(markup).toContain("day=2026-07-24");
     expect(markup).toContain("Compromissos de 24 de julho de 2026");
+    expect(markup).not.toContain(">Agenda<");
+    expect(markup).not.toContain("calendar-filter-menu");
+    expect(markup).not.toContain("calendar-today");
+    expect(markup).not.toContain("calendar-mobile-period-controls");
+  });
+
+  it("keeps the desktop toolbar compact and the legacy period controls mobile-only", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+    expect(css).toMatch(/\.calendar-view-tabs\s*\{[^}]*grid-template-columns:\s*repeat\(2, auto\)[^}]*width:\s*fit-content/);
+    expect(css).toMatch(/\.calendar-desktop-surface\s*\{[^}]*border:/);
   });
 });

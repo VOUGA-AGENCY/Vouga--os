@@ -1595,6 +1595,20 @@ a {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+.calendar-desktop-period-controls {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  margin-right: auto;
+}
+.calendar-desktop-period-controls > strong {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+}
+.calendar-mobile-period-controls {
+  display: none;
+}
 .calendar-period-controls > div {
   display: grid;
   gap: var(--space-1);
@@ -1635,8 +1649,9 @@ a {
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-sm);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, auto);
   padding: var(--space-1);
+  width: fit-content;
 }
 .calendar-view-tabs a {
   border-radius: var(--radius-xs);
@@ -1887,6 +1902,39 @@ a {
 }
 .calendar-week-header {
   border-bottom: var(--border-width) solid var(--color-border-strong);
+}
+.calendar-grid-navigation {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.calendar-grid-navigation a {
+  align-items: center;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  display: flex;
+  justify-content: center;
+  min-height: 3rem;
+}
+.calendar-grid-navigation a + a {
+  border-left: var(--border-width) solid var(--color-border);
+}
+.calendar-grid-navigation a:hover {
+  background: var(--color-panel-cell-hover);
+  color: var(--color-text-primary);
+}
+.calendar-grid-navigation svg {
+  height: var(--navigation-icon-size);
+  width: var(--navigation-icon-size);
+}
+.calendar-desktop-surface {
+  background: color-mix(in srgb, var(--color-bg-elevated) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 28%, transparent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.calendar-desktop-surface .calendar-week-hourly {
+  margin-top: 0;
 }
 .calendar-week-heading {
   align-items: baseline;
@@ -5917,10 +5965,13 @@ a {
   border: 0;
   box-shadow: none;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-3);
   margin-top: var(--space-5);
   padding: 0;
+}
+.calendar-toolbar-new {
+  flex: 0 0 auto;
 }
 .calendar-period-controls {
   display: grid;
@@ -8698,14 +8749,26 @@ a {
 .calendar-mobile-surface {
   display: none;
 }
+.calendar-mobile-navigation {
+  display: none;
+}
 .calendar-month-layout {
   align-items: stretch;
   display: grid;
   gap: var(--space-4);
   grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.3fr);
+  padding: var(--space-3);
 }
 .calendar-month-shell {
   min-width: 0;
+}
+.calendar-month-shell > .calendar-grid-navigation {
+  border: var(--border-width) solid var(--color-border);
+  margin-bottom: var(--space-3);
+  width: 4rem;
+}
+.calendar-month-shell > .calendar-grid-navigation a {
+  min-height: var(--control-height-md);
 }
 .calendar-month-weekdays {
   color: var(--color-text-tertiary);
@@ -8927,6 +8990,13 @@ a {
     grid-template-columns: var(--control-height-md) minmax(0, 1fr) var(--control-height-md);
     width: 100%;
   }
+  .calendar-desktop-period-controls {
+    display: none;
+  }
+  .calendar-toolbar-new {
+    margin-left: auto;
+    order: 2;
+  }
   .calendar-period-controls > div {
     text-align: center;
   }
@@ -8942,9 +9012,6 @@ a {
     min-height: var(--control-height-sm);
     padding: var(--space-2) var(--space-4);
   }
-  .calendar-view-tabs a:nth-child(3) {
-    display: none;
-  }
   .calendar-filter-menu {
     margin-left: auto;
     order: 2;
@@ -8958,6 +9025,26 @@ a {
   }
   .calendar-mobile-surface {
     display: block;
+  }
+  .calendar-mobile-navigation {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
+  }
+  .calendar-mobile-navigation a {
+    align-items: center;
+    background: var(--color-bg-elevated);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    display: flex;
+    height: var(--control-height-sm);
+    justify-content: center;
+    width: var(--control-height-sm);
+  }
+  .calendar-mobile-navigation svg {
+    height: var(--navigation-icon-size);
+    width: var(--navigation-icon-size);
   }
   .calendar-mobile-week-strip {
     display: grid;

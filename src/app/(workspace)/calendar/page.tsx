@@ -9,7 +9,7 @@ import {
 
 import { CalendarSurface } from "./calendar-view";
 
-const VIEWS: CalendarView[] = ["week", "month", "agenda"];
+const VIEWS: CalendarView[] = ["week", "month"];
 
 type CalendarSearchParams = {
   date?: string;

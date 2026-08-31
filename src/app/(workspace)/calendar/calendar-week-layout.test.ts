@@ -52,4 +52,15 @@ describe("calendar week layout", () => {
     ], "2026-07-20");
     expect(placement.compact).toBe(true);
   });
+
+  it("limita e reposiciona os eventos para a janela das 08:00 às 22:00", () => {
+    const placements = layoutTimedEntries([
+      entry("before", "2026-07-20T05:00:00.000Z", "2026-07-20T06:00:00.000Z"),
+      entry("visible", "2026-07-20T08:00:00.000Z", "2026-07-20T09:00:00.000Z"),
+    ], "2026-07-20", 56, 8, 22);
+
+    expect(placements).toHaveLength(1);
+    expect(placements[0].entry.entryKey).toBe("visible");
+    expect(placements[0].top).toBe(56);
+  });
 });

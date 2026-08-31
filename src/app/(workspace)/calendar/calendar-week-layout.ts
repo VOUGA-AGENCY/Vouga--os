@@ -14,9 +14,19 @@ export function layoutTimedEntries(
   entries: readonly CalendarEntry[],
   day: string,
   hourHeight = 56,
+  startHour = 0,
+  endHour = 24,
 ): CalendarWeekPlacement[] {
+  const visibleStart = startHour * 60;
+  const visibleEnd = endHour * 60;
   const intervals = entries
     .map((entry) => ({ entry, ...intervalMinutes(entry, day) }))
+    .map((interval) => ({
+      ...interval,
+      end: Math.min(interval.end, visibleEnd),
+      start: Math.max(interval.start, visibleStart),
+    }))
+    .filter((interval) => interval.end > interval.start)
     .sort((left, right) => left.start - right.start || left.end - right.end);
   const placements: CalendarWeekPlacement[] = [];
   let cluster: typeof intervals = [];
@@ -33,7 +43,7 @@ export function layoutTimedEntries(
     });
     const columnCount = Math.max(1, columnEnds.length);
     for (const interval of assigned) {
-      const top = (interval.start / 60) * hourHeight;
+      const top = ((interval.start - visibleStart) / 60) * hourHeight;
       const height = Math.max(20, ((interval.end - interval.start) / 60) * hourHeight);
       placements.push({
         column: interval.column,

@@ -28,8 +28,15 @@ type AppShellProps = {
   userRole: UserRole;
 };
 
-export function AppShell({ children, memberLabel, searchIsPartial, searchItems, userRole }: AppShellProps) {
+export function AppShell({
+  children,
+  memberLabel,
+  searchIsPartial,
+  searchItems,
+  userRole,
+}: AppShellProps) {
   const pathname = usePathname();
+  const brandHref = userRole === "admin" ? "/context" : "/calendar";
 
   return (
     <div className="app-shell">
@@ -38,7 +45,7 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems, 
       </a>
 
       <aside aria-label="Workspace Vouga" className="app-sidebar">
-        <Link aria-label="Vouga OS — Context Engine" className="app-sidebar-brand" href="/context">
+        <Link aria-label="Vouga OS" className="app-sidebar-brand" href={brandHref}>
           <Image
             alt="Vouga OS"
             className="app-sidebar-logo"
@@ -60,7 +67,7 @@ export function AppShell({ children, memberLabel, searchIsPartial, searchItems, 
       <div className="workspace-frame">
         <header className="workspace-header">
           <div className="workspace-header-context">
-            <Link aria-label="Vouga OS — Context Engine" className="workspace-mobile-mark" href="/context">
+            <Link aria-label="Vouga OS" className="workspace-mobile-mark" href={brandHref}>
               <BrandMark priority />
             </Link>
           </div>
@@ -95,13 +102,7 @@ function DesktopNavigation({ pathname, userRole }: { pathname: string; userRole:
   );
 }
 
-function DesktopNavigationItem({
-  item,
-  pathname,
-}: {
-  item: NavigationItem;
-  pathname: string;
-}) {
+function DesktopNavigationItem({ item, pathname }: { item: NavigationItem; pathname: string }) {
   const active = isNavigationItemActive(item, pathname);
   const children = item.children ?? [];
   const hasChildren = children.length > 0;
@@ -112,11 +113,7 @@ function DesktopNavigationItem({
     <div className={`navigation-group${active ? " navigation-group-active" : ""}`}>
       {hasChildren ? (
         <div className="navigation-parent-row">
-          <NavigationLink
-            item={item}
-            onNavigate={() => setExpanded(true)}
-            pathname={pathname}
-          />
+          <NavigationLink item={item} onNavigate={() => setExpanded(true)} pathname={pathname} />
           <button
             aria-controls={`navigation-children-${item.href.slice(1)}`}
             aria-expanded={open}

@@ -172,17 +172,20 @@ export function ContactForm({
           </header>
           <div className="crm-editor-grid">
             {prospectingContext && !contact ? (
-              <div className="field field-light crm-span-2">
-                <label htmlFor="new_company_name">Nova organização</label>
-                <input
-                  id="new_company_name"
-                  maxLength={160}
-                  name="new_company_name"
-                  onChange={(event) => setNewOrganisationName(event.target.value)}
-                  placeholder="Nome da organização"
-                  required
-                />
-              </div>
+              <>
+                <div className="field field-light crm-span-2">
+                  <label htmlFor="new_company_name">Nova organização</label>
+                  <input
+                    id="new_company_name"
+                    maxLength={160}
+                    name="new_company_name"
+                    onChange={(event) => setNewOrganisationName(event.target.value)}
+                    placeholder="Nome da organização"
+                    required
+                  />
+                </div>
+                <InlineOrganisationFields required />
+              </>
             ) : (
               <>
                 <div className="field field-light">
@@ -211,6 +214,7 @@ export function ContactForm({
                     placeholder="Nome da organização"
                   />
                 </div>
+                {newOrganisationName.trim() ? <InlineOrganisationFields required /> : null}
               </>
             )}
             <div className="field field-light crm-span-2">
@@ -292,5 +296,44 @@ export function ContactForm({
         <FormSubmit idleLabel={contact ? "Guardar alterações" : "Criar perfil"} />
       </div>
     </form>
+  );
+}
+
+function InlineOrganisationFields({ required }: { required: boolean }) {
+  return (
+    <>
+      <div className="field field-light">
+        <label htmlFor="new_company_primary_cae">CAE principal</label>
+        <input
+          id="new_company_primary_cae"
+          maxLength={20}
+          name="new_company_primary_cae"
+          placeholder="Ex.: 62010"
+          required={required}
+        />
+      </div>
+      <div className="field field-light">
+        <label htmlFor="new_company_contact_email">Email da organização</label>
+        <input
+          id="new_company_contact_email"
+          maxLength={320}
+          name="new_company_contact_email"
+          placeholder="geral@empresa.pt"
+          type="email"
+        />
+      </div>
+      <div className="field field-light">
+        <label htmlFor="new_company_contact_phone">Telefone da organização</label>
+        <input
+          id="new_company_contact_phone"
+          maxLength={40}
+          name="new_company_contact_phone"
+          placeholder="+351"
+        />
+      </div>
+      <p className="field-hint crm-span-2">
+        Indica pelo menos um email ou telefone da organização.
+      </p>
+    </>
   );
 }

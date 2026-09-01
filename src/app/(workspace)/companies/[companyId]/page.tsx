@@ -10,7 +10,6 @@ import { createCompanyModule } from "@/foundation/composition/companies";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createProjectModule } from "@/foundation/composition/projects";
 import { createRelationsModule } from "@/foundation/composition/relations";
-import { createTaskModule } from "@/foundation/composition/tasks";
 import { safeWorkspaceReturnTo, withReturnTo } from "@/foundation/navigation/return-to";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { ContextPanel } from "../../context-panel";
@@ -38,35 +37,28 @@ export default async function CompanyDetailPage({
   const companyHref = query.returnTo
     ? withReturnTo(`/companies/${companyId}`, backHref)
     : `/companies/${companyId}`;
-  const [companies, relations, tasks, projects, contextEngine, user] = await Promise.all([
+  const [companies, relations, projects, contextEngine, user] = await Promise.all([
     createCompanyModule(),
     createRelationsModule(),
-    createTaskModule(),
     createProjectModule(),
     createContextEngine(),
     getAuthenticatedUser(),
   ]);
-  const [company, allContacts, companyTasks, companyProjects, context, history] = await Promise.all([
+  const [company, allContacts, companyProjects, context, history] = await Promise.all([
     companies.readModel.findById(companyId),
     relations.readModel.listContacts(),
-    tasks.readModel.listByCompany(companyId),
     projects.readModel.listByCompany(companyId),
-    contextEngine.get({ type: "company", id: companyId }, new Date().toISOString(), user?.role ?? "engineer"),
+    contextEngine.get(
+      { type: "company", id: companyId },
+      new Date().toISOString(),
+      user?.role ?? "engineer",
+    ),
     relations.readModel.listInteractionsByCompany(companyId),
   ]);
   if (!company) notFound();
   const contacts = allContacts.filter(
     (contact) => contact.status === "active" && contact.companyId === companyId,
   );
-  const nextStep = companyTasks
-    .filter(
-      (task) =>
-        task.purpose === "relationship_follow_up" &&
-        task.status !== "completed" &&
-        task.status !== "cancelled",
-    )
-    .sort((a, b) => (a.dueAt ?? "9999").localeCompare(b.dueAt ?? "9999"))[0];
-  const primary = contacts.find((contact) => contact.id === company.primaryContactId);
 
   return (
     <main className="workspace-main module-main crm-company-profile">
@@ -92,10 +84,7 @@ export default async function CompanyDetailPage({
           </Link>
           <Link
             className="button-secondary"
-            href={withReturnTo(
-              `/relations/contacts/new?companyId=${company.id}`,
-              companyHref,
-            )}
+            href={withReturnTo(`/relations/contacts/new?companyId=${company.id}`, companyHref)}
           >
             Novo perfil
           </Link>
@@ -107,11 +96,25 @@ export default async function CompanyDetailPage({
 
       <section className="crm-company-overview">
         <div>
-          <span>Perfil principal</span>
-          {primary ? (
-            <Link href={withReturnTo(`/relations/contacts/${primary.id}`, companyHref)}>
-              {primary.displayName}
-            </Link>
+          <span>CAE principal</span>
+          <strong>{company.primaryCae ?? "—"}</strong>
+        </div>
+        <div>
+          <span>Contacto</span>
+          {company.contactEmail ? (
+            <a href={`mailto:${company.contactEmail}`}>{company.contactEmail}</a>
+          ) : null}
+          {company.contactPhone ? (
+            <a href={`tel:${company.contactPhone}`}>{company.contactPhone}</a>
+          ) : null}
+          {!company.contactEmail && !company.contactPhone ? <strong>—</strong> : null}
+        </div>
+        <div>
+          <span>Site</span>
+          {company.website ? (
+            <a href={company.website} rel="noreferrer" target="_blank">
+              {company.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+            </a>
           ) : (
             <strong>—</strong>
           )}
@@ -119,17 +122,6 @@ export default async function CompanyDetailPage({
         <div>
           <span>Owner</span>
           <strong>{company.ownerDisplayName}</strong>
-        </div>
-        <div>
-          <span>Próximo passo</span>
-          {nextStep ? (
-            <Link href={`/tasks/${nextStep.id}`}>
-              {nextStep.title}
-              <small>{nextStep.dueAt ? fullDate.format(new Date(nextStep.dueAt)) : ""}</small>
-            </Link>
-          ) : (
-            <strong>—</strong>
-          )}
         </div>
         <div>
           <span>Project associado</span>

@@ -6,6 +6,10 @@ export type CompanyListItem = Readonly<{
   status: CompanyStatus;
   ownerDisplayName: string;
   ownerEmail: string;
+  primaryCae: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  website: string | null;
   currentContext: string | null;
   relationshipRisks: string | null;
   prospectingStage: ProspectingStage | null;

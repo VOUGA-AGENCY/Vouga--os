@@ -15,6 +15,10 @@ type CompanyRow = {
   name: string;
   status: CompanyStatus;
   owner_member_id: string;
+  primary_cae: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  website: string | null;
   current_context: string | null;
   relationship_risks: string | null;
   prospecting_stage: ProspectingStage | null;
@@ -36,6 +40,10 @@ function toCompany(row: CompanyRow): Company {
     name: row.name,
     status: row.status,
     ownerMemberId: row.owner_member_id,
+    primaryCae: row.primary_cae,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    website: row.website,
     currentContext: row.current_context,
     relationshipRisks: row.relationship_risks,
     prospectingStage: row.prospecting_stage,
@@ -50,6 +58,10 @@ function toRowValues(values: ValidCompanyValues) {
     name: values.name,
     status: values.status,
     owner_member_id: values.ownerMemberId,
+    primary_cae: values.primaryCae,
+    contact_email: values.contactEmail,
+    contact_phone: values.contactPhone,
+    website: values.website,
     current_context: values.currentContext,
     relationship_risks: values.relationshipRisks,
     prospecting_stage: values.prospectingStage,
@@ -64,7 +76,7 @@ export class SupabaseCompanyRepository implements CompanyRepository {
     const { data, error } = await this.supabase
       .from("companies")
       .select(
-        "id,name,status,owner_member_id,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
+        "id,name,status,owner_member_id,primary_cae,contact_email,contact_phone,website,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
       )
       .order("updated_at", { ascending: false });
 
@@ -76,7 +88,7 @@ export class SupabaseCompanyRepository implements CompanyRepository {
     const { data, error } = await this.supabase
       .from("companies")
       .select(
-        "id,name,status,owner_member_id,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
+        "id,name,status,owner_member_id,primary_cae,contact_email,contact_phone,website,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
       )
       .eq("id", id)
       .maybeSingle();
@@ -90,7 +102,7 @@ export class SupabaseCompanyRepository implements CompanyRepository {
       .from("companies")
       .insert(toRowValues(values))
       .select(
-        "id,name,status,owner_member_id,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
+        "id,name,status,owner_member_id,primary_cae,contact_email,contact_phone,website,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
       )
       .single();
 
@@ -105,6 +117,10 @@ export class SupabaseCompanyRepository implements CompanyRepository {
         name: company.name,
         status: company.status,
         owner_member_id: company.ownerMemberId,
+        primary_cae: company.primaryCae,
+        contact_email: company.contactEmail,
+        contact_phone: company.contactPhone,
+        website: company.website,
         current_context: company.currentContext,
         relationship_risks: company.relationshipRisks,
         prospecting_stage: company.prospectingStage,
@@ -112,7 +128,7 @@ export class SupabaseCompanyRepository implements CompanyRepository {
       })
       .eq("id", company.id)
       .select(
-        "id,name,status,owner_member_id,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
+        "id,name,status,owner_member_id,primary_cae,contact_email,contact_phone,website,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at",
       )
       .single();
 

@@ -33,11 +33,13 @@ export function resolveRelationsSort(value?: string): RelationsSort {
 }
 
 export function relationsHref({
+  cae,
   layout,
   segment,
   sort,
   view,
 }: {
+  cae?: string | null;
   layout: RelationsLayout;
   segment: RelationsSegment;
   sort?: RelationsSort;
@@ -46,6 +48,7 @@ export function relationsHref({
   const params = new URLSearchParams();
   if (view !== "contacts") params.set("view", view);
   if (segment) params.set("segment", segment);
+  if (cae && view === "organizations") params.set("cae", cae);
   params.set("layout", layout);
   if (sort && sort !== "name_asc") params.set("sort", sort);
   return `/relations?${params.toString()}`;

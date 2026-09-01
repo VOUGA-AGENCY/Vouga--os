@@ -15,6 +15,10 @@ const company: Company = {
   name: "Empresa Externa",
   status: "active",
   ownerMemberId: "member-1",
+  primaryCae: "62010",
+  contactEmail: "geral@empresa.pt",
+  contactPhone: null,
+  website: null,
   currentContext: null,
   relationshipRisks: null,
   prospectingStage: null,
@@ -31,6 +35,8 @@ describe("Company", () => {
         name: "Empresa Externa",
         status: "pipeline" as "active",
         ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
       }),
     ).toThrow("O estado da Organisation não é válido.");
   });
@@ -60,6 +66,8 @@ describe("Company", () => {
         name: "  Empresa Externa  ",
         status: "active",
         ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
         currentContext: "  ",
         relationshipRisks: " risco material ",
       }),
@@ -67,6 +75,10 @@ describe("Company", () => {
       name: "Empresa Externa",
       status: "active",
       ownerMemberId: "member-1",
+      primaryCae: "62010",
+      contactEmail: "geral@empresa.pt",
+      contactPhone: null,
+      website: null,
       currentContext: null,
       relationshipRisks: "risco material",
       prospectingStage: null,
@@ -75,8 +87,26 @@ describe("Company", () => {
   });
 
   it.each([
-    ["nome", { name: "", status: "active", ownerMemberId: "member-1" }],
-    ["owner", { name: "Empresa Externa", status: "active", ownerMemberId: "" }],
+    [
+      "nome",
+      {
+        name: "",
+        status: "active",
+        ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
+      },
+    ],
+    [
+      "owner",
+      {
+        name: "Empresa Externa",
+        status: "active",
+        ownerMemberId: "",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
+      },
+    ],
   ])("rejeita ausência de %s", (_field, values) => {
     expect(() =>
       validateCompanyValues(values as Parameters<typeof validateCompanyValues>[0]),
@@ -87,7 +117,13 @@ describe("Company", () => {
     "impede registar a própria Vouga como %s",
     (name) => {
       expect(() =>
-        validateCompanyValues({ name, status: "active", ownerMemberId: "member-1" }),
+        validateCompanyValues({
+          name,
+          status: "active",
+          ownerMemberId: "member-1",
+          primaryCae: "62010",
+          contactEmail: "geral@empresa.pt",
+        }),
       ).toThrow("A própria Vouga não pode ser registada como Organisation.");
     },
   );
@@ -98,5 +134,33 @@ describe("Company", () => {
       currentContext: "Relação em avaliação",
       status: "archived",
     });
+  });
+
+  it("exige CAE e pelo menos um contacto, aceitando email, telefone ou ambos", () => {
+    const values = {
+      name: "Empresa Externa",
+      status: "active" as const,
+      ownerMemberId: "member-1",
+      primaryCae: "62010",
+    };
+    expect(() => validateCompanyValues({ ...values, contactEmail: "", contactPhone: "" })).toThrow(
+      "Indica pelo menos um email ou telefone de contacto.",
+    );
+    expect(
+      validateCompanyValues({ ...values, contactPhone: "+351 912 345 678" }).contactPhone,
+    ).toBe("+351 912 345 678");
+  });
+
+  it("normaliza um site opcional para link seguro", () => {
+    expect(
+      validateCompanyValues({
+        name: "Empresa Externa",
+        status: "active",
+        ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
+        website: "empresa.pt",
+      }).website,
+    ).toBe("https://empresa.pt/");
   });
 });

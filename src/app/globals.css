@@ -7366,8 +7366,81 @@ a {
     color var(--duration-fast) var(--ease-standard),
     transform var(--duration-fast) var(--ease-standard);
 }
+.crm-organisation-table-head {
+  align-items: center;
+  border-bottom: var(--border-width) solid var(--color-border);
+  color: var(--color-text-tertiary);
+  display: grid;
+  font-size: var(--text-xs);
+  gap: var(--space-4);
+  grid-template-columns: 2rem minmax(11rem, 1.4fr) 5.5rem minmax(8rem, 1fr) minmax(8rem, 1fr) minmax(10rem, 2fr) var(--control-height-sm);
+  padding: 0 var(--space-2) var(--space-2);
+}
 .crm-organisation-row {
-  grid-template-columns: 2rem minmax(10rem, 1.2fr) 0.6fr 0.8fr minmax(10rem, 1.5fr);
+  grid-template-columns: 2rem minmax(10rem, 1.2fr) 5.5rem 0.6fr 0.8fr minmax(10rem, 1.5fr);
+}
+.crm-layout-list .crm-organisation-row {
+  grid-template-columns: minmax(0, 1fr) var(--control-height-sm);
+  min-height: 0;
+  padding: 0;
+}
+.crm-organisation-row-main {
+  align-items: center;
+  color: inherit;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 2rem minmax(11rem, 1.4fr) 5.5rem minmax(8rem, 1fr) minmax(8rem, 1fr) minmax(10rem, 2fr);
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  text-decoration: none;
+}
+.crm-cae-field {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+}
+.crm-organisation-note-preview {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crm-organisation-note-toggle {
+  align-items: center;
+  align-self: stretch;
+  background: transparent;
+  border: 0;
+  border-left: var(--border-width) solid var(--color-border);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+}
+.crm-organisation-note-toggle:hover {
+  color: var(--color-text-primary);
+}
+.crm-organisation-note-toggle svg {
+  height: 1rem;
+  transition: transform var(--duration-fast) var(--ease-standard);
+  width: 1rem;
+}
+.crm-organisation-row-expanded .crm-organisation-note-toggle svg {
+  transform: rotate(180deg);
+}
+.crm-organisation-note-full {
+  border-top: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
+  grid-column: 1 / -1;
+  line-height: 1.55;
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  white-space: pre-wrap;
+}
+.crm-organisation-note-full strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }
 .crm-contact-row {
   grid-template-columns: 3rem minmax(10rem, 1.1fr) 1fr 1.2fr 0.8fr 3rem minmax(8rem, 1fr);
@@ -7452,12 +7525,22 @@ a {
   .crm-table-head {
     display: none;
   }
+  .crm-organisation-table-head {
+    display: none;
+  }
   .crm-prospect-summary {
     grid-template-columns: minmax(9rem, 1fr) minmax(9rem, 1fr) minmax(10rem, 1fr) 2rem;
   }
   .crm-prospect-summary > :nth-child(4),
   .crm-prospect-summary > :nth-child(5),
   .crm-prospect-summary > :nth-child(6) {
+    display: none;
+  }
+  .crm-organisation-row-main {
+    grid-template-columns: 2rem minmax(10rem, 1.2fr) minmax(7rem, 1fr) minmax(7rem, 1fr);
+  }
+  .crm-organisation-row-main > .crm-cae-field,
+  .crm-organisation-row-main > .crm-organisation-note-preview {
     display: none;
   }
   .crm-quick-touch form {
@@ -7499,6 +7582,23 @@ a {
   }
   .crm-organisation-row > :nth-child(n + 3) {
     display: none;
+  }
+  .crm-layout-list .crm-organisation-row {
+    grid-template-columns: minmax(0, 1fr) var(--control-height-sm);
+  }
+  .crm-layout-list .crm-organisation-row > :nth-child(n + 3) {
+    display: block;
+  }
+  .crm-organisation-row-main {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+  .crm-organisation-row-main > .crm-cae-field,
+  .crm-organisation-row-main > [data-label="Owner"],
+  .crm-organisation-row-main > .crm-organisation-note-preview {
+    display: none;
+  }
+  .crm-organisation-grid {
+    grid-template-columns: 1fr;
   }
   .crm-contact-row {
     grid-template-columns: 3rem 1fr;
@@ -7983,7 +8083,7 @@ a {
   border-bottom: var(--border-width) solid var(--color-border);
   border-top: var(--border-width) solid var(--color-border);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 .crm-company-overview > div {
   display: grid;
@@ -8238,8 +8338,91 @@ a {
   padding-top: var(--space-1);
 }
 
-.crm-layout-grid .crm-organisation-row {
-  grid-template-columns: 2rem minmax(0, 1fr);
+.crm-organisation-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  width: 100%;
+}
+
+.crm-organisation-card {
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 9.5rem;
+  padding: var(--space-4);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.crm-organisation-card:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+  transform: translateY(-1px);
+}
+
+.crm-organisation-card .crm-card-top {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.crm-organisation-card .crm-card-title-group {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.crm-organisation-card strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-organisation-card .crm-card-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.crm-cae-pill {
+  background: var(--color-bg-subtle);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-xs);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  padding: 1px var(--space-2);
+}
+
+.crm-owner-tag {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+}
+
+.crm-card-context {
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .crm-layout-grid .crm-contact-row {
@@ -8263,6 +8446,8 @@ a {
   content: attr(data-label);
   font-size: var(--text-xs);
 }
+
+
 
 .crm-layout-grid .crm-script-row {
   grid-template-columns: 1fr;

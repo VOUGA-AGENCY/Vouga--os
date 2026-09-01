@@ -14,6 +14,10 @@ type CompanyViewRow = {
   name: string;
   status: CompanyStatus;
   owner_member_id: string;
+  primary_cae: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  website: string | null;
   current_context: string | null;
   relationship_risks: string | null;
   prospecting_stage: ProspectingStage | null;
@@ -24,7 +28,7 @@ type CompanyViewRow = {
 };
 
 const COMPANY_VIEW_SELECT =
-  "id,name,status,owner_member_id,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at,owner:members!companies_owner_member_id_fkey(display_name,email)";
+  "id,name,status,owner_member_id,primary_cae,contact_email,contact_phone,website,current_context,relationship_risks,prospecting_stage,primary_contact_id,created_at,updated_at,owner:members!companies_owner_member_id_fkey(display_name,email)";
 
 function toListItem(row: CompanyViewRow): CompanyListItem {
   return {
@@ -33,6 +37,10 @@ function toListItem(row: CompanyViewRow): CompanyListItem {
     status: row.status,
     ownerDisplayName: row.owner?.display_name ?? "Owner indisponível",
     ownerEmail: row.owner?.email ?? "",
+    primaryCae: row.primary_cae,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    website: row.website,
     currentContext: row.current_context,
     relationshipRisks: row.relationship_risks,
     prospectingStage: row.prospecting_stage,

@@ -8,7 +8,6 @@ import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createRelationsModule } from "@/foundation/composition/relations";
-import { createTaskModule } from "@/foundation/composition/tasks";
 import { safeWorkspaceReturnTo, withReturnTo } from "@/foundation/navigation/return-to";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { ContextPanel } from "../../context-panel";
@@ -34,33 +33,26 @@ export default async function CompanyDetailPage({
   const companyHref = query.returnTo
     ? withReturnTo(`/companies/${companyId}`, backHref)
     : `/companies/${companyId}`;
-  const [companies, relations, tasks, contextEngine, user] = await Promise.all([
+  const [companies, relations, contextEngine, user] = await Promise.all([
     createCompanyModule(),
     createRelationsModule(),
-    createTaskModule(),
     createContextEngine(),
     getAuthenticatedUser(),
   ]);
-  const [company, allContacts, companyTasks, context, history] = await Promise.all([
+  const [company, allContacts, context, history] = await Promise.all([
     companies.readModel.findById(companyId),
     relations.readModel.listContacts(),
-    tasks.readModel.listByCompany(companyId),
-    contextEngine.get({ type: "company", id: companyId }, new Date().toISOString(), user?.role ?? "engineer"),
+    contextEngine.get(
+      { type: "company", id: companyId },
+      new Date().toISOString(),
+      user?.role ?? "engineer",
+    ),
     relations.readModel.listInteractionsByCompany(companyId),
   ]);
   if (!company) notFound();
   const contacts = allContacts.filter(
     (contact) => contact.status === "active" && contact.companyId === companyId,
   );
-  const nextStep = companyTasks
-    .filter(
-      (task) =>
-        task.purpose === "relationship_follow_up" &&
-        task.status !== "completed" &&
-        task.status !== "cancelled",
-    )
-    .sort((a, b) => (a.dueAt ?? "9999").localeCompare(b.dueAt ?? "9999"))[0];
-  const primary = contacts.find((contact) => contact.id === company.primaryContactId);
 
   return (
     <main className="workspace-main module-main crm-company-profile">
@@ -80,10 +72,7 @@ export default async function CompanyDetailPage({
         <div className="detail-actions">
           <Link
             className="button-secondary"
-            href={withReturnTo(
-              `/relations/contacts/new?companyId=${company.id}`,
-              companyHref,
-            )}
+            href={withReturnTo(`/relations/contacts/new?companyId=${company.id}`, companyHref)}
           >
             Novo perfil
           </Link>
@@ -95,29 +84,22 @@ export default async function CompanyDetailPage({
 
       <section className="crm-company-overview">
         <div>
-          <span>Perfil principal</span>
-          {primary ? (
-            <Link href={withReturnTo(`/relations/contacts/${primary.id}`, companyHref)}>
-              {primary.displayName}
-            </Link>
-          ) : (
-            <strong>—</strong>
-          )}
+          <span>CAE principal</span>
+          <strong>{company.primaryCae ?? "—"}</strong>
+        </div>
+        <div>
+          <span>Contacto</span>
+          {company.contactEmail ? (
+            <a href={`mailto:${company.contactEmail}`}>{company.contactEmail}</a>
+          ) : null}
+          {company.contactPhone ? (
+            <a href={`tel:${company.contactPhone}`}>{company.contactPhone}</a>
+          ) : null}
+          {!company.contactEmail && !company.contactPhone ? <strong>—</strong> : null}
         </div>
         <div>
           <span>Owner</span>
           <strong>{company.ownerDisplayName}</strong>
-        </div>
-        <div>
-          <span>Próximo passo</span>
-          {nextStep ? (
-            <Link href={`/tasks/${nextStep.id}`}>
-              {nextStep.title}
-              <small>{nextStep.dueAt ? fullDate.format(new Date(nextStep.dueAt)) : ""}</small>
-            </Link>
-          ) : (
-            <strong>—</strong>
-          )}
         </div>
       </section>
 

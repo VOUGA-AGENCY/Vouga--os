@@ -31,9 +31,7 @@ class MemoryCompanyRepository implements CompanyRepository {
     return Promise.resolve(company);
   }
 
-  deleteIfUnreferenced(
-    id: string,
-  ): Promise<"deleted" | "profiles" | "protected" | "not_found"> {
+  deleteIfUnreferenced(id: string): Promise<"deleted" | "profiles" | "protected" | "not_found"> {
     const exists = this.records.some((company) => company.id === id);
     this.records = this.records.filter((company) => company.id !== id);
     return Promise.resolve(exists ? "deleted" : "not_found");
@@ -58,6 +56,8 @@ const owner: ActiveMember = {
   email: "founder@example.com",
 };
 
+const companyContact = { primaryCae: "62010", contactEmail: "geral@empresa.pt" };
+
 function createService() {
   return new CompanyService(new MemoryCompanyRepository(), new MemoryMemberDirectory([owner]));
 }
@@ -69,6 +69,7 @@ describe("CompanyService", () => {
       name: "Organização Externa",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
 
     await expect(service.listCompanies()).resolves.toEqual([created]);
@@ -82,6 +83,7 @@ describe("CompanyService", () => {
         name: "Organização Externa",
         status: "active",
         ownerMemberId: "member-inactive",
+        ...companyContact,
       }),
     ).rejects.toBeInstanceOf(CompanyOwnerError);
   });
@@ -92,12 +94,14 @@ describe("CompanyService", () => {
       name: "Organização Externa",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
 
     const updated = await service.updateCompany(created.id, {
       name: "Organização Atualizada",
       status: "inactive",
       ownerMemberId: owner.id,
+      ...companyContact,
       currentContext: "Relação em pausa",
       relationshipRisks: "Sem sponsor interno",
     });
@@ -116,6 +120,7 @@ describe("CompanyService", () => {
       name: "Organização Externa",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
 
     const archived = await service.archiveCompany(created.id);
@@ -130,6 +135,7 @@ describe("CompanyService", () => {
       name: "Organização Externa",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
     await service.archiveCompany(created.id);
 
@@ -137,6 +143,7 @@ describe("CompanyService", () => {
       name: "Organização Externa Renomeada",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
 
     expect(edited.status).toBe("archived");
@@ -149,6 +156,7 @@ describe("CompanyService", () => {
       name: "Organização Temporária",
       status: "active",
       ownerMemberId: owner.id,
+      ...companyContact,
     });
 
     await service.deleteCompany(created.id);

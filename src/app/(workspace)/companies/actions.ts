@@ -21,9 +21,13 @@ function valuesFromFormData(formData: FormData) {
     name: String(formData.get("name") ?? ""),
     status: String(formData.get("status") ?? "active") as CompanyStatus,
     ownerMemberId: String(formData.get("owner_member_id") ?? ""),
+    primaryCae: String(formData.get("primary_cae") ?? ""),
+    contactEmail: String(formData.get("contact_email") ?? ""),
+    contactPhone: String(formData.get("contact_phone") ?? ""),
     currentContext: String(formData.get("current_context") ?? ""),
     relationshipRisks: String(formData.get("relationship_risks") ?? ""),
-    prospectingStage: (String(formData.get("prospecting_stage") ?? "") || null) as ProspectingStage | null,
+    prospectingStage: (String(formData.get("prospecting_stage") ?? "") ||
+      null) as ProspectingStage | null,
     primaryContactId: String(formData.get("primary_contact_id") ?? "") || null,
   };
 }
@@ -50,7 +54,12 @@ export async function createCompanyAction(
 
   revalidatePath("/companies");
   const returnTo = String(formData.get("return_to") ?? "");
-  redirect(withFeedback(returnTo.startsWith("/") ? returnTo : `/companies/${companyId}`, "Organisation criada."));
+  redirect(
+    withFeedback(
+      returnTo.startsWith("/") ? returnTo : `/companies/${companyId}`,
+      "Organisation criada.",
+    ),
+  );
 }
 
 export async function updateCompanyAction(
@@ -92,17 +101,9 @@ export async function deleteCompanyAction(companyId: string): Promise<void> {
     revalidatePath("/companies");
   } catch (error) {
     redirect(
-      withErrorFeedback(
-        `/companies/${companyId}`,
-        getCompanyApplicationErrorMessage(error),
-      ),
+      withErrorFeedback(`/companies/${companyId}`, getCompanyApplicationErrorMessage(error)),
     );
   }
 
-  redirect(
-    withFeedback(
-      "/relations?view=organizations",
-      "Organisation eliminada.",
-    ),
-  );
+  redirect(withFeedback("/relations?view=organizations", "Organisation eliminada."));
 }

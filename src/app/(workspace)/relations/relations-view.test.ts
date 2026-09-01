@@ -48,6 +48,15 @@ describe("Contacts presentation state", () => {
     );
   });
 
+  it("preserves a CAE filter only for Organizations", () => {
+    expect(
+      relationsHref({ cae: "62010", layout: "list", segment: null, view: "organizations" }),
+    ).toBe("/relations?view=organizations&cae=62010&layout=list");
+    expect(relationsHref({ cae: "62010", layout: "list", segment: null, view: "profiles" })).toBe(
+      "/relations?view=profiles&layout=list",
+    );
+  });
+
   it("offers only Profiles belonging to the selected Organisation", () => {
     const companies = [
       {

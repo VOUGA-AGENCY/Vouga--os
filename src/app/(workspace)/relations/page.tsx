@@ -13,6 +13,8 @@ import { withReturnTo } from "@/foundation/navigation/return-to";
 import type { ContactPipelineRow } from "@/projections/relations/relations-read-model";
 import { CopyScriptButton } from "./copy-script-button";
 import { InteractionModal } from "./interaction-modal";
+import { OrganizationList } from "./organization-list";
+import { AutoSubmitDirectoryFilters } from "./auto-submit-directory-filters";
 import {
   relationsHref,
   resolveRelationsLayout,
@@ -33,12 +35,20 @@ const dateTime = new Intl.DateTimeFormat("pt-PT", {
   minute: "2-digit",
 });
 
+function notePreview(note: string | null, maximum = 84): string {
+  if (!note) return "Sem notas";
+  const normalized = note.replace(/\s+/g, " ").trim();
+  return normalized.length > maximum ? `${normalized.slice(0, maximum).trimEnd()}…` : normalized;
+}
+
 function LayoutSwitcher({
+  cae,
   layout,
   segment,
   sort,
   view,
 }: {
+  cae?: string | null;
   layout: RelationsLayout;
   segment: RelationsSegment;
   sort: RelationsSort;
@@ -50,7 +60,7 @@ function LayoutSwitcher({
         aria-current={layout === "list" ? "page" : undefined}
         aria-label="Ver como lista"
         className={layout === "list" ? "active" : ""}
-        href={relationsHref({ layout: "list", segment, sort, view })}
+        href={relationsHref({ cae, layout: "list", segment, sort, view })}
       >
         <List aria-hidden="true" />
         <span>Lista</span>
@@ -59,7 +69,7 @@ function LayoutSwitcher({
         aria-current={layout === "grid" ? "page" : undefined}
         aria-label="Ver como quadrados"
         className={layout === "grid" ? "active" : ""}
-        href={relationsHref({ layout: "grid", segment, sort, view })}
+        href={relationsHref({ cae, layout: "grid", segment, sort, view })}
       >
         <LayoutGrid aria-hidden="true" />
         <span>Quadrados</span>
@@ -69,21 +79,38 @@ function LayoutSwitcher({
 }
 
 function DirectorySort({
+  cae,
+  caeOptions,
   layout,
   segment,
   sort,
   view,
 }: {
+  cae: string | null;
+  caeOptions?: readonly string[];
   layout: RelationsLayout;
   segment: RelationsSegment;
   sort: RelationsSort;
   view: "profiles" | "organizations";
 }) {
   return (
-    <form className="crm-directory-sort" method="get">
+    <AutoSubmitDirectoryFilters>
       <input name="view" type="hidden" value={view} />
       <input name="layout" type="hidden" value={layout} />
       {segment ? <input name="segment" type="hidden" value={segment} /> : null}
+      {caeOptions ? (
+        <>
+          <label htmlFor="organizations-cae">CAE</label>
+          <select defaultValue={cae ?? ""} id="organizations-cae" name="cae">
+            <option value="">Todos os CAEs</option>
+            {caeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : null}
       <label htmlFor={`${view}-sort`}>Ordenar</label>
       <select defaultValue={sort} id={`${view}-sort`} name="sort">
         <option value="name_asc">Nome A–Z</option>
@@ -91,8 +118,7 @@ function DirectorySort({
         <option value="owner">Owner</option>
         <option value="recent">Mais recentes</option>
       </select>
-      <button type="submit">Aplicar</button>
-    </form>
+    </AutoSubmitDirectoryFilters>
   );
 }
 
@@ -229,7 +255,13 @@ function FollowUps({ rows, returnTo }: { rows: readonly ContactPipelineRow[]; re
 export default async function RelationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; segment?: string; layout?: string; sort?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    segment?: string;
+    layout?: string;
+    sort?: string;
+    cae?: string;
+  }>;
 }) {
   const query = await searchParams;
   const view = resolveRelationsView(query.view);
@@ -247,8 +279,15 @@ export default async function RelationsPage({
     companyModule.readModel.list(),
   ]);
   const activeContacts = contacts.filter((contact) => contact.status === "active");
+  const caeOptions = [
+    ...new Set(companies.flatMap((company) => (company.primaryCae ? [company.primaryCae] : []))),
+  ].sort((left, right) => left.localeCompare(right, "pt-PT"));
+  const cae = caeOptions.includes(query.cae ?? "") ? (query.cae ?? null) : null;
+  const filteredCompanies = cae
+    ? companies.filter((company) => company.primaryCae === cae)
+    : companies;
   const sortedCompanies = sortRelationItems(
-    companies.map((company) => ({
+    filteredCompanies.map((company) => ({
       ...company,
       name: company.name,
       ownerName: company.ownerDisplayName,
@@ -273,7 +312,20 @@ export default async function RelationsPage({
       name: contact.displayName,
     })),
   }));
-  const currentHref = relationsHref({ layout, segment, sort, view });
+  const currentHref = relationsHref({ cae, layout, segment, sort, view });
+  const organizationRows = sortedCompanies.map((company) => {
+    return {
+      href: withReturnTo(`/companies/${company.id}`, currentHref),
+      id: company.id,
+      name: company.name,
+      note: company.currentContext,
+      owner: company.ownerDisplayName,
+      stage: company.prospectingStage ? PROSPECTING_STAGE_LABELS[company.prospectingStage] : "—",
+      stageClassName: company.prospectingStage
+        ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
+        : "",
+    };
+  });
 
   return (
     <main className={`workspace-main module-main relations-main crm-main crm-layout-${layout}`}>
@@ -309,7 +361,7 @@ export default async function RelationsPage({
           </Link>
         </nav>
         <div className="crm-subnav-actions">
-          <LayoutSwitcher layout={layout} segment={segment} sort={sort} view={view} />
+          <LayoutSwitcher cae={cae} layout={layout} segment={segment} sort={sort} view={view} />
           <div className="crm-context-actions">
             {view === "contacts" && segment ? (
               <InteractionModal
@@ -365,52 +417,66 @@ export default async function RelationsPage({
       ) : view === "organizations" ? (
         <section className="crm-directory">
           <div className="crm-directory-head">
-            <span>{companies.length} organizações</span>
-            <DirectorySort layout={layout} segment={segment} sort={sort} view="organizations" />
+            <span>{sortedCompanies.length} organizações</span>
+            <DirectorySort
+              cae={cae}
+              caeOptions={caeOptions.length ? caeOptions : undefined}
+              layout={layout}
+              segment={segment}
+              sort={sort}
+              view="organizations"
+            />
           </div>
           <div className="crm-table crm-organisation-table crm-layout-collection">
-            {sortedCompanies.map((company) => {
-              const people = activeContacts.filter((contact) => contact.companyId === company.id);
-              return (
-                <Link
-                  className="crm-organisation-row"
-                  href={withReturnTo(`/companies/${company.id}`, currentHref)}
-                  key={company.id}
-                >
-                  <span className="crm-icon">
-                    <Building2 aria-hidden="true" />
-                  </span>
-                  <strong>{company.name}</strong>
-                  <span className="crm-card-field" data-label="Perfis">
-                    {people.length} {people.length === 1 ? "perfil" : "perfis"}
-                  </span>
-                  <span
-                    className={`crm-card-field${
-                      company.prospectingStage
-                        ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
-                        : ""
-                    }`}
-                    data-label="Estado"
+            {layout === "list" ? (
+              <OrganizationList rows={organizationRows} />
+            ) : (
+              sortedCompanies.map((company) => {
+                return (
+                  <Link
+                    className="crm-organisation-row"
+                    href={withReturnTo(`/companies/${company.id}`, currentHref)}
+                    key={company.id}
                   >
-                    {company.prospectingStage
-                      ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
-                      : "—"}
-                  </span>
-                  {layout === "list" ? (
-                    <span className="crm-card-field" data-label="Nota">
-                      {company.currentContext ?? "Sem notas"}
+                    <span className="crm-icon">
+                      <Building2 aria-hidden="true" />
                     </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+                    <strong>{company.name}</strong>
+                    <span className="crm-card-field" data-label="Owner">
+                      {company.ownerDisplayName}
+                    </span>
+                    <span
+                      className={`crm-card-field${
+                        company.prospectingStage
+                          ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
+                          : ""
+                      }`}
+                      data-label="Estado"
+                    >
+                      {company.prospectingStage
+                        ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
+                        : "—"}
+                    </span>
+                    <span className="crm-card-field" data-label="Notas">
+                      <span>{notePreview(company.currentContext)}</span>
+                    </span>
+                  </Link>
+                );
+              })
+            )}
           </div>
         </section>
       ) : view === "profiles" ? (
         <section className="crm-directory">
           <div className="crm-directory-head">
             <span>{activeContacts.length} perfis</span>
-            <DirectorySort layout={layout} segment={segment} sort={sort} view="profiles" />
+            <DirectorySort
+              cae={null}
+              layout={layout}
+              segment={segment}
+              sort={sort}
+              view="profiles"
+            />
           </div>
           <div className="crm-contact-list crm-layout-collection">
             {sortedContacts.map((contact) => (

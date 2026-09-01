@@ -7369,6 +7369,64 @@ a {
 .crm-organisation-row {
   grid-template-columns: 2rem minmax(10rem, 1.2fr) 0.6fr 0.8fr minmax(10rem, 1.5fr);
 }
+.crm-layout-list .crm-organisation-row {
+  grid-template-columns: minmax(0, 1fr) var(--control-height-sm);
+  min-height: 0;
+  padding: 0;
+}
+.crm-organisation-row-main {
+  align-items: center;
+  color: inherit;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 2rem minmax(10rem, 1.2fr) 0.6fr 0.8fr minmax(10rem, 1.5fr);
+  min-width: 0;
+  padding: var(--space-2) var(--space-2);
+  text-decoration: none;
+}
+.crm-organisation-note-preview {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crm-organisation-note-toggle {
+  align-items: center;
+  align-self: stretch;
+  background: transparent;
+  border: 0;
+  border-left: var(--border-width) solid var(--color-border);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+}
+.crm-organisation-note-toggle:hover {
+  color: var(--color-text-primary);
+}
+.crm-organisation-note-toggle svg {
+  height: 1rem;
+  transition: transform var(--duration-fast) var(--ease-standard);
+  width: 1rem;
+}
+.crm-organisation-row-expanded .crm-organisation-note-toggle svg {
+  transform: rotate(180deg);
+}
+.crm-organisation-note-full {
+  border-top: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
+  grid-column: 1 / -1;
+  line-height: 1.55;
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  white-space: pre-wrap;
+}
+.crm-organisation-note-full strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
 .crm-contact-row {
   grid-template-columns: 3rem minmax(10rem, 1.1fr) 1fr 1.2fr 0.8fr 3rem minmax(8rem, 1fr);
 }
@@ -7499,6 +7557,22 @@ a {
   }
   .crm-organisation-row > :nth-child(n + 3) {
     display: none;
+  }
+  .crm-layout-list .crm-organisation-row {
+    grid-template-columns: minmax(0, 1fr) var(--control-height-sm);
+  }
+  .crm-layout-list .crm-organisation-row > :nth-child(n + 3) {
+    display: block;
+  }
+  .crm-organisation-row-main {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+  .crm-organisation-row-main > :nth-child(3),
+  .crm-organisation-row-main > :nth-child(4) {
+    display: none;
+  }
+  .crm-organisation-note-preview {
+    grid-column: 2;
   }
   .crm-contact-row {
     grid-template-columns: 3rem 1fr;
@@ -8239,7 +8313,17 @@ a {
 }
 
 .crm-layout-grid .crm-organisation-row {
+  height: 11rem;
   grid-template-columns: 2rem minmax(0, 1fr);
+  min-height: 11rem;
+  overflow: hidden;
+}
+
+.crm-layout-grid .crm-organisation-row > strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .crm-layout-grid .crm-contact-row {
@@ -8262,6 +8346,13 @@ a {
   color: var(--color-text-tertiary);
   content: attr(data-label);
   font-size: var(--text-xs);
+}
+
+.crm-layout-grid .crm-organisation-row .crm-card-field[data-label="Notas"] > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .crm-layout-grid .crm-script-row {

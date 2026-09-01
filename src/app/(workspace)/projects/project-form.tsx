@@ -19,13 +19,17 @@ export function ProjectForm({
   action,
   options,
   project,
+  initialCompanyId,
 }: {
   action: Action;
   options: ProjectFormOptions;
   project?: ProjectDetail;
+  initialCompanyId?: string;
 }) {
   const [state, formAction] = useActionState(action, { message: null });
-  const [companyId, setCompanyId] = useState(project?.client.id ?? options.companies[0]?.id ?? "");
+  const [companyId, setCompanyId] = useState(
+    project?.client.id ?? initialCompanyId ?? options.companies[0]?.id ?? "",
+  );
   const [taskIds, setTaskIds] = useState(
     () => new Set(project?.tasks.map((item) => item.id) ?? []),
   );

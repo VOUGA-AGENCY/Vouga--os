@@ -1,5 +1,7 @@
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
+import { exportGraphToMarkdown } from "@/projections/context-engine/export-markdown";
+import { CopyContextButton } from "../copy-context-button";
 import { ContextEngineView } from "./context-engine-view";
 
 export default async function ContextPage() {
@@ -7,6 +9,7 @@ export default async function ContextPage() {
   const engine = await createContextEngine();
   const nowIso = new Date().toISOString();
   const graph = await engine.getFullGraph(nowIso, user?.role ?? "engineer");
+  const markdown = exportGraphToMarkdown(graph, { generatedAt: nowIso });
 
   return (
     <main className="workspace-main module-main context-hub-main">
@@ -17,6 +20,10 @@ export default async function ContextPage() {
           <p className="workspace-intro">
             Rede de inteligência operacional e rastreio de dados do Vouga OS.
           </p>
+        </div>
+
+        <div className="context-hub-actions">
+          <CopyContextButton label="Exportar Rede em Markdown" markdown={markdown} />
         </div>
 
         <div className="context-hub-stats" aria-label="Estatísticas da Rede">

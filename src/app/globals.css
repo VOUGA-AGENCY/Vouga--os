@@ -11467,3 +11467,127 @@ a {
   outline: var(--border-width) solid var(--color-border-focus);
   outline-offset: var(--space-1);
 }
+
+/* CRM to Project Deal Conversion */
+.close-deal-page {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.crm-deal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.crm-deal-warning svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.crm-deal-warning strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.crm-deal-warning small {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.crm-deal-prompt {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.crm-deal-prompt:hover {
+  text-decoration: underline;
+}
+
+.crm-deal-contacts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.crm-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.crm-checkbox-item:hover {
+  border-color: var(--color-border-strong);
+}
+
+.crm-checkbox-item input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.input-disabled {
+  background: var(--color-bg-subtle) !important;
+  color: var(--color-text-secondary) !important;
+  cursor: not-allowed;
+}
+
+/* Context Engine Markdown Exporter */
+.context-heading-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.context-body-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.context-export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.context-export-button svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.context-hub-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: var(--space-4);
+}
+
+

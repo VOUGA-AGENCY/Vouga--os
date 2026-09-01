@@ -162,6 +162,16 @@ export class SupabaseProjectReadModel implements ProjectReadModel {
     if (error) throw new Error("Não foi possível carregar o Project.");
     return data ? detail(data as unknown as DetailRow) : null;
   }
+
+  async listByCompany(companyId: string) {
+    const { data, error } = await this.supabase
+      .from("projects")
+      .select(LIST_SELECT)
+      .eq("client_company_id", companyId)
+      .order("target_delivery_on", { ascending: true });
+    if (error) throw new Error("Não foi possível carregar Projects da Organização.");
+    return ((data ?? []) as unknown as ListRow[]).map(list);
+  }
 }
 
 function task(row: TaskRow): ProjectTaskItem {

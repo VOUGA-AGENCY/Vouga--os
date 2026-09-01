@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Briefcase,
   Building2,
   CalendarDays,
   Linkedin,
@@ -14,6 +15,7 @@ import { ContextPanel } from "@/app/(workspace)/context-panel";
 import { CONTACT_CHANNEL_LABELS, CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
+import { createProjectModule } from "@/foundation/composition/projects";
 import { createRelationsModule } from "@/foundation/composition/relations";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
@@ -39,18 +41,24 @@ export default async function ContactPage({
       : backHref.includes("segment=prospecting")
         ? "Prospeção"
         : "Contacts";
-  const { readModel } = await createRelationsModule();
-  const [contact, contextEngine, user] = await Promise.all([
-    readModel.findContact(contactId),
+  const [relationsModule, contextEngine, user, projectsModule] = await Promise.all([
+    createRelationsModule(),
     createContextEngine(),
     getAuthenticatedUser(),
+    createProjectModule(),
   ]);
+  const contact = await relationsModule.readModel.findContact(contactId);
   if (!contact) notFound();
-  const context = await contextEngine.get(
-    { type: "contact", id: contactId },
-    new Date().toISOString(),
-    user?.role ?? "engineer",
-  );
+  const [context, companyProjects] = await Promise.all([
+    contextEngine.get(
+      { type: "contact", id: contactId },
+      new Date().toISOString(),
+      user?.role ?? "engineer",
+    ),
+    contact.companyId
+      ? projectsModule.readModel.listByCompany(contact.companyId)
+      : Promise.resolve([]),
+  ]);
 
   return (
     <main className="workspace-main module-main contact-profile crm-contact-profile">
@@ -89,6 +97,21 @@ export default async function ContactPage({
               <Building2 />
               {contact.companyName}
             </Link>
+          </div>
+        ) : null}
+        {contact.companyId ? (
+          <div>
+            <span>Project</span>
+            {companyProjects.length > 0 ? (
+              <Link href={`/projects/${companyProjects[0].id}`}>
+                <Briefcase />
+                {companyProjects[0].name}
+              </Link>
+            ) : (
+              <Link href={`/companies/${contact.companyId}/close-deal`}>
+                + Iniciar entrega
+              </Link>
+            )}
           </div>
         ) : null}
         {contact.email ? (

@@ -9,6 +9,7 @@ export type CompanyListItem = Readonly<{
   primaryCae: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  website: string | null;
   currentContext: string | null;
   relationshipRisks: string | null;
   prospectingStage: ProspectingStage | null;

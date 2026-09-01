@@ -18,6 +18,7 @@ const company: Company = {
   primaryCae: "62010",
   contactEmail: "geral@empresa.pt",
   contactPhone: null,
+  website: null,
   currentContext: null,
   relationshipRisks: null,
   prospectingStage: null,
@@ -77,6 +78,7 @@ describe("Company", () => {
       primaryCae: "62010",
       contactEmail: "geral@empresa.pt",
       contactPhone: null,
+      website: null,
       currentContext: null,
       relationshipRisks: "risco material",
       prospectingStage: null,
@@ -147,5 +149,18 @@ describe("Company", () => {
     expect(
       validateCompanyValues({ ...values, contactPhone: "+351 912 345 678" }).contactPhone,
     ).toBe("+351 912 345 678");
+  });
+
+  it("normaliza um site opcional para link seguro", () => {
+    expect(
+      validateCompanyValues({
+        name: "Empresa Externa",
+        status: "active",
+        ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: "geral@empresa.pt",
+        website: "empresa.pt",
+      }).website,
+    ).toBe("https://empresa.pt/");
   });
 });

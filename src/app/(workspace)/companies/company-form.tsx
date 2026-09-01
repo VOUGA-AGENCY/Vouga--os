@@ -85,6 +85,17 @@ export function CompanyForm({
               />
             </div>
             <div className="field field-light">
+              <label htmlFor="website">Site</label>
+              <input
+                defaultValue={company?.website ?? ""}
+                id="website"
+                maxLength={2048}
+                name="website"
+                placeholder="https://empresa.pt"
+                type="url"
+              />
+            </div>
+            <div className="field field-light">
               <label htmlFor="owner_member_id">Owner</label>
               <select
                 defaultValue={company?.ownerMemberId ?? defaultOwnerId ?? owners[0]?.id}

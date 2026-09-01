@@ -98,6 +98,16 @@ export default async function CompanyDetailPage({
           {!company.contactEmail && !company.contactPhone ? <strong>—</strong> : null}
         </div>
         <div>
+          <span>Site</span>
+          {company.website ? (
+            <a href={company.website} rel="noreferrer" target="_blank">
+              {company.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+            </a>
+          ) : (
+            <strong>—</strong>
+          )}
+        </div>
+        <div>
           <span>Owner</span>
           <strong>{company.ownerDisplayName}</strong>
         </div>

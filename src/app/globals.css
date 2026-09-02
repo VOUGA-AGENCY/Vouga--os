@@ -185,6 +185,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
 }
+.notes-document-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
 .notes-document {
   align-items: center;
   background: transparent;
@@ -265,6 +271,7 @@
 .notes-create-dialog,
 .notes-editor-dialog,
 .notes-file-dialog,
+.notes-file-metadata-dialog,
 .notes-delete-dialog {
   background: var(--color-bg-elevated);
   border: var(--border-width) solid var(--color-border-strong);
@@ -323,19 +330,22 @@
   width: min(100%, calc(var(--space-10) * 7));
 }
 .notes-create-dialog > header,
-.notes-file-dialog > header {
+.notes-file-dialog > header,
+.notes-file-metadata-dialog > header {
   align-items: center;
   display: flex;
   justify-content: space-between;
 }
 .notes-create-dialog h2,
-.notes-file-dialog h2 {
+.notes-file-dialog h2,
+.notes-file-metadata-dialog h2 {
   font-size: var(--text-lg);
   font-weight: var(--font-weight-medium);
   margin: 0;
 }
 .notes-create-dialog header button,
 .notes-file-dialog header button,
+.notes-file-metadata-dialog header button,
 .notes-editor-toolbar button {
   background: transparent;
   border: 0;
@@ -345,6 +355,7 @@
 }
 .notes-create-dialog header svg,
 .notes-file-dialog header svg,
+.notes-file-metadata-dialog header svg,
 .notes-editor-toolbar button svg {
   height: var(--space-4);
   width: var(--space-4);
@@ -480,6 +491,10 @@
   height: min(calc(100dvh - var(--space-8)), calc(var(--space-10) * 13));
   padding: var(--space-4);
 }
+.notes-file-metadata-dialog {
+  padding: var(--space-6);
+  width: min(100%, calc(var(--space-10) * 7));
+}
 .notes-file-dialog > header {
   min-height: var(--control-height-lg);
 }
@@ -531,6 +546,25 @@
   white-space: pre-wrap;
   width: 100%;
 }
+.notes-pdf-backdrop {
+  align-items: center;
+  background: rgb(0 0 0 / 58%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: var(--space-6);
+  position: fixed;
+  z-index: 100;
+}
+.notes-pdf-viewer {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  display: block;
+  height: min(92dvh, 72rem);
+  max-width: 100%;
+  width: min(88vw, 58rem);
+}
 
 @media (max-width: 47.99rem) {
   .notes-workspace-heading {
@@ -570,8 +604,16 @@
   }
   .notes-create-dialog,
   .notes-editor-dialog,
-  .notes-file-dialog {
+  .notes-file-dialog,
+  .notes-file-metadata-dialog {
     max-height: calc(100dvh - var(--bottom-navigation-height) - var(--space-6));
+    width: 100%;
+  }
+  .notes-pdf-backdrop {
+    padding: var(--space-3);
+  }
+  .notes-pdf-viewer {
+    height: calc(100dvh - var(--bottom-navigation-height) - var(--space-6));
     width: 100%;
   }
   .notes-editor-title {

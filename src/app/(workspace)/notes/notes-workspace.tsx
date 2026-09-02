@@ -48,6 +48,7 @@ export function NotesWorkspace(props: Props) {
   const [openItem, setOpenItem] = useState<NoteItem | null>(
     props.items.find((item) => item.id === props.initialOpenId) ?? null,
   );
+  const [editingFile, setEditingFile] = useState<NoteItem | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -230,11 +231,23 @@ export function NotesWorkspace(props: Props) {
                   </small>
                 </span>
               </button>
-              {props.isAdmin ? (
-                <DeleteIconButton
-                  label={`Eliminar ${item.title}`}
-                  onClick={() => setDeleteTarget({ id: item.id, kind: "item", title: item.title })}
-                />
+              {item.kind === "upload" || props.isAdmin ? (
+                <div className="notes-document-actions">
+                  {item.kind === "upload" ? (
+                    <EditIconButton
+                      label={`Editar ${item.title}`}
+                      onClick={() => setEditingFile(item)}
+                    />
+                  ) : null}
+                  {props.isAdmin ? (
+                    <DeleteIconButton
+                      label={`Eliminar ${item.title}`}
+                      onClick={() =>
+                        setDeleteTarget({ id: item.id, kind: "item", title: item.title })
+                      }
+                    />
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ))}
@@ -260,6 +273,17 @@ export function NotesWorkspace(props: Props) {
           item={openItem}
           onClose={() => setOpenItem(null)}
           onSaved={updateItem}
+        />
+      ) : null}
+      {editingFile ? (
+        <FileMetadataDialog
+          folders={folders}
+          item={editingFile}
+          onClose={() => setEditingFile(null)}
+          onSaved={(saved) => {
+            updateItem(saved);
+            setEditingFile(null);
+          }}
         />
       ) : null}
       {renameFolder ? (
@@ -615,7 +639,7 @@ function DocumentDialog({
   onSaved: (item: NoteItem) => void;
 }) {
   if (item.kind === "upload")
-    return <FilePreview folders={folders} item={item} onClose={onClose} onSaved={onSaved} />;
+    return <FilePreview item={item} onClose={onClose} />;
   return (
     <NoteEditor
       editable={item.kind === "os_note" || isAdmin}
@@ -751,23 +775,13 @@ function NoteEditor({
 }
 
 function FilePreview({
-  folders,
   item,
   onClose,
-  onSaved,
 }: {
-  folders: NoteFolder[];
   item: NoteItem;
   onClose: () => void;
-  onSaved: (item: NoteItem) => void;
 }) {
   const url = `/api/notes/files/${item.id}`;
-  const [title, setTitle] = useState(item.title);
-  const [folderId, setFolderId] = useState(item.folderId ?? "");
-  const [version, setVersion] = useState(item.version);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [docxText, setDocxText] = useState<string | null>(null);
   useEffect(() => {
     if (item.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
@@ -781,6 +795,68 @@ function FilePreview({
       })
       .catch(() => setDocxText("Could not preview this document."));
   }, [item.mimeType, url]);
+
+  if (item.mimeType === "application/pdf") {
+    return <PdfPreview onClose={onClose} title={item.title} url={url} />;
+  }
+
+  return (
+    <div aria-modal="true" className="notes-dialog-backdrop" role="dialog">
+      <div className="notes-file-dialog">
+        <DialogHeader onClose={onClose} title={item.title} />
+        {/* Authenticated file routes cannot use the Next image optimizer safely. */}
+        {item.mimeType?.startsWith("image/") ? (
+          <img alt={item.title} src={url} />
+        ) : (
+          <pre>{docxText ?? "Loading document…"}</pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PdfPreview({ onClose, title, url }: { onClose: () => void; title: string; url: string }) {
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      aria-label={`Pré-visualização de ${title}`}
+      aria-modal="true"
+      className="notes-pdf-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      role="dialog"
+    >
+      <iframe className="notes-pdf-viewer" src={url} title={title} />
+    </div>
+  );
+}
+
+function FileMetadataDialog({
+  folders,
+  item,
+  onClose,
+  onSaved,
+}: {
+  folders: NoteFolder[];
+  item: NoteItem;
+  onClose: () => void;
+  onSaved: (item: NoteItem) => void;
+}) {
+  const [title, setTitle] = useState(item.title);
+  const [folderId, setFolderId] = useState(item.folderId ?? "");
+  const [version, setVersion] = useState(item.version);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   async function saveMetadata() {
     setSaving(true);
     setError(null);
@@ -806,10 +882,11 @@ function FilePreview({
       setSaving(false);
     }
   }
+
   return (
     <div aria-modal="true" className="notes-dialog-backdrop" role="dialog">
-      <div className="notes-file-dialog">
-        <DialogHeader onClose={onClose} title={title} />
+      <div className="notes-file-metadata-dialog">
+        <DialogHeader onClose={onClose} title="Editar documento" />
         <div className="notes-file-metadata">
           <input
             aria-label="Document title"
@@ -838,14 +915,6 @@ function FilePreview({
           </button>
         </div>
         {error ? <p className="notes-form-error">{error}</p> : null}
-        {/* Authenticated file routes cannot use the Next image optimizer safely. */}
-        {item.mimeType?.startsWith("image/") ? (
-          <img alt={title} src={url} />
-        ) : item.mimeType === "application/pdf" ? (
-          <iframe src={url} title={title} />
-        ) : (
-          <pre>{docxText ?? "Loading document…"}</pre>
-        )}
       </div>
     </div>
   );

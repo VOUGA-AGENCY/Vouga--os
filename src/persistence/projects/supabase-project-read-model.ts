@@ -64,6 +64,8 @@ type ListRow = {
   agreed_amount_minor: number;
   received_amount_minor: number;
   currency: string;
+  objective: string;
+  expected_result: string;
   updated_at: string;
   client: { id: string; name: string } | null;
   owner: { id: string; display_name: string } | null;
@@ -71,8 +73,6 @@ type ListRow = {
 };
 
 type DetailRow = ListRow & {
-  objective: string;
-  expected_result: string;
   created_at: string;
   project_members: Array<{
     member_id: string;
@@ -136,10 +136,10 @@ type DetailRow = ListRow & {
 
 const TASK_SELECT =
   "id,title,status,due_at,completed_at,owner:members!tasks_owner_member_id_fkey(display_name)";
-const LIST_SELECT = `id,name,status,starts_on,target_delivery_on,agreed_amount_minor,received_amount_minor,currency,updated_at,client:companies!projects_client_company_id_fkey(id,name),owner:members!projects_owner_member_id_fkey(id,display_name),next_task:tasks!projects_next_task_id_fkey(${TASK_SELECT})`;
+const LIST_SELECT = `id,name,status,starts_on,target_delivery_on,agreed_amount_minor,received_amount_minor,currency,objective,expected_result,updated_at,client:companies!projects_client_company_id_fkey(id,name),owner:members!projects_owner_member_id_fkey(id,display_name),next_task:tasks!projects_next_task_id_fkey(${TASK_SELECT})`;
 const COST_SELECT =
   "id,title,description,category,supplier,expected_amount_minor,actual_amount_minor,currency,cost_type,recurrence,expected_on,starts_on,billing_anchor_on,paid_on,ended_on,cancelled_on,status,owner_member_id,created_at,updated_at,owner:members!costs_owner_member_id_fkey(display_name),company:companies!costs_company_id_fkey(name),roadmap_item:roadmap_items!costs_roadmap_item_id_fkey(title),source_decision:decisions!costs_source_decision_id_fkey(title),cost_tasks(task_id)";
-const DETAIL_SELECT = `${LIST_SELECT},objective,expected_result,created_at,project_members(member_id,member:members!project_members_member_id_fkey(display_name,email)),project_contacts(contact_id,contact:contacts!project_contacts_contact_id_fkey(display_name,job_title,avatar_url)),project_tasks(task_id,task:tasks!project_tasks_task_id_fkey(${TASK_SELECT})),project_meetings(meeting_id,meeting:meetings!project_meetings_meeting_id_fkey(title,kind,status,starts_at,ends_at)),project_decisions(decision_id,decision:decisions!project_decisions_decision_id_fkey(title,status,decided_on)),project_costs(cost_id,cost:costs!project_costs_cost_id_fkey(${COST_SELECT})),project_scope_items(id,kind,label,position),project_milestones(id,title,position,completed_at),project_resources(id,title,kind,url,position),project_status_changes(id,from_status,to_status,changed_at,changed_by:members!project_status_changes_changed_by_member_id_fkey(display_name))`;
+const DETAIL_SELECT = `${LIST_SELECT},created_at,project_members(member_id,member:members!project_members_member_id_fkey(display_name,email)),project_contacts(contact_id,contact:contacts!project_contacts_contact_id_fkey(display_name,job_title,avatar_url)),project_tasks(task_id,task:tasks!project_tasks_task_id_fkey(${TASK_SELECT})),project_meetings(meeting_id,meeting:meetings!project_meetings_meeting_id_fkey(title,kind,status,starts_at,ends_at)),project_decisions(decision_id,decision:decisions!project_decisions_decision_id_fkey(title,status,decided_on)),project_costs(cost_id,cost:costs!project_costs_cost_id_fkey(${COST_SELECT})),project_scope_items(id,kind,label,position),project_milestones(id,title,position,completed_at),project_resources(id,title,kind,url,position),project_status_changes(id,from_status,to_status,changed_at,changed_by:members!project_status_changes_changed_by_member_id_fkey(display_name))`;
 
 export class SupabaseProjectReadModel implements ProjectReadModel {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -201,6 +201,8 @@ function list(row: ListRow): ProjectListItem {
     receivedAmountMinor: row.received_amount_minor,
     currency: row.currency,
     nextTask: row.next_task ? task(row.next_task) : null,
+    objective: row.objective,
+    expectedResult: row.expected_result,
     updatedAt: row.updated_at,
   };
 }

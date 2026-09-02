@@ -1,17 +1,26 @@
 import { getAuthenticatedUser } from "@/application/auth/current-user";
-import { createContextEngine } from "@/foundation/composition/context-engine";
+import {
+  createContextEngine,
+  createGlobalContextProjection,
+} from "@/foundation/composition/context-engine";
 import { redirect } from "next/navigation";
-import { exportGraphToMarkdown } from "@/projections/context-engine/export-markdown";
+import { exportGlobalContextToMarkdown } from "@/projections/context-engine/export-markdown";
 import { CopyContextButton } from "../copy-context-button";
 import { ContextEngineView } from "./context-engine-view";
 
 export default async function ContextPage() {
   const user = await getAuthenticatedUser();
   if (!user || user.role !== "admin") redirect("/");
-  const engine = await createContextEngine();
+  const [engine, globalContextProjection] = await Promise.all([
+    createContextEngine(),
+    createGlobalContextProjection(),
+  ]);
   const nowIso = new Date().toISOString();
-  const graph = await engine.getFullGraph(nowIso, user.role);
-  const markdown = exportGraphToMarkdown(graph, { generatedAt: nowIso });
+  const [graph, globalContext] = await Promise.all([
+    engine.getFullGraph(nowIso, user.role),
+    globalContextProjection.get(nowIso),
+  ]);
+  const markdown = exportGlobalContextToMarkdown(globalContext);
 
   return (
     <main className="workspace-main module-main context-hub-main">
@@ -25,7 +34,7 @@ export default async function ContextPage() {
         </div>
 
         <div className="context-hub-actions">
-          <CopyContextButton label="Exportar Rede em Markdown" markdown={markdown} />
+          <CopyContextButton label="Exportar contexto em Markdown" markdown={markdown} />
         </div>
 
         <div className="context-hub-stats" aria-label="Estatísticas da Rede">

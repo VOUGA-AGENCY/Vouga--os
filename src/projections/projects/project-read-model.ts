@@ -61,6 +61,8 @@ export type ProjectListItem = Readonly<{
   receivedAmountMinor: number;
   currency: string;
   nextTask: ProjectTaskItem | null;
+  objective: string;
+  expectedResult: string;
   updatedAt: string;
 }>;
 

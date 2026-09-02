@@ -22,7 +22,12 @@ export interface NoteRepository {
   listFolders(): Promise<NoteFolder[]>;
   listItems(): Promise<NoteItem[]>;
   findItem(id: string): Promise<NoteItem | null>;
-  createFolder(values: { id: string; name: string; color: NoteFolderColor; memberId: string }): Promise<void>;
+  createFolder(values: {
+    id: string;
+    name: string;
+    color: NoteFolderColor;
+    memberId: string;
+  }): Promise<void>;
   createItem(values: CreateNoteItem): Promise<void>;
   updateFolder(id: string, values: { name?: string; color?: NoteFolderColor }): Promise<void>;
   updateItem(values: {
@@ -48,7 +53,7 @@ export interface NoteRepository {
 }
 
 export interface NoteFileStorage {
-  upload(path: string, file: Blob, mimeType: string): Promise<void>;
+  createSignedUpload(path: string): Promise<{ token: string }>;
   download(path: string): Promise<Blob>;
   remove(path: string): Promise<void>;
 }

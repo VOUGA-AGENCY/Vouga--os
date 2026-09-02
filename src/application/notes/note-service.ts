@@ -70,7 +70,8 @@ export class NoteService {
     folderId: string | null;
   }) {
     const current = await this.repository.findItem(values.id);
-    if (!current || current.kind !== "os_note") throw new NoteApplicationError("Nota não encontrada.");
+    if (!current || current.kind !== "os_note")
+      throw new NoteApplicationError("Nota não encontrada.");
     return this.repository.updateItem({
       ...values,
       body: normalizeNoteBody(values.body),
@@ -87,7 +88,8 @@ export class NoteService {
     expectedVersion: number;
   }) {
     const current = await this.repository.findItem(values.id);
-    if (!current || current.kind !== "upload") throw new NoteApplicationError("Documento não encontrado.");
+    if (!current || current.kind !== "upload")
+      throw new NoteApplicationError("Documento não encontrado.");
     return this.repository.updateItemMetadata({
       ...values,
       folderId: cleanId(values.folderId),
@@ -119,41 +121,67 @@ export class NoteService {
     await this.repository.deleteItem(id);
   }
 
-  async importFile(values: {
+  async prepareFileImport(values: {
     memberId: string;
     folderId: string | null;
-    file: File;
-  }): Promise<string> {
-    const { file } = values;
-    if (!NOTE_UPLOAD_MIME_TYPES.includes(file.type as (typeof NOTE_UPLOAD_MIME_TYPES)[number])) {
-      throw new NoteApplicationError("Importa um PDF, PNG, JPEG ou DOCX.");
-    }
-    if (file.size < 1 || file.size > NOTE_UPLOAD_MAX_BYTES) {
-      throw new NoteApplicationError("O ficheiro deve ter no máximo 10 MB.");
-    }
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+  }): Promise<{ id: string; path: string; token: string }> {
+    validateImport(values);
     const id = this.id();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "file";
-    const path = `${id}/${safeName}`;
-    await this.files.upload(path, file, file.type);
-    try {
-      await this.repository.createItem({
-        body: null,
-        folderId: cleanId(values.folderId),
-        id,
-        kind: "upload",
-        memberId: values.memberId,
-        mimeType: file.type,
-        originalFileName: file.name,
-        sizeBytes: file.size,
-        storagePath: path,
-        title: normalizeNoteTitle(file.name.replace(/\.[^.]+$/, "") || file.name),
-      });
-    } catch (error) {
-      await this.files.remove(path).catch(() => undefined);
-      throw error;
-    }
-    return id;
+    const path = `${id}/${safeFileName(values.fileName)}`;
+    const { token } = await this.files.createSignedUpload(path);
+    return { id, path, token };
   }
+
+  async completeFileImport(values: {
+    id: string;
+    memberId: string;
+    folderId: string | null;
+    fileName: string;
+    mimeType: string;
+    path: string;
+    sizeBytes: number;
+  }): Promise<string> {
+    validateImport(values);
+    const expectedPath = `${values.id}/${safeFileName(values.fileName)}`;
+    if (values.path !== expectedPath)
+      throw new NoteApplicationError("O upload preparado não é válido.");
+    const existing = await this.repository.findItem(values.id);
+    if (existing) {
+      if (existing.kind === "upload" && existing.storagePath === values.path) return existing.id;
+      throw new NoteApplicationError("O documento já existe com outra origem.");
+    }
+    await this.repository.createItem({
+      body: null,
+      folderId: cleanId(values.folderId),
+      id: values.id,
+      kind: "upload",
+      memberId: values.memberId,
+      mimeType: values.mimeType,
+      originalFileName: values.fileName,
+      sizeBytes: values.sizeBytes,
+      storagePath: values.path,
+      title: normalizeNoteTitle(values.fileName.replace(/\.[^.]+$/, "") || values.fileName),
+    });
+    return values.id;
+  }
+}
+
+function validateImport(values: { fileName: string; mimeType: string; sizeBytes: number }) {
+  if (
+    !NOTE_UPLOAD_MIME_TYPES.includes(values.mimeType as (typeof NOTE_UPLOAD_MIME_TYPES)[number])
+  ) {
+    throw new NoteApplicationError("Importa um PDF, PNG, JPEG ou DOCX.");
+  }
+  if (values.sizeBytes < 1 || values.sizeBytes > NOTE_UPLOAD_MAX_BYTES) {
+    throw new NoteApplicationError("O ficheiro deve ter no máximo 10 MB.");
+  }
+}
+
+function safeFileName(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "file";
 }
 
 function cleanId(value: string | null): string | null {

@@ -13,6 +13,7 @@ import type {
 import type { ProspectingStage } from "@/domain/companies/company";
 import type {
   CompanyInteractionItem,
+  GlobalInteractionItem,
   ContactDetail,
   ContactInteractionItem,
   ContactListItem,
@@ -507,6 +508,37 @@ export class SupabaseRelationsReadModel implements RelationsReadModel {
       body: row.body,
       occurredAt: row.occurred_at,
     }));
+  }
+  async listRecentInteractions(sinceIso: string, limit: number): Promise<GlobalInteractionItem[]> {
+    const { data, error } = await this.supabase
+      .from("contact_interactions")
+      .select(
+        "id,company_id,contact_id,direction,channel,body,occurred_at,company:companies!contact_interactions_company_id_fkey(name),contact:contacts!contact_interactions_contact_id_fkey(display_name),recorder:members!contact_interactions_recorded_by_member_id_fkey(display_name)",
+      )
+      .gte("occurred_at", sinceIso)
+      .order("occurred_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error("Não foi possível carregar as interações recentes.");
+    return (
+      (data ?? []) as unknown as Array<InteractionRow & { company: { name: string } | null }>
+    ).flatMap((row) =>
+      row.company
+        ? [
+            {
+              id: row.id,
+              companyId: row.company_id,
+              companyName: row.company.name,
+              contactId: row.contact_id,
+              contactName: row.contact?.display_name ?? null,
+              direction: row.direction,
+              channel: row.channel,
+              body: row.body,
+              occurredAt: row.occurred_at,
+              recorderName: row.recorder?.display_name ?? "Member",
+            },
+          ]
+        : [],
+    );
   }
   async listTemplates(): Promise<MessageTemplateItem[]> {
     const { data, error } = await this.supabase

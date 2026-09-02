@@ -43,6 +43,18 @@ export type CompanyInteractionItem = Readonly<{
   body: string;
   occurredAt: string;
 }>;
+export type GlobalInteractionItem = Readonly<{
+  id: string;
+  companyId: string;
+  companyName: string;
+  contactId: string | null;
+  contactName: string | null;
+  direction: ContactDirection;
+  channel: ContactChannel;
+  body: string;
+  occurredAt: string;
+  recorderName: string;
+}>;
 export type ContactDetail = ContactListItem &
   Readonly<{
     ownerMemberId: string;
@@ -85,5 +97,6 @@ export interface RelationsReadModel {
   listContacts(): Promise<ContactListItem[]>;
   findContact(id: string): Promise<ContactDetail | null>;
   listInteractionsByCompany(companyId: string): Promise<CompanyInteractionItem[]>;
+  listRecentInteractions(sinceIso: string, limit: number): Promise<GlobalInteractionItem[]>;
   listTemplates(): Promise<MessageTemplateItem[]>;
 }

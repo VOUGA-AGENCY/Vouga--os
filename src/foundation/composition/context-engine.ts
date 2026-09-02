@@ -9,7 +9,9 @@ import { createRoadmapModule } from "@/foundation/composition/roadmap";
 import { createSprintModule } from "@/foundation/composition/sprints";
 import { createTaskModule } from "@/foundation/composition/tasks";
 import { createRelationsModule } from "@/foundation/composition/relations";
+import { createProjectModule } from "@/foundation/composition/projects";
 import { ContextEngine } from "@/projections/context-engine/context-engine";
+import { GlobalContextProjection } from "@/projections/context-engine/global-context";
 
 export const createContextEngine = cache(async () => {
   const [companies, relations, costs, tasks, meetings, decisions, sprints, roadmap] =
@@ -34,4 +36,19 @@ export const createContextEngine = cache(async () => {
     sprints: sprints.readModel,
     roadmap: roadmap.readModel,
   });
+});
+
+export const createGlobalContextProjection = cache(async () => {
+  const [companies, relations, projects, tasks] = await Promise.all([
+    createCompanyModule(),
+    createRelationsModule(),
+    createProjectModule(),
+    createTaskModule(),
+  ]);
+  return new GlobalContextProjection(
+    companies.readModel,
+    relations.readModel,
+    projects.readModel,
+    tasks.readModel,
+  );
 });

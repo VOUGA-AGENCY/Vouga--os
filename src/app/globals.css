@@ -1643,6 +1643,55 @@ a {
 .calendar-today {
   margin-left: var(--space-1);
 }
+.calendar-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.calendar-desktop-period-controls strong {
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+}
+.calendar-collaborator-nav {
+  align-items: center;
+  border-bottom: var(--border-width) solid var(--color-border);
+  display: flex;
+  gap: var(--space-6);
+  margin-bottom: var(--space-4);
+  min-height: 2.75rem;
+  overflow-x: auto;
+}
+.calendar-collaborator-nav a {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-regular);
+  padding: var(--space-2) 0;
+  position: relative;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+.calendar-collaborator-nav a:hover {
+  color: var(--color-text-primary);
+}
+.calendar-collaborator-nav a.active {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.calendar-collaborator-nav a.active::after {
+  background: var(--color-accent);
+  bottom: -1px;
+  content: "";
+  display: block;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
 .calendar-view-tabs {
   align-items: center;
   background: var(--color-surface);
@@ -2076,6 +2125,44 @@ a {
 .calendar-week-event-overdue {
   background: var(--color-danger-soft);
   border-left-color: var(--color-danger);
+}
+.calendar-week-event-conflict {
+  background: color-mix(in srgb, var(--color-warning) 10%, var(--color-panel-cell));
+  border-left: 3px solid var(--color-warning) !important;
+}
+.calendar-week-event-conflict:hover {
+  background: color-mix(in srgb, var(--color-warning) 16%, var(--color-panel-cell-hover));
+}
+.calendar-week-event-title-wrap {
+  align-items: center;
+  display: flex;
+  gap: var(--space-1);
+  justify-content: space-between;
+  overflow: hidden;
+}
+.calendar-conflict-badge {
+  background: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  border-radius: var(--radius-xs);
+  color: var(--color-warning);
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+.calendar-conflict-pill {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  border-radius: var(--radius-xs);
+  color: var(--color-warning);
+  display: inline-block;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  margin-left: var(--space-2);
+  padding: 1px 5px;
+}
+.calendar-day-panel-entry-conflict {
+  border-left: 2px solid var(--color-warning);
 }
 .google-event-official-data {
   border-bottom: var(--border-width) solid var(--color-border);
@@ -2986,16 +3073,141 @@ a {
 .archive-heading .eyebrow {
   color: var(--color-text-tertiary);
 }
-.status-pill {
-  border: var(--border-width) solid currentColor;
-  border-radius: var(--radius-pill);
-  display: inline-flex;
-  font-family: var(--font-mono);
+.object-hero-meta {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.object-meta-separator {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  line-height: 1;
+  user-select: none;
+}
+.object-meta-kind {
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  padding: var(--space-1) var(--space-2);
-  text-transform: uppercase;
+  font-weight: var(--font-weight-regular);
+}
+.meeting-badges {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.meeting-badge {
+  align-items: center;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding: 4px 10px;
+}
+.meeting-badge-status-closed {
+  background: color-mix(in srgb, var(--color-success) 14%, var(--color-bg));
+  border: 1px solid color-mix(in srgb, var(--color-success) 24%, transparent);
+  color: #3b5226;
+}
+.meeting-badge-status-planned {
+  background: color-mix(in srgb, var(--color-info) 14%, var(--color-bg));
+  border: 1px solid color-mix(in srgb, var(--color-info) 24%, transparent);
+  color: #234652;
+}
+.meeting-badge-status-needs_closure {
+  background: color-mix(in srgb, var(--color-danger) 14%, var(--color-bg));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent);
+  color: #7a2b20;
+}
+.meeting-badge-status-cancelled {
+  background: color-mix(in srgb, var(--color-text-tertiary) 12%, var(--color-bg));
+  border: 1px solid color-mix(in srgb, var(--color-text-tertiary) 20%, transparent);
+  color: var(--color-text-secondary);
+}
+.meeting-badge-kind {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+.object-subtitle {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  font-size: var(--text-sm);
+  gap: var(--space-3);
+  line-height: var(--leading-relaxed);
+  margin-top: var(--space-2);
+}
+.object-status-group {
+  align-items: center;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-2);
+}
+.object-meta-divider {
+  background: var(--color-border-strong);
+  display: inline-block;
+  flex-shrink: 0;
+  height: 0.85rem;
+  width: 1px;
+}
+.object-kind-label {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-regular);
+}
+.status-dot {
+  border-radius: var(--radius-full);
+  display: inline-block;
+  flex-shrink: 0;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+.status-dot-planned {
+  background: var(--color-info);
+}
+.status-dot-needs_closure {
+  background: var(--color-danger);
+}
+.status-dot-closed {
+  background: var(--color-success);
+}
+.status-dot-cancelled {
+  background: var(--color-text-tertiary);
+}
+.status-dot-active {
+  background: var(--color-success);
+}
+.status-dot-inactive {
+  background: var(--color-warning);
+}
+.status-pill {
+  align-items: center;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border: var(--border-width) solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding: 3px var(--space-2);
+  text-transform: capitalize;
   width: fit-content;
+}
+.status-pill::before {
+  background: currentColor;
+  border-radius: var(--radius-full);
+  content: "";
+  display: inline-block;
+  height: 5px;
+  margin-right: var(--space-1-5);
+  width: 5px;
 }
 .status-pill-active {
   color: var(--color-success);

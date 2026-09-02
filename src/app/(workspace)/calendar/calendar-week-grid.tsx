@@ -25,6 +25,7 @@ export function CalendarWeekGrid({
   days,
   entries,
   nextHref,
+  ownerFilter,
   previousHref,
   returnTo,
   today,
@@ -32,6 +33,7 @@ export function CalendarWeekGrid({
   days: readonly string[];
   entries: readonly CalendarEntry[];
   nextHref: string;
+  ownerFilter?: string | null;
   previousHref: string;
   returnTo: string;
   today: string;
@@ -153,6 +155,7 @@ export function CalendarWeekGrid({
                   HOUR_HEIGHT,
                   START_HOUR,
                   END_HOUR,
+                  ownerFilter,
                 ).map((placement) => (
                     <WeekEvent
                       entry={placement.entry}
@@ -200,10 +203,21 @@ function WeekEvent({
     top: placement.top,
     width: `calc(${100 / placement.columnCount}% - 6px)`,
   } : undefined;
-  const className = `calendar-week-event calendar-week-event-${entry.sourceType}${entry.tone ? ` calendar-week-event-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-week-event-vacation" : ""}${entry.isOverdue ? " calendar-week-event-overdue" : ""}${placement?.compact ? " calendar-week-event-compact" : ""}`;
+  const conflictClass = placement?.hasConflict ? " calendar-week-event-conflict" : "";
+  const className = `calendar-week-event calendar-week-event-${entry.sourceType}${entry.tone ? ` calendar-week-event-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-week-event-vacation" : ""}${entry.isOverdue ? " calendar-week-event-overdue" : ""}${placement?.compact ? " calendar-week-event-compact" : ""}${conflictClass}`;
   const content = (
     <>
-      <strong>{entry.title}</strong>
+      <div className="calendar-week-event-title-wrap">
+        <strong>{entry.title}</strong>
+        {placement?.hasConflict ? (
+          <span
+            className="calendar-conflict-badge"
+            title={placement.conflictTitle ?? "Sobreposição de horário"}
+          >
+            Sobreposição
+          </span>
+        ) : null}
+      </div>
       {time ? <time dateTime={entry.start}>{time.label}</time> : null}
     </>
   );

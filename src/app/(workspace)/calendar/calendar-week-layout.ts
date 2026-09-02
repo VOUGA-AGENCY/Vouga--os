@@ -8,6 +8,8 @@ export type CalendarWeekPlacement = Readonly<{
   entry: CalendarEntry;
   height: number;
   top: number;
+  hasConflict: boolean;
+  conflictTitle?: string;
 }>;
 
 export function layoutTimedEntries(
@@ -16,6 +18,7 @@ export function layoutTimedEntries(
   hourHeight = 56,
   startHour = 0,
   endHour = 24,
+  ownerFilter?: string | null,
 ): CalendarWeekPlacement[] {
   const visibleStart = startHour * 60;
   const visibleEnd = endHour * 60;
@@ -45,6 +48,25 @@ export function layoutTimedEntries(
     for (const interval of assigned) {
       const top = ((interval.start - visibleStart) / 60) * hourHeight;
       const height = Math.max(20, ((interval.end - interval.start) / 60) * hourHeight);
+
+      // Deteção de sobreposição para o mesmo colaborador
+      const conflicting = assigned.find((other) => {
+        if (other.entry.entryKey === interval.entry.entryKey) return false;
+        const timeOverlaps = interval.start < other.end && interval.end > other.start;
+        if (!timeOverlaps) return false;
+        if (ownerFilter) return true;
+        return Boolean(
+          interval.entry.owner?.memberId &&
+            other.entry.owner?.memberId &&
+            interval.entry.owner.memberId === other.entry.owner.memberId,
+        );
+      });
+
+      const hasConflict = Boolean(conflicting);
+      const conflictTitle = conflicting
+        ? `Sobreposição com "${conflicting.entry.title}" (${conflicting.entry.owner?.displayName ?? "mesmo colaborador"})`
+        : undefined;
+
       placements.push({
         column: interval.column,
         columnCount,
@@ -52,6 +74,8 @@ export function layoutTimedEntries(
         entry: interval.entry,
         height,
         top,
+        hasConflict,
+        conflictTitle,
       });
     }
     cluster = [];

@@ -77,6 +77,26 @@ export function CalendarSurface({
         </div>
       </div>
 
+      {projection.owners.length > 0 ? (
+        <nav aria-label="Filtrar por colaborador" className="calendar-collaborator-nav">
+          <Link
+            className={!filters.owner ? "active" : ""}
+            href={calendarHref(view, anchor, { ...filters, owner: "" }, selectedDate)}
+          >
+            Todos
+          </Link>
+          {projection.owners.map((owner) => (
+            <Link
+              className={filters.owner === owner.memberId ? "active" : ""}
+              href={calendarHref(view, anchor, { ...filters, owner: owner.memberId }, selectedDate)}
+              key={owner.memberId}
+            >
+              {owner.displayName}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+
       <section className="calendar-controls" aria-label="Controlos do Calendar">
         <div className="calendar-desktop-period-controls">
           <strong>{formatMonthYear(anchor)}</strong>
@@ -131,6 +151,7 @@ export function CalendarSurface({
                     days={days}
                     entries={projection.entries}
                     nextHref={nextHref}
+                    ownerFilter={filters.owner}
                     previousHref={previousHref}
                     returnTo={returnTo}
                     today={today}
@@ -329,6 +350,7 @@ function MonthView({
       />
       <SelectedDayPanel
         entries={entries}
+        ownerFilter={filters.owner}
         returnTo={returnTo}
         selectedDate={selectedDate}
         today={today}
@@ -381,6 +403,7 @@ function MobileWeekView({
       <SelectedDayPanel
         entries={entries}
         mobile
+        ownerFilter={filters.owner}
         returnTo={returnTo}
         selectedDate={selectedDate}
         today={today}
@@ -426,6 +449,7 @@ function MobileMonthView({
       <SelectedDayPanel
         entries={entries}
         mobile
+        ownerFilter={filters.owner}
         returnTo={returnTo}
         selectedDate={selectedDate}
         today={today}
@@ -521,17 +545,24 @@ function MonthGrid({
 function SelectedDayPanel({
   entries,
   mobile = false,
+  ownerFilter,
   returnTo,
   selectedDate,
   today,
 }: {
   entries: readonly CalendarEntry[];
   mobile?: boolean;
+  ownerFilter?: string | null;
   returnTo: string;
   selectedDate: string;
   today: string;
 }) {
   const items = entries.filter((entry) => entryOccursOn(entry, selectedDate));
+  const conflictingKeys = new Set(
+    items
+      .filter((entry) => hasTimedOverlap(entry, items, ownerFilter))
+      .map((entry) => entry.entryKey),
+  );
   const [isCollapsed, setIsCollapsed] = useState(false);
   const touchStartY = useRef<number | null>(null);
 
@@ -595,7 +626,12 @@ function SelectedDayPanel({
       {items.length ? (
         <div className="calendar-day-panel-list">
           {items.map((entry) => (
-            <DayPanelEntry entry={entry} key={entry.entryKey} returnTo={returnTo} />
+            <DayPanelEntry
+              entry={entry}
+              hasConflict={conflictingKeys.has(entry.entryKey)}
+              key={entry.entryKey}
+              returnTo={returnTo}
+            />
           ))}
         </div>
       ) : (
@@ -605,11 +641,20 @@ function SelectedDayPanel({
   );
 }
 
-function DayPanelEntry({ entry, returnTo }: { entry: CalendarEntry; returnTo: string }) {
+function DayPanelEntry({
+  entry,
+  hasConflict = false,
+  returnTo,
+}: {
+  entry: CalendarEntry;
+  hasConflict?: boolean;
+  returnTo: string;
+}) {
   const time = formatEntryTime(entry);
+  const conflictClass = hasConflict ? " calendar-day-panel-entry-conflict" : "";
   return (
     <Link
-      className={`calendar-day-panel-entry calendar-day-panel-entry-${entry.sourceType}${entry.tone ? ` calendar-day-panel-entry-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-day-panel-entry-vacation" : ""}${entry.isOverdue ? " calendar-day-panel-entry-overdue" : ""}`}
+      className={`calendar-day-panel-entry calendar-day-panel-entry-${entry.sourceType}${entry.tone ? ` calendar-day-panel-entry-${entry.tone}` : ""}${entry.sourceLabel === "Vacation" ? " calendar-day-panel-entry-vacation" : ""}${entry.isOverdue ? " calendar-day-panel-entry-overdue" : ""}${conflictClass}`}
       href={withReturnTo(entry.href, returnTo)}
     >
       <i aria-hidden="true" />
@@ -618,11 +663,40 @@ function DayPanelEntry({ entry, returnTo }: { entry: CalendarEntry; returnTo: st
         <small>
           {entry.sourceLabel}
           {entry.owner ? ` · ${entry.owner.displayName}` : ""}
+          {hasConflict ? (
+            <span className="calendar-conflict-pill" title="Sobreposição de horário">
+              Sobreposição
+            </span>
+          ) : null}
         </small>
       </span>
       <time dateTime={entry.start}>{time}</time>
     </Link>
   );
+}
+
+function hasTimedOverlap(
+  entry: CalendarEntry,
+  allEntries: readonly CalendarEntry[],
+  ownerFilter?: string | null,
+): boolean {
+  if (entry.allDay) return false;
+  const startA = new Date(entry.start).getTime();
+  const endA = entry.end ? new Date(entry.end).getTime() : startA + 30 * 60000;
+
+  return allEntries.some((other) => {
+    if (other.entryKey === entry.entryKey || other.allDay) return false;
+    const startB = new Date(other.start).getTime();
+    const endB = other.end ? new Date(other.end).getTime() : startB + 30 * 60000;
+    const overlaps = startA < endB && endA > startB;
+    if (!overlaps) return false;
+    if (ownerFilter) return true;
+    return Boolean(
+      entry.owner?.memberId &&
+        other.owner?.memberId &&
+        entry.owner.memberId === other.owner.memberId,
+    );
+  });
 }
 
 function CalendarGridNavigation({ nextHref, previousHref }: { nextHref: string; previousHref: string }) {

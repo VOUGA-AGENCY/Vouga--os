@@ -14,9 +14,9 @@ export const MEETING_STATUS_LABELS: Record<MeetingStatus, string> = {
   cancelled: "Cancelada",
 };
 export const MEETING_KIND_LABELS: Record<MeetingKind, string> = {
-  meeting: "Meeting",
-  event: "Event",
-  vacation: "Vacation",
+  meeting: "Reunião",
+  event: "Evento",
+  vacation: "Férias",
 };
 
 export type MeetingParticipant = Readonly<{

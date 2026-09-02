@@ -9,21 +9,25 @@ import { SupabaseGoogleCalendarEventProjectionRepository } from "@/persistence/g
 
 import { createMeetingModule } from "./meetings";
 import { createGoogleIntegrationModule } from "./google";
+import { SupabaseMemberDirectory } from "@/persistence/members/supabase-member-directory";
 
 export async function loadCalendar(
   range: Readonly<{ start: string; end: string }>,
   nowIso: string,
   filters: CalendarFilters,
 ) {
+  const supabase = await createClient();
   const [meetings, user] = await Promise.all([createMeetingModule(), getAuthenticatedUser()]);
   const googleModulePromise = user && canManageGoogle(user.role) ? createGoogleIntegrationModule() : null;
-  const sharedGoogleEvents = new SupabaseGoogleCalendarEventProjectionRepository(await createClient());
+  const sharedGoogleEvents = new SupabaseGoogleCalendarEventProjectionRepository(supabase);
+  const memberDirectory = new SupabaseMemberDirectory(supabase);
 
   return composeCalendar(
     {
       meetings: () => meetings.readModel.list(nowIso),
       tasks: async () => [],
       sprints: async () => [],
+      members: () => memberDirectory.listActive().catch(() => []),
       googleEvents: async () => {
         if (!user) return [];
         if (!googleModulePromise) return sharedGoogleEvents.listShared(range);

@@ -75,4 +75,29 @@ describe("CalendarSurface month composition", () => {
     expect(css).toMatch(/\.calendar-view-tabs\s*\{[^}]*grid-template-columns:\s*repeat\(2, auto\)[^}]*width:\s*fit-content/);
     expect(css).toMatch(/\.calendar-desktop-surface\s*\{[^}]*border:/);
   });
+
+  it("renders collaborator filter pills when owners are available", () => {
+    const markup = renderToStaticMarkup(
+      <CalendarSurface
+        anchor="2026-07-24"
+        filters={{ history: false, owner: "member-one", sourceType: "" }}
+        projection={{
+          ...projection,
+          owners: [
+            { displayName: "Miguel", memberId: "member-one" },
+            { displayName: "Vasco", memberId: "member-two" },
+          ],
+        }}
+        selectedDate="2026-07-24"
+        today="2026-07-24"
+        view="month"
+      />,
+    );
+
+    expect(markup).toContain("calendar-collaborator-nav");
+    expect(markup).toContain("Todos");
+    expect(markup).toContain("Miguel");
+    expect(markup).toContain("Vasco");
+    expect(markup).toContain("owner=member-one");
+  });
 });

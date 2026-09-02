@@ -24,6 +24,7 @@ export type CalendarSources = Readonly<{
   sprints(): Promise<readonly SprintListItem[]>;
   googleEvents(): Promise<readonly GoogleCalendarEvent[]>;
   googleArtifacts(): Promise<readonly GoogleEventArtifact[]>;
+  members?(): Promise<readonly { id: string; displayName: string }[]>;
 }>;
 
 export async function composeCalendar(
@@ -42,6 +43,7 @@ export async function composeCalendar(
     sources.sprints(),
     sources.googleEvents(),
     sources.googleArtifacts(),
+    sources.members ? sources.members() : Promise.resolve([]),
   ] as const);
   const sourceStates: Record<CalendarSourceType, CalendarSourceState> = {
     meeting: sourceState(results[0]),
@@ -58,18 +60,24 @@ export async function composeCalendar(
   const meetings = value(results[0]);
   const googleEvents = value(results[3]);
   const googleArtifacts = value(results[4]);
+  const memberList = results[5].status === "fulfilled" ? results[5].value : [];
 
   const allEntries = [
     ...meetingEntries(meetings, range, filters.includeHistory ?? false),
     ...googleEventEntries(googleEvents, range),
   ];
-  const owners = [
-    ...new Map(
-      allEntries.flatMap((entry) =>
-        entry.owner ? [[entry.owner.memberId, entry.owner] as const] : [],
-      ),
-    ).values(),
-  ].sort((left, right) => left.displayName.localeCompare(right.displayName, "pt-PT"));
+  const ownersMap = new Map<string, { memberId: string; displayName: string }>();
+  for (const member of memberList) {
+    ownersMap.set(member.id, { memberId: member.id, displayName: member.displayName });
+  }
+  for (const entry of allEntries) {
+    if (entry.owner) {
+      ownersMap.set(entry.owner.memberId, entry.owner);
+    }
+  }
+  const owners = [...ownersMap.values()].sort((left, right) =>
+    left.displayName.localeCompare(right.displayName, "pt-PT"),
+  );
   const filtered = allEntries
     .filter((entry) => matchesFilters(entry, filters))
     .sort(compareEntries);

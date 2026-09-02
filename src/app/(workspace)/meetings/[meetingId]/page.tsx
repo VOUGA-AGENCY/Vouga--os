@@ -30,7 +30,7 @@ export default async function MeetingDetailPage({
   const { meetingId } = await params;
   const { returnTo } = await searchParams;
   const backHref = safeWorkspaceReturnTo(returnTo, "/meetings");
-  const backLabel = returnLabel(backHref, "Meetings");
+  const backLabel = returnLabel(backHref, "Reuniões");
   const nowIso = new Date().toISOString();
   const [{ readModel }, contextEngine, user] = await Promise.all([
     createMeetingModule(),
@@ -47,7 +47,8 @@ export default async function MeetingDetailPage({
   const canClose = Boolean(user && meeting.participantMemberIds.includes(user.id));
   const cancelAction = cancelMeetingAction.bind(null, meeting.id);
   const objectLabel =
-    meeting.kind === "vacation" ? "Vacation" : meeting.kind === "event" ? "Event" : "Meeting";
+    meeting.kind === "vacation" ? "férias" : meeting.kind === "event" ? "evento" : "reunião";
+  const objectArticle = meeting.kind === "event" ? "este" : "esta";
 
   return (
     <main className="workspace-main module-main object-view object-view-meeting">
@@ -56,10 +57,16 @@ export default async function MeetingDetailPage({
       </Link>
       <div className="detail-heading object-hero">
         <div>
-          <span className={`status-pill status-pill-${meeting.status}`}>
-            {statusLabel(meeting.kind, meeting.status)}
-          </span>
-          <span className="status-pill">{MEETING_KIND_LABELS[meeting.kind]}</span>
+          <div className="meeting-badges">
+            <span
+              className={`meeting-badge meeting-badge-status meeting-badge-status-${meeting.status}`}
+            >
+              {statusLabel(meeting.kind, meeting.status)}
+            </span>
+            <span className="meeting-badge meeting-badge-kind">
+              {MEETING_KIND_LABELS[meeting.kind]}
+            </span>
+          </div>
           <h1 className="display">{meeting.title}</h1>
         </div>
         <div className="detail-actions">
@@ -73,12 +80,12 @@ export default async function MeetingDetailPage({
                   className="button-primary"
                   href={withReturnTo(`/meetings/${meeting.id}/close`, backHref)}
                 >
-                  Close meeting
+                  Concluir reunião
                 </Link>
               ) : null}
               <ConfirmAction
                 action={cancelAction}
-                confirmation={`Cancelar esta ${objectLabel}? O registo permanece consultável e não poderá voltar ao estado planeado.`}
+                confirmation={`Cancelar ${objectArticle} ${objectLabel}? O registo permanece consultável e não poderá voltar ao estado planeado.`}
                 pendingLabel="A cancelar…"
               >
                 Cancelar {objectLabel}
@@ -87,7 +94,7 @@ export default async function MeetingDetailPage({
           )}
           <ConfirmAction
             action={deleteMeetingAction.bind(null, meeting.id)}
-            confirmation={`Eliminar definitivamente esta ${objectLabel}? Também será removida do Google e não ficará histórico no Vouga OS.`}
+            confirmation={`Eliminar definitivamente ${objectArticle} ${objectLabel}? Também será removido do Google e não ficará histórico no Vouga OS.`}
             pendingLabel="A eliminar…"
           >
             Eliminar

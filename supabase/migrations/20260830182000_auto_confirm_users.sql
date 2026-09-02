@@ -1,21 +1,14 @@
 begin;
 
 -- Function to automatically confirm email ONLY for internal accounts created by Vouga
--- Restricts auto-confirmation strictly to Vouga organization emails or accounts created with internal roles
+-- Restricts auto-confirmation strictly to official @vouga-agency.pt emails
 create or replace function public.auto_confirm_new_users()
 returns trigger
 language plpgsql
 security definer
 as $$
 begin
-  if (
-    new.email ilike '%@vouga.pt'
-    or new.email ilike '%@vouga.agency'
-    or (
-      new.raw_user_meta_data->>'role' in ('admin', 'engineer')
-      and (new.raw_user_meta_data->>'must_change_password')::boolean is true
-    )
-  ) then
+  if (new.email ilike '%@vouga-agency.pt') then
     new.email_confirmed_at := coalesce(new.email_confirmed_at, now());
   end if;
   return new;
@@ -33,9 +26,7 @@ execute function public.auto_confirm_new_users();
 update auth.users
 set email_confirmed_at = coalesce(email_confirmed_at, now())
 where (
-    email ilike '%@vouga.pt'
-    or email ilike '%@vouga.agency'
-    or raw_user_meta_data->>'role' in ('admin', 'engineer')
+    email ilike '%@vouga-agency.pt'
   )
   and email_confirmed_at is null;
 

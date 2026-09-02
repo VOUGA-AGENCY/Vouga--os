@@ -318,8 +318,9 @@ export default async function RelationsPage({
       href: withReturnTo(`/companies/${company.id}`, currentHref),
       id: company.id,
       name: company.name,
+      cae: company.primaryCae,
       note: company.currentContext,
-      owner: company.ownerDisplayName,
+      owner: company.ownerDisplayName || "—",
       stage: company.prospectingStage ? PROSPECTING_STAGE_LABELS[company.prospectingStage] : "—",
       stageClassName: company.prospectingStage
         ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
@@ -427,44 +428,61 @@ export default async function RelationsPage({
               view="organizations"
             />
           </div>
-          <div className="crm-table crm-organisation-table crm-layout-collection">
-            {layout === "list" ? (
+          {layout === "list" ? (
+            <div className="crm-table crm-organisation-table">
+              <div className="crm-table-head crm-organisation-table-head">
+                <span />
+                <span>Organização</span>
+                <span>CAE</span>
+                <span>Owner</span>
+                <span>Estado</span>
+                <span>Notas</span>
+                <span />
+              </div>
               <OrganizationList rows={organizationRows} />
-            ) : (
-              sortedCompanies.map((company) => {
+            </div>
+          ) : (
+            <div className="crm-organisation-grid">
+              {sortedCompanies.map((company) => {
                 return (
                   <Link
-                    className="crm-organisation-row"
+                    className="crm-organisation-card"
                     href={withReturnTo(`/companies/${company.id}`, currentHref)}
                     key={company.id}
                   >
-                    <span className="crm-icon">
-                      <Building2 aria-hidden="true" />
-                    </span>
-                    <strong>{company.name}</strong>
-                    <span className="crm-card-field" data-label="Owner">
-                      {company.ownerDisplayName}
-                    </span>
-                    <span
-                      className={`crm-card-field${
-                        company.prospectingStage
-                          ? ` crm-stage-badge crm-stage-${company.prospectingStage}`
-                          : ""
-                      }`}
-                      data-label="Estado"
-                    >
-                      {company.prospectingStage
-                        ? PROSPECTING_STAGE_LABELS[company.prospectingStage]
-                        : "—"}
-                    </span>
-                    <span className="crm-card-field" data-label="Notas">
-                      <span>{notePreview(company.currentContext)}</span>
-                    </span>
+                    <div className="crm-card-top">
+                      <div className="crm-card-title-group">
+                        <span className="crm-icon">
+                          <Building2 aria-hidden="true" />
+                        </span>
+                        <strong>{company.name}</strong>
+                      </div>
+                      {company.prospectingStage ? (
+                        <span
+                          className={`crm-stage-badge crm-stage-${company.prospectingStage}`}
+                        >
+                          {PROSPECTING_STAGE_LABELS[company.prospectingStage]}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="crm-card-meta">
+                      {company.primaryCae ? (
+                        <span className="crm-cae-pill">CAE {company.primaryCae}</span>
+                      ) : null}
+                      <span className="crm-owner-tag">
+                        {company.ownerDisplayName || "Sem owner"}
+                      </span>
+                    </div>
+                    {company.currentContext ? (
+                      <p className="crm-card-context">
+                        {notePreview(company.currentContext, 140)}
+                      </p>
+                    ) : null}
                   </Link>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </section>
       ) : view === "profiles" ? (
         <section className="crm-directory">

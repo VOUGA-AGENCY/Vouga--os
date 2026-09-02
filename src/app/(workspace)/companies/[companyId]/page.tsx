@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { COMPANY_STATUS_LABELS, PROSPECTING_STAGE_LABELS } from "@/domain/companies/company";
+import { PROJECT_STATUS_LABELS } from "@/domain/projects/project";
 import { CONTACT_CHANNEL_LABELS, initials } from "@/domain/relations/contact";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createContextEngine } from "@/foundation/composition/context-engine";
+import { createProjectModule } from "@/foundation/composition/projects";
 import { createRelationsModule } from "@/foundation/composition/relations";
 import { safeWorkspaceReturnTo, withReturnTo } from "@/foundation/navigation/return-to";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
@@ -25,7 +27,9 @@ export default async function CompanyDetailPage({
   const { companyId } = await params;
   const query = await searchParams;
   const backHref = safeWorkspaceReturnTo(query.returnTo, "/relations?view=organizations");
-  const backLabel = backHref.includes("view=organizations")
+  const backLabel = backHref.startsWith("/companies/")
+    ? "Organização"
+    : backHref.includes("view=organizations")
     ? "Organizações"
     : backHref.includes("segment=prospecting")
       ? "Prospeção"
@@ -33,15 +37,17 @@ export default async function CompanyDetailPage({
   const companyHref = query.returnTo
     ? withReturnTo(`/companies/${companyId}`, backHref)
     : `/companies/${companyId}`;
-  const [companies, relations, contextEngine, user] = await Promise.all([
+  const [companies, relations, projects, contextEngine, user] = await Promise.all([
     createCompanyModule(),
     createRelationsModule(),
+    createProjectModule(),
     createContextEngine(),
     getAuthenticatedUser(),
   ]);
-  const [company, allContacts, context, history] = await Promise.all([
+  const [company, allContacts, companyProjects, context, history] = await Promise.all([
     companies.readModel.findById(companyId),
     relations.readModel.listContacts(),
+    projects.readModel.listByCompany(companyId),
     contextEngine.get(
       { type: "company", id: companyId },
       new Date().toISOString(),
@@ -70,6 +76,12 @@ export default async function CompanyDetailPage({
           </p>
         </div>
         <div className="detail-actions">
+          <Link
+            className="button-primary"
+            href={`/companies/${company.id}/close-deal`}
+          >
+            {companyProjects.length > 0 ? "Novo Contrato" : "Fechar Contrato"}
+          </Link>
           <Link
             className="button-secondary"
             href={withReturnTo(`/relations/contacts/new?companyId=${company.id}`, companyHref)}
@@ -110,6 +122,19 @@ export default async function CompanyDetailPage({
         <div>
           <span>Owner</span>
           <strong>{company.ownerDisplayName}</strong>
+        </div>
+        <div>
+          <span>Project associado</span>
+          {companyProjects.length > 0 ? (
+            <Link href={`/projects/${companyProjects[0].id}`}>
+              {companyProjects[0].name}
+              <small>{PROJECT_STATUS_LABELS[companyProjects[0].status]}</small>
+            </Link>
+          ) : (
+            <Link className="crm-deal-prompt" href={`/companies/${company.id}/close-deal`}>
+              + Iniciar entrega
+            </Link>
+          )}
         </div>
       </section>
 

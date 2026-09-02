@@ -84,4 +84,5 @@ export type ProjectDetail = ProjectListItem &
 export interface ProjectReadModel {
   list(): Promise<ProjectListItem[]>;
   findById(id: string): Promise<ProjectDetail | null>;
+  listByCompany(companyId: string): Promise<ProjectListItem[]>;
 }

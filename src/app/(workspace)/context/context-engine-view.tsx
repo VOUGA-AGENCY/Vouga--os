@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   Building2,
   Calendar,
   CheckSquare,
@@ -13,7 +12,6 @@ import {
   Layers,
   Network,
   RotateCcw,
-  Sparkles,
   User,
   Workflow,
   X,
@@ -154,7 +152,6 @@ export function ContextEngineView({ graph }: { graph: FullContextGraph }) {
         ) : (
           <ContextFlowView
             connectedNodeIds={connectedNodeIds}
-            edges={filteredEdges}
             nodes={filteredNodes}
             onSelectNode={setSelectedNodeId}
             selectedNodeId={selectedNodeId}
@@ -282,12 +279,14 @@ function NeuralGraphView({
 
       group.forEach((node, i) => {
         const angle = i * angleStep + layer * 0.4;
-        const jitterX = (Math.sin(i * 3 + layer) * 20);
-        const jitterY = (Math.cos(i * 2 + layer) * 20);
+        const jitterX = Math.sin(i * 3 + layer) * 20;
+        const jitterY = Math.cos(i * 2 + layer) * 20;
+        const rawX = centerX + radius * Math.cos(angle) + jitterX;
+        const rawY = centerY + radius * Math.sin(angle) + jitterY;
         result.push({
           ...node,
-          x: centerX + radius * Math.cos(angle) + jitterX,
-          y: centerY + radius * Math.sin(angle) + jitterY,
+          x: Math.round(rawX * 100) / 100,
+          y: Math.round(rawY * 100) / 100,
         });
       });
     });
@@ -325,7 +324,7 @@ function NeuralGraphView({
           </radialGradient>
         </defs>
 
-        <g transform={`scale(${zoom})`} transform-origin="500 350">
+        <g transform={`translate(500 350) scale(${zoom}) translate(-500 -350)`}>
           {/* Edges */}
           {edges.map((edge) => {
             const p1 = posMap.get(edge.source);
@@ -400,13 +399,11 @@ function NeuralGraphView({
 
 function ContextFlowView({
   connectedNodeIds,
-  edges,
   nodes,
   onSelectNode,
   selectedNodeId,
 }: {
   connectedNodeIds: Set<string>;
-  edges: readonly GraphEdge[];
   nodes: readonly GraphNode[];
   onSelectNode: (id: string | null) => void;
   selectedNodeId: string | null;

@@ -8,6 +8,7 @@ type OrganizationRow = Readonly<{
   href: string;
   id: string;
   name: string;
+  cae: string | null;
   note: string | null;
   owner: string;
   stage: string;
@@ -31,8 +32,11 @@ export function OrganizationList({ rows }: { rows: readonly OrganizationRow[] })
             <Building2 aria-hidden="true" />
           </span>
           <strong>{row.name}</strong>
+          <span className="crm-card-field crm-cae-field" data-label="CAE">
+            {row.cae ?? "—"}
+          </span>
           <span className="crm-card-field" data-label="Owner">
-            {row.owner}
+            {row.owner || "—"}
           </span>
           <span className={`crm-card-field${row.stageClassName}`} data-label="Estado">
             {row.stage}

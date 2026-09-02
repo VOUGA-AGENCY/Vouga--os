@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 import type { ContextSection, ObjectContext } from "@/projections/context-engine/context-engine";
+import { exportContextToMarkdown } from "@/projections/context-engine/export-markdown";
+import { CopyContextButton } from "./copy-context-button";
 
 export function ContextPanel({
   context,
@@ -14,6 +16,7 @@ export function ContextPanel({
 }) {
   const excluded = new Set(exclude);
   const sections = context.sections.filter((section) => !excluded.has(section.id));
+  const markdown = exportContextToMarkdown({ ...context, sections });
 
   if (collapsible) {
     return (
@@ -30,28 +33,31 @@ export function ContextPanel({
           </span>
           <ChevronDown aria-hidden="true" className="context-disclosure-icon" />
         </summary>
-        <ContextPanelBody context={context} sections={sections} />
+        <ContextPanelBody context={context} sections={sections} markdown={markdown} />
       </details>
     );
   }
 
   return (
     <section className="meeting-section" aria-labelledby="context-engine-title">
-      <div className="archive-heading">
-        <p className="eyebrow">Context Engine</p>
-        <h2 className="display section-title" id="context-engine-title">
-          Contexto operacional
-        </h2>
-        <p className="muted-copy">
-          Leitura calculada agora a partir das relações e fontes oficiais.
-        </p>
-        {context.isPartial && (
-          <p className="risk-copy" role="status">
-            O contexto está parcial. As fontes indisponíveis estão identificadas abaixo.
+      <div className="archive-heading context-heading-with-actions">
+        <div>
+          <p className="eyebrow">Context Engine</p>
+          <h2 className="display section-title" id="context-engine-title">
+            Contexto operacional
+          </h2>
+          <p className="muted-copy">
+            Leitura calculada agora a partir das relações e fontes oficiais.
           </p>
-        )}
+          {context.isPartial && (
+            <p className="risk-copy" role="status">
+              O contexto está parcial. As fontes indisponíveis estão identificadas abaixo.
+            </p>
+          )}
+        </div>
+        <CopyContextButton markdown={markdown} />
       </div>
-      <ContextPanelBody context={context} sections={sections} showPartialStatus={false} />
+      <ContextPanelBody context={context} sections={sections} markdown={markdown} showPartialStatus={false} />
     </section>
   );
 }
@@ -59,19 +65,24 @@ export function ContextPanel({
 function ContextPanelBody({
   context,
   sections,
+  markdown,
   showPartialStatus = true,
 }: {
   context: ObjectContext;
   sections: readonly ContextSection[];
+  markdown: string;
   showPartialStatus?: boolean;
 }) {
   return (
     <div className="context-disclosure-body">
-      {showPartialStatus && context.isPartial ? (
-        <p className="risk-copy" role="status">
-          O contexto está parcial. As fontes indisponíveis estão identificadas abaixo.
-        </p>
-      ) : null}
+      <div className="context-body-header">
+        {showPartialStatus && context.isPartial ? (
+          <p className="risk-copy" role="status">
+            O contexto está parcial. As fontes indisponíveis estão identificadas abaixo.
+          </p>
+        ) : <span />}
+        {showPartialStatus ? <CopyContextButton markdown={markdown} /> : null}
+      </div>
       <div className="detail-grid">
         {sections.map((section) => (
           <ContextSectionCard key={section.id} section={section} />

@@ -81,7 +81,7 @@ function ContextPanelBody({
             O contexto está parcial. As fontes indisponíveis estão identificadas abaixo.
           </p>
         ) : <span />}
-        <CopyContextButton markdown={markdown} />
+        {showPartialStatus ? <CopyContextButton markdown={markdown} /> : null}
       </div>
       <div className="detail-grid">
         {sections.map((section) => (

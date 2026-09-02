@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   Building2,
   Calendar,
   CheckSquare,
@@ -13,7 +12,6 @@ import {
   Layers,
   Network,
   RotateCcw,
-  Sparkles,
   User,
   Workflow,
   X,
@@ -154,7 +152,6 @@ export function ContextEngineView({ graph }: { graph: FullContextGraph }) {
         ) : (
           <ContextFlowView
             connectedNodeIds={connectedNodeIds}
-            edges={filteredEdges}
             nodes={filteredNodes}
             onSelectNode={setSelectedNodeId}
             selectedNodeId={selectedNodeId}
@@ -327,7 +324,7 @@ function NeuralGraphView({
           </radialGradient>
         </defs>
 
-        <g style={{ transformOrigin: "500px 350px" }} transform={`scale(${zoom})`}>
+        <g transform={`translate(500 350) scale(${zoom}) translate(-500 -350)`}>
           {/* Edges */}
           {edges.map((edge) => {
             const p1 = posMap.get(edge.source);
@@ -402,13 +399,11 @@ function NeuralGraphView({
 
 function ContextFlowView({
   connectedNodeIds,
-  edges,
   nodes,
   onSelectNode,
   selectedNodeId,
 }: {
   connectedNodeIds: Set<string>;
-  edges: readonly GraphEdge[];
   nodes: readonly GraphNode[];
   onSelectNode: (id: string | null) => void;
   selectedNodeId: string | null;

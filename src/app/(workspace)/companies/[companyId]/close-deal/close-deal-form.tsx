@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import type { CompanyFormState } from "../../actions";
 import type { ProjectListItem } from "@/projections/projects/project-read-model";
@@ -15,6 +15,11 @@ type CloseDealFormProps = {
     name: string;
     ownerMemberId: string;
     currentContext: string | null;
+    status: string;
+    primaryCae: string | null;
+    contactEmail: string | null;
+    contactPhone: string | null;
+    website: string | null;
   };
   contacts: readonly Readonly<{
     id: string;
@@ -26,6 +31,8 @@ type CloseDealFormProps = {
     displayName: string;
   }>[];
   existingProjects: readonly ProjectListItem[];
+  defaultStartsOn: string;
+  defaultTargetDeliveryOn: string;
 };
 
 export function CloseDealForm({
@@ -34,14 +41,18 @@ export function CloseDealForm({
   contacts,
   members,
   existingProjects,
+  defaultStartsOn,
+  defaultTargetDeliveryOn,
 }: CloseDealFormProps) {
   const [state, formAction, isPending] = useActionState(action, { message: null });
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(
     () => new Set(contacts.map((c) => c.id)),
   );
+  const [logInteraction, setLogInteraction] = useState(true);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const thirtyDaysLater = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const needsCae = company.status !== "active" && !company.primaryCae;
+  const needsContact =
+    company.status !== "active" && !company.contactEmail && !company.contactPhone;
 
   const toggleContact = (id: string) => {
     setSelectedContacts((prev) => {
@@ -59,13 +70,14 @@ export function CloseDealForm({
           <AlertCircle aria-hidden="true" />
           <div>
             <strong>Atenção: Já existe um Project associado a esta Organização</strong>
-            <p>
+             <ul className="plain-list">
               {existingProjects.map((p) => (
-                <span key={p.id} className="block mt-1">
-                  • <Link href={`/projects/${p.id}`} className="underline font-medium">{p.name}</Link> ({PROJECT_STATUS_LABELS[p.status]})
-                </span>
+               <li key={p.id}>
+                   <Link href={`/projects/${p.id}`}>{p.name}</Link>
+                   <span>{PROJECT_STATUS_LABELS[p.status]}</span>
+                 </li>
               ))}
-            </p>
+            </ul>
             <small>Podes avançar se este for um novo contrato ou aditamento independente.</small>
           </div>
         </div>
@@ -140,7 +152,7 @@ export function CloseDealForm({
             name="starts_on"
             type="date"
             required
-            defaultValue={today}
+            defaultValue={defaultStartsOn}
           />
         </div>
 
@@ -151,7 +163,7 @@ export function CloseDealForm({
             name="target_delivery_on"
             type="date"
             required
-            defaultValue={thirtyDaysLater}
+            defaultValue={defaultTargetDeliveryOn}
           />
         </div>
 
@@ -204,6 +216,112 @@ export function CloseDealForm({
             <small>Os contactos selecionados terão acesso ao contexto e comunicação do Project.</small>
           </fieldset>
         ) : null}
+
+        {(needsCae || needsContact) ? (
+          <div className="crm-deal-data-completion field-full">
+            <div className="crm-deal-warning">
+              <AlertCircle aria-hidden="true" />
+              <div>
+                <strong>Completar dados da Organização</strong>
+                <small>
+                  Para ativar a Organização e fechar contrato, é obrigatório indicar o CAE e pelo menos um contacto direto real (email ou telefone).
+                </small>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <div className="field field-light">
+                <label htmlFor="company_cae">CAE Principal *</label>
+                <input
+                  id="company_cae"
+                  name="company_cae"
+                  type="text"
+                  required={needsCae}
+                  defaultValue={company.primaryCae ?? ""}
+                  placeholder="Ex: 62010"
+                  maxLength={20}
+                />
+                <small>Código de Atividade Económica oficial.</small>
+              </div>
+
+              <div className="field field-light">
+                <label htmlFor="company_email">Email de Contacto</label>
+                <input
+                  id="company_email"
+                  name="company_email"
+                  type="email"
+                  defaultValue={company.contactEmail ?? ""}
+                  placeholder="Ex: geral@empresa.pt"
+                  maxLength={320}
+                />
+              </div>
+
+              <div className="field field-light">
+                <label htmlFor="company_phone">Telefone de Contacto</label>
+                <input
+                  id="company_phone"
+                  name="company_phone"
+                  type="tel"
+                  defaultValue={company.contactPhone ?? ""}
+                  placeholder="Ex: +351 912 345 678"
+                  maxLength={40}
+                />
+                <small>Indica pelo menos um email ou telefone válido.</small>
+              </div>
+
+              <div className="field field-light">
+                <label htmlFor="company_website">Website da Organização (opcional)</label>
+                <input
+                  id="company_website"
+                  name="company_website"
+                  type="text"
+                  defaultValue={company.website ?? ""}
+                  placeholder="Ex: https://empresa.pt"
+                  maxLength={2048}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="crm-deal-consequences">
+        <p className="eyebrow">Consequências da Ação</p>
+        <h3 className="section-title">O que acontece ao confirmar:</h3>
+        <ul className="plain-list crm-consequence-list">
+          <li>
+            <strong>1. Criação do Project:</strong> O novo workspace de entrega será criado na área Work com as datas e o valor contratual acordado.
+          </li>
+          <li>
+            <strong>2. Atualização da Organização:</strong> O estado passará a <em>Ativa</em> e a fase de prospeção avançará para <em>Acordado</em>.
+          </li>
+          <li>
+            <label className="crm-checkbox-item">
+              <input
+                type="checkbox"
+                name="log_interaction"
+                value="yes"
+                checked={logInteraction}
+                onChange={(e) => setLogInteraction(e.target.checked)}
+              />
+              <span>
+                <strong>3. Registar no histórico:</strong> Documentar o fecho do contrato e o valor acordado no timeline de interações da Organização.
+              </span>
+            </label>
+            {logInteraction ? (
+              <div className="field field-light crm-interaction-note-field">
+                <label htmlFor="interaction_note">Nota adicional para o histórico (opcional)</label>
+                <textarea
+                  id="interaction_note"
+                  name="interaction_note"
+                  rows={2}
+                  maxLength={500}
+                  placeholder="Ex: Reunião final de aprovação e formalização do acordo com o cliente."
+                />
+              </div>
+            ) : null}
+          </li>
+        </ul>
       </div>
 
       <div className="form-actions">

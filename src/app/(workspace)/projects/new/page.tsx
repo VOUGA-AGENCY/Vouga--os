@@ -6,12 +6,10 @@ import { ProjectForm } from "../project-form";
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ companyId?: string }>;
+  searchParams?: { companyId?: string };
 }) {
-  const [{ companyId } = { companyId: undefined }, { service }] = await Promise.all([
-    searchParams ?? Promise.resolve({ companyId: undefined }),
-    createProjectModule(),
-  ]);
+  const companyId = searchParams?.companyId;
+   const { service } = await createProjectModule();
   const options = await service.getFormOptions();
 
   return (

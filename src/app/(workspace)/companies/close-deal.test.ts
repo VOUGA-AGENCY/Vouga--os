@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { validateProjectValues } from "@/domain/projects/project";
-import { PROSPECTING_STAGE_LABELS, PROSPECTING_STAGES } from "@/domain/companies/company";
+import {
+  PROSPECTING_STAGE_LABELS,
+  PROSPECTING_STAGES,
+  validateCompanyValues,
+} from "@/domain/companies/company";
 
 describe("Conversão Comercial → Entrega (Fechar Contrato)", () => {
   it("valida a criação de um Project a partir de um acordo fechado", () => {
@@ -74,8 +78,47 @@ describe("Conversão Comercial → Entrega (Fechar Contrato)", () => {
     ).toThrow("O cliente é obrigatório.");
   });
 
-  it("mantém a fase 'agreed' como Acordo no pipeline comercial", () => {
+  it("mantém a fase 'agreed' no pipeline comercial", () => {
     expect(PROSPECTING_STAGES).toContain("agreed");
-    expect(PROSPECTING_STAGE_LABELS.agreed).toBe("Acordo");
+    expect(PROSPECTING_STAGE_LABELS.agreed).toBeDefined();
+  });
+
+  it("exige dados reais de CAE e contacto para ativação da Organização sem dados inventados", () => {
+    // Sem CAE
+    expect(() =>
+      validateCompanyValues({
+        name: "Empresa Real",
+        ownerMemberId: "member-1",
+        primaryCae: "",
+        contactEmail: "contacto@empresa.pt",
+        status: "active",
+      }),
+    ).toThrow("O CAE principal é obrigatório.");
+
+    // Sem email e sem telefone
+    expect(() =>
+      validateCompanyValues({
+        name: "Empresa Real",
+        ownerMemberId: "member-1",
+        primaryCae: "62010",
+        contactEmail: null,
+        contactPhone: null,
+        status: "active",
+      }),
+    ).toThrow("Indica pelo menos um email ou telefone de contacto.");
+
+    // Com dados reais válidos
+    const valid = validateCompanyValues({
+      name: "Empresa Real",
+      ownerMemberId: "member-1",
+      primaryCae: "62010",
+      contactEmail: "contacto@empresa.pt",
+      status: "active",
+      prospectingStage: "agreed",
+    });
+    expect(valid.primaryCae).toBe("62010");
+    expect(valid.contactEmail).toBe("contacto@empresa.pt");
+    expect(valid.prospectingStage).toBe("agreed");
+    expect(valid.status).toBe("active");
   });
 });

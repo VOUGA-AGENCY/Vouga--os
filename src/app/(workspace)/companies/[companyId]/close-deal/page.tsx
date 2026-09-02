@@ -38,6 +38,10 @@ export default async function CloseDealPage({
   );
 
   const boundAction = closeDealAction.bind(null, companyId);
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const targetDate = new Date(now.getTime() + 30 * 86400000);
+  const thirtyDaysLater = targetDate.toISOString().slice(0, 10);
 
   return (
     <main className="workspace-main module-main module-form-main object-form-page close-deal-page">
@@ -59,6 +63,8 @@ export default async function CloseDealPage({
         contacts={companyContacts}
         members={formOptions.members}
         existingProjects={existingProjects}
+        defaultStartsOn={today}
+        defaultTargetDeliveryOn={thirtyDaysLater}
       />
     </main>
   );

@@ -8358,8 +8358,7 @@ a {
   text-decoration: none;
   transition:
     background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .crm-organisation-card:hover {
@@ -8400,13 +8399,13 @@ a {
 }
 
 .crm-cae-pill {
-  background: var(--color-bg-subtle);
+  background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-xs);
   color: var(--color-text-tertiary);
   font-family: var(--font-mono, monospace);
   font-size: var(--text-xs);
-  padding: 1px var(--space-2);
+  padding: var(--border-width) var(--space-2);
 }
 
 .crm-owner-tag {
@@ -11667,21 +11666,21 @@ a {
   background: var(--color-bg-elevated);
   border: var(--border-width) solid var(--color-border);
   border-left: 3px solid var(--color-accent);
-  border-radius: var(--radius-md);
+  border-left: calc(var(--border-width) * 3) solid var(--color-accent);
   margin-bottom: var(--space-6);
 }
 
 .crm-deal-warning svg {
   color: var(--color-accent);
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: calc(var(--space-1) / 2);
 }
 
 .crm-deal-warning strong {
   display: block;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .crm-deal-warning small {
@@ -11732,9 +11731,57 @@ a {
 }
 
 .input-disabled {
-  background: var(--color-bg-subtle) !important;
+  background: var(--color-surface) !important;
   color: var(--color-text-secondary) !important;
   cursor: not-allowed;
+}
+
+.crm-deal-data-completion {
+  background: var(--color-bg-subtle);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+}
+
+.crm-deal-data-completion .crm-deal-warning {
+  margin-bottom: var(--space-4);
+}
+
+.crm-deal-consequences {
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+}
+
+.crm-deal-consequences .section-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-4);
+}
+
+.crm-consequence-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.crm-consequence-list > li {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.crm-consequence-list strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.crm-interaction-note-field {
+  margin-top: var(--space-3);
 }
 
 /* Context Engine Markdown Exporter */
@@ -11765,8 +11812,8 @@ a {
 }
 
 .context-export-button svg {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: var(--text-base);
+  height: var(--text-base);
 }
 
 .context-hub-actions {
@@ -11774,5 +11821,3 @@ a {
   justify-content: flex-start;
   margin-top: var(--space-4);
 }
-
-

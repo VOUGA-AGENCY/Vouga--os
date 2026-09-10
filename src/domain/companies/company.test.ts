@@ -41,22 +41,26 @@ describe("Company", () => {
     ).toThrow("O estado da Organisation não é válido.");
   });
 
-  it("expõe os seis estados aprovados para Contacts", () => {
+  it("expõe os oito estados aprovados para Contacts", () => {
     expect(PROSPECTING_STAGES).toEqual([
       "to_contact",
       "contacted",
+      "strategic_partnership",
+      "budgeting",
+      "agreed",
       "replied",
       "meeting_scheduled",
       "not_interested",
-      "agreed",
     ]);
     expect(PROSPECTING_STAGE_LABELS).toEqual({
       to_contact: "Por contactar",
       contacted: "Contactado",
+      strategic_partnership: "Parceria Estratégica",
+      budgeting: "Orçamentação",
+      agreed: "Acordado",
       replied: "Por responder",
       meeting_scheduled: "Agendado",
       not_interested: "Não avançou",
-      agreed: "Acordado",
     });
   });
 

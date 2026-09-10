@@ -2,10 +2,12 @@ export const COMPANY_STATUSES = ["active", "inactive", "archived"] as const;
 export const PROSPECTING_STAGES = [
   "to_contact",
   "contacted",
+  "strategic_partnership",
+  "budgeting",
+  "agreed",
   "replied",
   "meeting_scheduled",
   "not_interested",
-  "agreed",
 ] as const;
 
 export type CompanyStatus = (typeof COMPANY_STATUSES)[number];
@@ -14,10 +16,12 @@ export type ProspectingStage = (typeof PROSPECTING_STAGES)[number];
 export const PROSPECTING_STAGE_LABELS: Record<ProspectingStage, string> = {
   to_contact: "Por contactar",
   contacted: "Contactado",
+  strategic_partnership: "Parceria Estratégica",
+  budgeting: "Orçamentação",
+  agreed: "Acordado",
   replied: "Por responder",
   meeting_scheduled: "Agendado",
   not_interested: "Não avançou",
-  agreed: "Acordado",
 };
 
 export const COMPANY_STATUS_LABELS: Record<CompanyStatus, string> = {

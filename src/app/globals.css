@@ -8544,6 +8544,78 @@ a {
   margin: 0;
   white-space: pre-wrap;
 }
+.crm-history-view-content {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+.crm-history-view-content p {
+  flex: 1;
+  min-width: 0;
+}
+.crm-history-edit-trigger {
+  align-items: center;
+  background: transparent;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-xs);
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  transition: all var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+.crm-history-edit-trigger:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+.crm-history-edit-trigger svg {
+  height: 0.7rem;
+  width: 0.7rem;
+}
+.crm-history-editing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+.crm-history-edit-textarea {
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  min-height: 5rem;
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+  width: 100%;
+}
+.crm-history-edit-textarea:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+.crm-history-edit-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+.crm-history-edit-actions button {
+  font-size: var(--text-xs);
+  min-height: 1.75rem;
+  padding: var(--space-1) var(--space-3);
+}
+.crm-history-edit-error {
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+  margin: 0;
+}
 .crm-company-danger {
   border-top: var(--border-width) solid
     color-mix(in srgb, var(--color-danger) 28%, var(--color-border));

@@ -6,15 +6,18 @@ import { RelationsService } from "./relations-service";
 function createService() {
   const recordContactInteraction = vi.fn().mockResolvedValue("interaction-1");
   const createInteraction = vi.fn().mockResolvedValue("interaction-2");
+  const updateInteraction = vi.fn().mockResolvedValue(undefined);
   const repository = {
     recordContactInteraction,
     createInteraction,
+    updateInteraction,
   } as unknown as ContactRepository;
   const directory = {} as RelationsDirectory;
   return {
     service: new RelationsService(repository, directory),
     recordContactInteraction,
     createInteraction,
+    updateInteraction,
   };
 }
 
@@ -80,5 +83,20 @@ describe("RelationsService interactions", () => {
       replyToInteractionId: null,
       sourceTemplateId: null,
     });
+  });
+
+  it("atualiza a mensagem da Interaction e valida o corpo", async () => {
+    const { service, updateInteraction } = createService();
+
+    await service.updateInteraction(" int-1 ", "  Nova mensagem atualizada  ");
+
+    expect(updateInteraction).toHaveBeenCalledWith("int-1", "Nova mensagem atualizada");
+
+    await expect(service.updateInteraction("int-1", "   ")).rejects.toThrow(
+      "A mensagem do log não pode estar vazia.",
+    );
+    await expect(service.updateInteraction("  ", "Texto")).rejects.toThrow(
+      "Identificador de interação inválido.",
+    );
   });
 });

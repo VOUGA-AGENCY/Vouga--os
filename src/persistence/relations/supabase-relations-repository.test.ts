@@ -59,4 +59,16 @@ describe("SupabaseContactRepository interactions", () => {
       recorded_by_member_id: "member-1",
     });
   });
+
+  it("atualiza o corpo da interação via rpc", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
+    const repository = new SupabaseContactRepository({ rpc } as unknown as SupabaseClient);
+
+    await repository.updateInteraction("interaction-1", "Texto revisto");
+
+    expect(rpc).toHaveBeenCalledWith("update_contact_interaction", {
+      p_interaction_id: "interaction-1",
+      p_body: "Texto revisto",
+    });
+  });
 });

@@ -59,4 +59,23 @@ describe("ContactHistoryList", () => {
     expect(html).toContain("· com resposta");
     expect(html).toContain("crm-interaction-body-clamped");
   });
+
+  it("renders edit trigger in contact history items", () => {
+    const item: ContactInteractionItem = {
+      body: "Contacto inicial.",
+      channel: "email",
+      companyId: "comp-1",
+      contactId: "cont-1",
+      direction: "outbound",
+      hasReply: false,
+      id: "int-3",
+      occurredAt: "2026-09-02T10:00:00Z",
+      recorderName: "Vasco Magolo",
+      replyToInteractionId: null,
+    };
+
+    const html = renderToStaticMarkup(<ContactHistoryList interactions={[item]} />);
+    expect(html).toContain("crm-history-edit-trigger");
+    expect(html).toContain("Editar");
+  });
 });

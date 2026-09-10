@@ -49,6 +49,7 @@ export interface ContactRepository {
     sourceTemplateId: string | null;
     recordedByMemberId: string;
   }): Promise<string>;
+  updateInteraction(id: string, body: string): Promise<void>;
 }
 export interface RelationsDirectory {
   listMembers(): Promise<ActiveMember[]>;

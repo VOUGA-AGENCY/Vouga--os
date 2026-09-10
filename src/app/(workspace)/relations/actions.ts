@@ -206,3 +206,26 @@ export async function recordContactInteractionAction(fd: FormData) {
   if (contactId) revalidatePath(`/relations/contacts/${contactId}`);
   redirect(withFeedback(returnTo, "Interação registada."));
 }
+
+export async function updateInteractionBodyAction(
+  interactionId: string,
+  body: string,
+  path?: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!(await getAuthenticatedUser())) {
+    return { success: false, error: "Não autenticado." };
+  }
+  try {
+    const { service } = await createRelationsModule();
+    await service.updateInteraction(interactionId, body);
+    if (path) revalidatePath(path);
+    revalidatePath("/relations");
+    revalidatePath("/companies");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: getRelationsErrorMessage(error) || "Não foi possível atualizar o log de interação.",
+    };
+  }
+}

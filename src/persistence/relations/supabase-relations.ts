@@ -236,6 +236,21 @@ export class SupabaseContactRepository implements ContactRepository {
     if (error || !data) throw new Error("Não foi possível registar o contacto.");
     return String(data.id);
   }
+  async updateInteraction(id: string, body: string): Promise<void> {
+    const { error: rpcError } = await this.supabase.rpc("update_contact_interaction", {
+      p_interaction_id: id,
+      p_body: body,
+    });
+    if (rpcError) {
+      const { error: updateError } = await this.supabase
+        .from("contact_interactions")
+        .update({ body })
+        .eq("id", id);
+      if (updateError) {
+        throw new Error("Não foi possível atualizar o log de interação.");
+      }
+    }
+  }
 }
 
 export class SupabaseRelationsDirectory implements RelationsDirectory {

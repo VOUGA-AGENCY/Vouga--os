@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   Briefcase,
   Building2,
   CalendarDays,
@@ -12,7 +10,7 @@ import {
   Phone,
 } from "lucide-react";
 import { ContextPanel } from "@/app/(workspace)/context-panel";
-import { CONTACT_CHANNEL_LABELS, CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
+import { CONTACT_ROLE_LABELS, initials } from "@/domain/relations/contact";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createContextEngine } from "@/foundation/composition/context-engine";
 import { createProjectModule } from "@/foundation/composition/projects";
@@ -20,8 +18,8 @@ import { createRelationsModule } from "@/foundation/composition/relations";
 import { safeWorkspaceReturnTo } from "@/foundation/navigation/return-to";
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { deleteContactAction } from "../../actions";
+import { ContactHistoryList } from "./contact-history-list";
 
-const dateTime = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium", timeStyle: "short" });
 const date = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium" });
 
 export default async function ContactPage({
@@ -159,28 +157,7 @@ export default async function ContactPage({
           <h2>Histórico</h2>
           <span>{contact.interactions.length}</span>
         </header>
-        {contact.interactions.length === 0 ? (
-          <p className="crm-muted">Ainda não existem interações. O registo é feito em Contacts.</p>
-        ) : (
-          <div className="crm-contact-history">
-            {contact.interactions.map((item) => (
-              <article key={item.id}>
-                <span className="interaction-icon">
-                  {item.direction === "outbound" ? <ArrowUpRight /> : <ArrowDownLeft />}
-                </span>
-                <div>
-                  <strong>{CONTACT_CHANNEL_LABELS[item.channel]}</strong>
-                  <p>{item.body}</p>
-                  <small>
-                    {item.recorderName}
-                    {item.hasReply ? " · com resposta" : ""}
-                  </small>
-                </div>
-                <time>{dateTime.format(new Date(item.occurredAt))}</time>
-              </article>
-            ))}
-          </div>
-        )}
+        <ContactHistoryList interactions={contact.interactions} />
       </section>
 
       <section className="crm-contact-section">

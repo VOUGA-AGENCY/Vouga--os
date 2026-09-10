@@ -137,6 +137,15 @@ export class RelationsService {
       recordedByMemberId: values.memberId,
     });
   }
+  async updateInteraction(id: string, body: string): Promise<void> {
+    const trimmedId = id.trim();
+    const trimmedBody = body.trim();
+    if (!trimmedId) throw new ContactValidationError("Identificador de interação inválido.");
+    if (!trimmedBody) throw new ContactValidationError("A mensagem do log não pode estar vazia.");
+    if (trimmedBody.length > 12000)
+      throw new ContactValidationError("A mensagem excede 12000 caracteres.");
+    await this.repository.updateInteraction(trimmedId, trimmedBody);
+  }
   private async assertRefs(ownerId: string, companyId: string | null) {
     if (!(await this.directory.isActiveMember(ownerId)))
       throw new ContactValidationError("Seleciona um owner ativo.");

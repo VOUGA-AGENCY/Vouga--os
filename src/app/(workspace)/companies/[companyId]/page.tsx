@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { COMPANY_STATUS_LABELS, PROSPECTING_STAGE_LABELS } from "@/domain/companies/company";
 import { PROJECT_STATUS_LABELS } from "@/domain/projects/project";
-import { CONTACT_CHANNEL_LABELS, initials } from "@/domain/relations/contact";
+import { initials } from "@/domain/relations/contact";
 import { getAuthenticatedUser } from "@/application/auth/current-user";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createContextEngine } from "@/foundation/composition/context-engine";
@@ -14,8 +14,7 @@ import { safeWorkspaceReturnTo, withReturnTo } from "@/foundation/navigation/ret
 import { ConfirmAction } from "@/foundation/ui/confirm-action";
 import { ContextPanel } from "../../context-panel";
 import { deleteCompanyAction } from "../actions";
-
-const fullDate = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium", timeStyle: "short" });
+import { CompanyHistoryList } from "./company-history-list";
 
 export default async function CompanyDetailPage({
   params,
@@ -184,32 +183,7 @@ export default async function CompanyDetailPage({
           <h2>Histórico de interações</h2>
           <span>{history.length}</span>
         </header>
-        <div className="crm-company-history">
-          {history.length ? (
-            history.map((item) => {
-              const content = (
-                <>
-                  <span>{CONTACT_CHANNEL_LABELS[item.channel]}</span>
-                  <strong>{item.contactName ?? "Sem perfil específico"}</strong>
-                  <p>{item.body}</p>
-                  <time>{fullDate.format(new Date(item.occurredAt))}</time>
-                </>
-              );
-              return item.contactId ? (
-                <Link
-                  href={withReturnTo(`/relations/contacts/${item.contactId}`, companyHref)}
-                  key={item.id}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <article key={item.id}>{content}</article>
-              );
-            })
-          ) : (
-            <p className="crm-muted">Ainda não existem interações.</p>
-          )}
-        </div>
+        <CompanyHistoryList companyHref={companyHref} history={history} />
       </section>
 
       <ContextPanel context={context} collapsible />

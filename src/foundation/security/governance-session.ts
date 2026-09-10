@@ -48,7 +48,8 @@ export async function verifyGovernanceSession(
   }
 }
 
-export function isGovernanceProtectedPath(_pathname: string): boolean {
+export function isGovernanceProtectedPath(pathname: string): boolean {
+  void pathname;
   return false;
 }
 

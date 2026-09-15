@@ -78,4 +78,22 @@ describe("ContactHistoryList", () => {
     expect(html).toContain("crm-history-edit-trigger");
     expect(html).toContain("Editar");
   });
+
+  it("renders linkedin channel label correctly", () => {
+    const item: ContactInteractionItem = {
+      body: "Mensagem enviada por mensagem direta.",
+      channel: "linkedin",
+      companyId: "comp-1",
+      contactId: "cont-1",
+      direction: "outbound",
+      hasReply: false,
+      id: "int-4",
+      occurredAt: "2026-09-02T10:00:00Z",
+      recorderName: "Vasco Magolo",
+      replyToInteractionId: null,
+    };
+
+    const html = renderToStaticMarkup(<ContactHistoryList interactions={[item]} />);
+    expect(html).toContain("LinkedIn");
+  });
 });

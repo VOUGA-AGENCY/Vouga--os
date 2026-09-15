@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { CompanyInteractionItem } from "@/projections/relations/relations-read-model";
@@ -49,5 +51,13 @@ describe("CompanyHistoryList", () => {
     expect(html).toContain("Sem perfil específico");
     expect(html).toContain("crm-company-history-toggle");
     expect(html).toContain('aria-label="Expandir registo"');
+  });
+
+  it("declares css styles for channel selection in interaction history editing", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+    expect(css).toContain(".crm-history-edit-channel-row");
+    expect(css).toContain(".crm-history-edit-channel-label");
+    expect(css).toContain(".crm-history-edit-channel-select");
   });
 });

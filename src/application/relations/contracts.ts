@@ -49,7 +49,7 @@ export interface ContactRepository {
     sourceTemplateId: string | null;
     recordedByMemberId: string;
   }): Promise<string>;
-  updateInteraction(id: string, body: string): Promise<void>;
+  updateInteraction(id: string, body: string, channel?: ContactChannel): Promise<void>;
 }
 export interface RelationsDirectory {
   listMembers(): Promise<ActiveMember[]>;

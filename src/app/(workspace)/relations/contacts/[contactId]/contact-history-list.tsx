@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { updateInteractionBodyAction } from "@/app/(workspace)/relations/actions";
-import { CONTACT_CHANNEL_LABELS } from "@/domain/relations/contact";
+import { CONTACT_CHANNELS, CONTACT_CHANNEL_LABELS, type ContactChannel } from "@/domain/relations/contact";
 import type { ContactInteractionItem } from "@/projections/relations/relations-read-model";
 
 const dateTime = new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium", timeStyle: "short" });
@@ -16,8 +16,10 @@ export function ContactHistoryList({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [editChannel, setEditChannel] = useState<ContactChannel>("email");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [localBodies, setLocalBodies] = useState<Record<string, string>>({});
+  const [localChannels, setLocalChannels] = useState<Record<string, ContactChannel>>({});
   const [isPending, startTransition] = useTransition();
 
   const toggleExpand = (id: string) => {
@@ -32,9 +34,10 @@ export function ContactHistoryList({
     });
   };
 
-  const startEditing = (id: string, currentBody: string) => {
+  const startEditing = (id: string, currentBody: string, currentChannel: ContactChannel) => {
     setEditingId(id);
     setEditText(currentBody);
+    setEditChannel(currentChannel);
     setErrorMessage(null);
     setExpandedIds((prev) => new Set(prev).add(id));
   };
@@ -53,9 +56,10 @@ export function ContactHistoryList({
     }
     setErrorMessage(null);
     startTransition(async () => {
-      const res = await updateInteractionBodyAction(id, trimmed);
+      const res = await updateInteractionBodyAction(id, trimmed, editChannel);
       if (res.success) {
         setLocalBodies((prev) => ({ ...prev, [id]: trimmed }));
+        setLocalChannels((prev) => ({ ...prev, [id]: editChannel }));
         setEditingId(null);
       } else {
         setErrorMessage(res.error || "Não foi possível guardar as alterações.");
@@ -72,6 +76,7 @@ export function ContactHistoryList({
       {interactions.map((item) => {
         const isExpanded = expandedIds.has(item.id);
         const currentBody = localBodies[item.id] ?? item.body;
+        const currentChannel = localChannels[item.id] ?? item.channel;
         const isLong = currentBody.length > 120 || currentBody.includes("\n");
         const isEditing = editingId === item.id;
 
@@ -88,9 +93,31 @@ export function ContactHistoryList({
               )}
             </span>
             <div className="crm-interaction-main">
-              <strong>{CONTACT_CHANNEL_LABELS[item.channel]}</strong>
+              <strong>{CONTACT_CHANNEL_LABELS[currentChannel]}</strong>
               {isEditing ? (
                 <div className="crm-history-editing">
+                  <div className="crm-history-edit-channel-row">
+                    <label
+                      className="crm-history-edit-channel-label"
+                      htmlFor={`contact-channel-${item.id}`}
+                    >
+                      Tipo
+                    </label>
+                    <select
+                      aria-label="Tipo de registo"
+                      className="crm-history-edit-channel-select"
+                      disabled={isPending}
+                      id={`contact-channel-${item.id}`}
+                      onChange={(e) => setEditChannel(e.target.value as ContactChannel)}
+                      value={editChannel}
+                    >
+                      {CONTACT_CHANNELS.map((ch) => (
+                        <option key={ch} value={ch}>
+                          {CONTACT_CHANNEL_LABELS[ch]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <textarea
                     aria-label="Mensagem da interação"
                     autoFocus
@@ -135,7 +162,7 @@ export function ContactHistoryList({
                       <button
                         aria-label="Editar registo"
                         className="crm-history-edit-trigger"
-                        onClick={() => startEditing(item.id, currentBody)}
+                        onClick={() => startEditing(item.id, currentBody, currentChannel)}
                         type="button"
                       >
                         <Pencil aria-hidden="true" />

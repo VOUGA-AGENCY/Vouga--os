@@ -8583,6 +8583,30 @@ a {
   gap: var(--space-2);
   width: 100%;
 }
+.crm-history-edit-channel-row {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+.crm-history-edit-channel-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+.crm-history-edit-channel-select {
+  background: var(--color-bg-elevated);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  padding: var(--space-1) var(--space-2);
+}
+.crm-history-edit-channel-select:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
 .crm-history-edit-textarea {
   background: var(--color-bg-elevated);
   border: var(--border-width) solid var(--color-border-strong);

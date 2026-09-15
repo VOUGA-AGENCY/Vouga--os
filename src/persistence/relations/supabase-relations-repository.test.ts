@@ -60,15 +60,30 @@ describe("SupabaseContactRepository interactions", () => {
     });
   });
 
-  it("atualiza o corpo da interação via rpc", async () => {
+  it("atualiza o corpo e canal da interação via rpc", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
     const repository = new SupabaseContactRepository({ rpc } as unknown as SupabaseClient);
 
-    await repository.updateInteraction("interaction-1", "Texto revisto");
+    await repository.updateInteraction("interaction-1", "Texto revisto", "linkedin");
 
     expect(rpc).toHaveBeenCalledWith("update_contact_interaction", {
       p_interaction_id: "interaction-1",
       p_body: "Texto revisto",
+      p_channel: "linkedin",
     });
+  });
+
+  it("faz fallback para update direto quando o rpc falha", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: new Error("RPC not found") });
+    const eq = vi.fn().mockResolvedValue({ data: null, error: null });
+    const update = vi.fn().mockReturnValue({ eq });
+    const from = vi.fn().mockReturnValue({ update });
+    const repository = new SupabaseContactRepository({ rpc, from } as unknown as SupabaseClient);
+
+    await repository.updateInteraction("interaction-1", "Texto revisto", "call");
+
+    expect(from).toHaveBeenCalledWith("contact_interactions");
+    expect(update).toHaveBeenCalledWith({ body: "Texto revisto", channel: "call" });
+    expect(eq).toHaveBeenCalledWith("id", "interaction-1");
   });
 });

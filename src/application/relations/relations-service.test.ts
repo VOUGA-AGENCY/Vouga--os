@@ -85,12 +85,12 @@ describe("RelationsService interactions", () => {
     });
   });
 
-  it("atualiza a mensagem da Interaction e valida o corpo", async () => {
+  it("atualiza a mensagem e o canal da Interaction e valida os campos", async () => {
     const { service, updateInteraction } = createService();
 
-    await service.updateInteraction(" int-1 ", "  Nova mensagem atualizada  ");
+    await service.updateInteraction(" int-1 ", "  Nova mensagem atualizada  ", "linkedin");
 
-    expect(updateInteraction).toHaveBeenCalledWith("int-1", "Nova mensagem atualizada");
+    expect(updateInteraction).toHaveBeenCalledWith("int-1", "Nova mensagem atualizada", "linkedin");
 
     await expect(service.updateInteraction("int-1", "   ")).rejects.toThrow(
       "A mensagem do log não pode estar vazia.",
@@ -98,5 +98,8 @@ describe("RelationsService interactions", () => {
     await expect(service.updateInteraction("  ", "Texto")).rejects.toThrow(
       "Identificador de interação inválido.",
     );
+    await expect(
+      service.updateInteraction("int-1", "Texto", "sms" as unknown as "email"),
+    ).rejects.toThrow("O tipo de interação não é válido.");
   });
 });

@@ -236,15 +236,20 @@ export class SupabaseContactRepository implements ContactRepository {
     if (error || !data) throw new Error("Não foi possível registar o contacto.");
     return String(data.id);
   }
-  async updateInteraction(id: string, body: string): Promise<void> {
+  async updateInteraction(id: string, body: string, channel?: ContactChannel): Promise<void> {
     const { error: rpcError } = await this.supabase.rpc("update_contact_interaction", {
       p_interaction_id: id,
       p_body: body,
+      p_channel: channel ?? null,
     });
     if (rpcError) {
+      const payload: { body: string; channel?: ContactChannel } = { body };
+      if (channel) {
+        payload.channel = channel;
+      }
       const { error: updateError } = await this.supabase
         .from("contact_interactions")
-        .update({ body })
+        .update(payload)
         .eq("id", id);
       if (updateError) {
         throw new Error("Não foi possível atualizar o log de interação.");

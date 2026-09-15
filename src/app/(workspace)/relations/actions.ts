@@ -7,7 +7,7 @@ import {
   getRelationsErrorMessage,
 } from "@/application/relations/relations-service";
 import { getCompanyApplicationErrorMessage } from "@/application/companies/company-service";
-import type { ContactChannel } from "@/domain/relations/contact";
+import { CONTACT_CHANNELS, type ContactChannel } from "@/domain/relations/contact";
 import type { ProspectingStage } from "@/domain/companies/company";
 import { createCompanyModule } from "@/foundation/composition/companies";
 import { createRelationsModule } from "@/foundation/composition/relations";
@@ -210,15 +210,26 @@ export async function recordContactInteractionAction(fd: FormData) {
 export async function updateInteractionBodyAction(
   interactionId: string,
   body: string,
+  channelOrPath?: ContactChannel | string,
   path?: string,
 ): Promise<{ success: boolean; error?: string }> {
   if (!(await getAuthenticatedUser())) {
     return { success: false, error: "Não autenticado." };
   }
   try {
+    let channel: ContactChannel | undefined;
+    let targetPath = path;
+    if (channelOrPath) {
+      if ((CONTACT_CHANNELS as readonly string[]).includes(channelOrPath)) {
+        channel = channelOrPath as ContactChannel;
+      } else if (!targetPath) {
+        targetPath = channelOrPath;
+      }
+    }
+
     const { service } = await createRelationsModule();
-    await service.updateInteraction(interactionId, body);
-    if (path) revalidatePath(path);
+    await service.updateInteraction(interactionId, body, channel);
+    if (targetPath) revalidatePath(targetPath);
     revalidatePath("/relations");
     revalidatePath("/companies");
     return { success: true };
@@ -229,3 +240,6 @@ export async function updateInteractionBodyAction(
     };
   }
 }
+
+export const updateInteractionAction = updateInteractionBodyAction;
+
